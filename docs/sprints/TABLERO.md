@@ -3,18 +3,20 @@
 ## Nombre y acceso
 
 - Nombre: `Sprint Board - GameOn Network`.
-- Ubicación: GitHub Projects, asociado al repositorio del equipo.
+- URL: https://github.com/orgs/UPT-FAING-EPIS/projects/422/views/1
+- Ubicación: GitHub Projects de `UPT-FAING-EPIS`, con `py_moviles_ii_capicodex` como repositorio predeterminado.
 - Visibilidad: privada.
-- Acceso docente: lectura.
+- Contenido importado: 35 issues abiertos del Product Backlog.
+- Acceso docente: sujeto a los permisos de la organización.
 
 ## Campos personalizados
 
 | Campo | Tipo | Uso |
 |---|---|---|
-| Sprint | Texto o iteración | Sprint previsto del elemento |
+| Sprint | Selección única | Sprint previsto, con opciones Sprint 1 a Sprint 7 |
 | Puntos | Número | Estimación relativa acordada |
 | Riesgo | Número | Nivel de 1 a 5 |
-| Dato personal | Texto | Dato tratado o `No` |
+| Dato personal | Selección única | Indica `Sí` o `No` |
 
 ## Columnas y límites WIP
 
@@ -26,6 +28,12 @@
 | En revisión | WIP 3 | Pull Request abierto, CI en verde y autoprueba en emulador |
 | En pruebas | WIP 2 | Pull Request aprobado por una persona distinta del autor |
 | Listo | Sin límite | Todos los criterios de aceptación verificados y Definition of Done cumplida |
+
+## Estado inicial del Sprint 1
+
+- `TD-01` y `US-02` están en `Sprint Backlog`, con 2 y 3 puntos.
+- `US-01` está en `En progreso`, con 5 puntos, responsable y rama vinculada.
+- Los tres elementos tienen `Sprint 1`, riesgo y tratamiento de datos personales registrados en los campos del Project.
 
 ## Automatizaciones recomendadas
 

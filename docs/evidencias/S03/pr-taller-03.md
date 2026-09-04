@@ -6,6 +6,7 @@
 - Estado al registrar la evidencia: abierto y fusionable, sin conflictos.
 - Revisiones solicitadas: `mayrafc` y `SebastianFuentesAvalos`.
 - Verificaciones automáticas reportadas por GitHub: no hay flujos de CI configurados en el repositorio.
+- Project: https://github.com/orgs/UPT-FAING-EPIS/projects/422/views/1
 
 ## Condición de cierre
 
