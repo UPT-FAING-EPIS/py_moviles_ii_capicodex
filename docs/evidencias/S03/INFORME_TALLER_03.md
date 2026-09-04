@@ -32,8 +32,9 @@ El Sprint 1 se planificó con una capacidad efectiva estimada de 69 horas y un c
 | 9 | Capacidad del Sprint calculada | https://github.com/UPT-FAING-EPIS/py_moviles_ii_capicodex/blob/taller-03/docs/sprints/sprint-01/SPRINT_BACKLOG.md | Preparado |
 | 10 | Sprint Goal formulado y probado | https://github.com/UPT-FAING-EPIS/py_moviles_ii_capicodex/blob/taller-03/docs/sprints/sprint-01/SPRINT_BACKLOG.md | Preparado |
 | 11 | Sprint Backlog con plan de entrega y Daily | https://github.com/UPT-FAING-EPIS/py_moviles_ii_capicodex/blob/taller-03/docs/sprints/sprint-01/SPRINT_BACKLOG.md | Preparado |
-| 12 | Tablero con límites WIP y políticas | https://github.com/UPT-FAING-EPIS/py_moviles_ii_capicodex/blob/taller-03/docs/evidencias/S03/tablero-wip.png | Pendiente en GitHub |
-| 13 | Sprint 1 iniciado con una historia y rama | https://github.com/UPT-FAING-EPIS/py_moviles_ii_capicodex/blob/taller-03/docs/evidencias/S03/sprint-01-inicio.md | Iniciado; falta reflejarlo en el tablero |
+| 12 | Diseño del tablero, límites WIP y políticas | https://github.com/UPT-FAING-EPIS/py_moviles_ii_capicodex/blob/docs/taller-03/docs/sprints/TABLERO.md | Diseño preparado; falta crear el GitHub Project autenticado y capturarlo |
+| 13 | Sprint 1 iniciado con una historia y rama | https://github.com/UPT-FAING-EPIS/py_moviles_ii_capicodex/blob/docs/taller-03/docs/evidencias/S03/sprint-01-inicio.md | Iniciado; issue y rama verificables |
+| 14 | Pull Request hacia `develop` | https://github.com/UPT-FAING-EPIS/py_moviles_ii_capicodex/pull/60 | Abierto; revisión solicitada a dos integrantes |
 
 ## Conclusiones
 
@@ -55,4 +56,5 @@ El Sprint 1 se planificó con una capacidad efectiva estimada de 69 horas y un c
 - Anexo B: criterios Gherkin versionados en `docs/sprints/criterios/`.
 - Anexo C: registro de estimación en `docs/sprints/ESTIMACION.md`.
 - Anexo D: Sprint Backlog en `docs/sprints/sprint-01/SPRINT_BACKLOG.md`.
-- Anexo E: captura del tablero con límites WIP, pendiente de generar después de configurar GitHub Projects.
+- Anexo E: diseño versionado del tablero y captura pendiente de generar después de configurar GitHub Projects.
+- Anexo F: registro verificable del Pull Request en `docs/evidencias/S03/pr-taller-03.md`.
