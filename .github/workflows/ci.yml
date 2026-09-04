@@ -1,0 +1,70 @@
+name: CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+jobs:
+  calidad:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configurar Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Dependencias
+        run: flutter pub get
+
+      - name: DoD-6 · Sin secretos
+        run: >-
+          docker run --rm -v "$PWD":/src aquasec/trivy:latest fs
+          --scanners secret --exit-code 1
+          --skip-files lib/firebase_options.dart
+          --skip-files android/app/google-services.json
+          /src
+
+      - name: DoD-10 · Formato
+        run: dart format --output=none --set-exit-if-changed lib test
+
+      - name: DoD-2 · Análisis estático
+        run: flutter analyze
+
+      - name: DoD-8 · Regla de dependencia
+        shell: bash
+        run: |
+          if grep -R -nE "features/home/(data|presentation)" lib/features/home/domain; then
+            echo "La capa domain depende de data o presentation"
+            exit 1
+          fi
+          echo "Regla de dependencia respetada"
+
+      - name: DoD-3 y DoD-4 · Pruebas y cobertura
+        run: flutter test --coverage
+
+      - name: DoD-4 · Cobertura de dominio ≥ 70 %
+        shell: bash
+        run: |
+          awk '
+            /^SF:/ {in_domain = ($0 ~ /lib\/features\/home\/domain\//)}
+            /^LF:/ && in_domain {split($0,a,":"); total+=a[2]}
+            /^LH:/ && in_domain {split($0,a,":"); hit+=a[2]}
+            END {
+              if (total == 0) { print "No se encontraron líneas de dominio en cobertura"; exit 1 }
+              pct = 100 * hit / total
+              printf "Cobertura dominio: %.2f%% (%d/%d)\n", pct, hit, total
+              if (pct < 70) exit 1
+            }
+          ' coverage/lcov.info
+
+      - name: DoD-1 · Compilación Android debug
+        run: >-
+          flutter build apk --debug
+          --dart-define=SUPABASE_URL=https://example.supabase.co
+          --dart-define=SUPABASE_ANON_KEY=ci-placeholder

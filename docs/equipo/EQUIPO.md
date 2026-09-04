@@ -8,7 +8,7 @@
 |**Product Owner**|Sebastián Fuentes|
 |**Scrum Master**|Gabriela Gutierrez|
 |**Developers**|Mayra Chire|
-|**Acceso a macOS**|NO|
+|**Acceso a macOS**|NO (el alcance actual del proyecto es Android; el dato se conserva porque la guía lo considera en la evaluación de stacks)|
 |**Dispositivos disponibles**|JDY-LX3 - Versión Android 16 <br />ALT-LX3 - Versión Android 14<br />SM-A556E - Versión Android 16|
 
 ## Competencias del equipo
@@ -27,7 +27,7 @@
 | Integración continua con GitHub Actions | Mayra Chire | Configurar y probar el workflow desde la Semana 01 |
 | Gestión de estado y arquitectura móvil | Gabriela Gutierrez | Comparar alternativas y documentar la decisión |
 | Pruebas automatizadas | Mayra Chire | Preparar pruebas mínimas para el flujo principal |
-| Publicación y firma de la aplicación | Sebastián Fuentes | Investigar requisitos de Android/iOS antes de la fase de publicación |
+| Publicación y firma de la aplicación Android | Sebastián Fuentes | Revisar requisitos de firma y generación del APK/AAB para Android antes de la fase de publicación |
 
 ## Responsabilidades Scrum
 

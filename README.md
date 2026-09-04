@@ -1,144 +1,52 @@
-# GameOn Network
+# GameOn Mobile
 
-Aplicación móvil orientada a deportistas amateur que busca facilitar la búsqueda de instalaciones deportivas, consulta de disponibilidad, coordinación de actividades y gestión de reservas desde un solo lugar.
+App móvil Flutter para reservas deportivas y pagos seguros con PayPal.
 
-Proyecto desarrollado para el curso **SI-988 · Soluciones Móviles II** de la Escuela Profesional de Ingeniería de Sistemas de la Universidad Privada de Tacna.
+## Características principales
+- Reserva de canchas y áreas deportivas.
+- Gestión de horarios y disponibilidad.
+- Pago seguro integrado con PayPal (WebView embebido).
+- Conversión automática de moneda (Soles a USD).
+- Estados de reserva: Pendiente, Confirmada, En curso, Completada.
+- Persistencia de datos de pago (monto, método, fecha, orderId).
+- Experiencia de usuario moderna y profesional.
 
----
+## Estructura del proyecto
+- `lib/features/home/`: Pantallas y lógica de inicio.
+- `lib/features/reservas/`: Lógica de reservas, ViewModels y vistas.
+- `lib/features/reservas/viewmodels/`: MVVM para reservas y pagos.
+- `lib/features/reservas/views/`: UI de resumen, calendario y pago.
+- `lib/features/reservas/services/paypal_service.dart`: Integración con PayPal vía Supabase Edge Functions.
+- `android/`, `ios/`, `web/`, `windows/`, `macos/`, `linux/`: Soporte multiplataforma.
 
-## Información del proyecto
+## Instalación y ejecución
+1. Instala Flutter: https://docs.flutter.dev/get-started/install
+2. Clona el repositorio:
+	```sh
+	git clone https://github.com/nkmelndz/gameon_mobile.git
+	cd gameon_mobile
+	```
+3. Instala dependencias:
+	```sh
+	flutter pub get
+	```
+4. Ejecuta la app:
+	```sh
+	flutter run --debug
+	```
 
-| Campo | Detalle |
-|---|---|
-| Proyecto | GameOn Network |
-| Equipo | GameOn Team |
-| Curso | SI-988 · Soluciones Móviles II |
-| Universidad | Universidad Privada de Tacna |
-| Facultad | Facultad de Ingeniería |
-| Escuela | Ingeniería de Sistemas |
-| Modalidad | Aplicación móvil |
-| Estado | En desarrollo |
+## Configuración de PayPal
+- Sandbox: Usar credenciales de prueba en Edge Function.
+- Producción: Cambiar a credenciales live y endpoint real.
 
----
+## Notas técnicas
+- El flujo de pago se realiza dentro de la app usando WebView.
+- El overlay de carga cubre toda la pantalla durante el procesamiento de pago y reserva.
+- El tipo de cambio es configurable (por defecto 3.7).
 
-## Problema
-
-Actualmente, los deportistas amateur pueden encontrar dificultades para localizar instalaciones deportivas, conocer su disponibilidad, comparar alternativas y coordinar actividades.
-
-La información suele encontrarse dispersa entre redes sociales, llamadas telefónicas, grupos de mensajería, recomendaciones y consultas directas a los establecimientos.
-
-Esto puede generar pérdida de tiempo, dificultad para coordinar partidos y poca visibilidad sobre las instalaciones deportivas disponibles.
-
----
-
-## Propuesta de solución
-
-**GameOn Network** busca centralizar la información relacionada con actividades e instalaciones deportivas mediante una aplicación móvil.
-
-La aplicación permitirá progresivamente:
-
-- Visualizar instalaciones deportivas cercanas.
-- Buscar espacios según el deporte.
-- Consultar información de las instalaciones.
-- Revisar horarios y disponibilidad.
-- Gestionar reservas.
-- Consultar las reservas realizadas.
-- Recibir notificaciones y recordatorios.
-- Facilitar la coordinación entre deportistas.
-
-Como funcionalidad futura se contempla permitir la creación de partidos abiertos para encontrar otros jugadores interesados en participar.
-
----
-
-## ¿Por qué una aplicación móvil?
-
-GameOn Network requiere capacidades propias de los dispositivos móviles que permiten mejorar la experiencia del usuario.
-
-Entre ellas se consideran:
-
-- Geolocalización.
-- Visualización de instalaciones cercanas mediante mapas.
-- Notificaciones.
-- Acceso desde cualquier lugar.
-- Uso durante el desplazamiento del usuario.
-- Posible integración futura con cámara y otras capacidades del dispositivo.
-
-Estas características permiten justificar el desarrollo de una aplicación móvil frente a una solución exclusivamente web.
+## Contacto y soporte
+- Autor: 
+- Issues y soporte: Usar el sistema de issues de GitHub.
 
 ---
-
-## Público objetivo
-
-El público objetivo principal está compuesto por:
-
-**Deportistas amateur de Tacna** que practican fútbol, vóley, básquet, pádel u otras disciplinas y requieren encontrar instalaciones o coordinar actividades deportivas.
-
-También se considera como usuario del sistema al:
-
-**Administrador de una instalación deportiva**, encargado de registrar y gestionar información relacionada con sus espacios deportivos.
-
----
-
-## MVP
-
-Para mantener un alcance viable durante el curso, el producto mínimo viable contempla inicialmente:
-
-1. Registro e inicio de sesión.
-2. Perfil básico del usuario.
-3. Visualización de instalaciones deportivas.
-4. Geolocalización y mapa.
-5. Búsqueda y filtros por deporte.
-6. Información de cada instalación.
-7. Consulta de disponibilidad.
-8. Reserva de instalaciones.
-9. Consulta de reservas realizadas.
-10. Notificaciones y recordatorios.
-
-Las funcionalidades adicionales serán evaluadas de acuerdo con el avance de los sprints.
-
----
-
-## Equipo Scrum
-
-| Integrante | Rol Scrum | Área principal |
-|---|---|---|
-| Sebastián Fuentes | Product Owner | Desarrollo móvil y diseño UI/UX |
-| Gabriela Gutierrez | Scrum Master | Backend y base de datos |
-| Mayra Chire | Developer | Pruebas e integración |
-
----
-
-## Organización del repositorio
-
-```text
-pro_moviles_ii_capicodex/
-│
-├── .github/
-│   └── workflows/
-│       └── ci.yml
-│
-├── app/
-│
-├── docs/
-│   ├── arquitectura/
-│   ├── decisiones/
-│   ├── entorno/
-│   ├── equipo/
-│   │   ├── EQUIPO.md
-│   │   └── ACUERDOS.md
-│   │
-│   ├── evidencias/
-│   │   └── S01/
-│   │
-│   ├── producto/
-│   │   ├── LEAN_CANVAS.md
-│   │   ├── VALIDACION.md
-│   │   └── VISION.md
-│   │
-│   └── sprints/
-│
-├── src/
-├── test/
-├── .gitignore
-├── CONTRIBUTING.md
-└── README.md
+¡Gracias por usar GameOn Mobile!
