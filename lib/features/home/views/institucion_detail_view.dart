@@ -4,6 +4,7 @@ import 'package:gameon/features/home/models/institucion_deportiva.dart';
 import 'package:gameon/features/home/models/horario_atencion.dart';
 import 'package:gameon/features/home/models/deporte.dart';
 import 'package:gameon/features/home/viewmodels/institucion_detail_viewmodel.dart';
+
 import 'areas_deportivas_view.dart';
 
 class InstitucionDetailView extends StatefulWidget {

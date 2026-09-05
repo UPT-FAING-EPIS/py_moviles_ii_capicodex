@@ -33,21 +33,24 @@ const institucionDePrueba = InstitucionDeportiva(
 );
 
 void main() {
-  test('emite Loading y luego Success cuando el repositorio responde', () async {
-    final vm = HomeViewModel(
-      obtenerInstitucionesActivas: ObtenerInstitucionesActivas(
-        RepositorioFalso(respuesta: const [institucionDePrueba]),
-      ),
-    );
+  test(
+    'emite Loading y luego Success cuando el repositorio responde',
+    () async {
+      final vm = HomeViewModel(
+        obtenerInstitucionesActivas: ObtenerInstitucionesActivas(
+          RepositorioFalso(respuesta: const [institucionDePrueba]),
+        ),
+      );
 
-    expect(vm.estado, isA<Loading<List<InstitucionDeportiva>>>());
-    await vm.cargar();
+      expect(vm.estado, isA<Loading<List<InstitucionDeportiva>>>());
+      await vm.cargar();
 
-    expect(vm.estado, isA<Success<List<InstitucionDeportiva>>>());
-    final estado = vm.estado as Success<List<InstitucionDeportiva>>;
-    expect(estado.data, hasLength(1));
-    expect(estado.data.first.nombre, 'Complejo Deportivo Tacna');
-  });
+      expect(vm.estado, isA<Success<List<InstitucionDeportiva>>>());
+      final estado = vm.estado as Success<List<InstitucionDeportiva>>;
+      expect(estado.data, hasLength(1));
+      expect(estado.data.first.nombre, 'Complejo Deportivo Tacna');
+    },
+  );
 
   test('emite Empty cuando el repositorio responde sin elementos', () async {
     final vm = HomeViewModel(
@@ -61,18 +64,21 @@ void main() {
     expect(vm.estado, isA<Empty<List<InstitucionDeportiva>>>());
   });
 
-  test('emite Error con acción de reintento cuando el repositorio falla', () async {
-    final vm = HomeViewModel(
-      obtenerInstitucionesActivas: ObtenerInstitucionesActivas(
-        RepositorioFalso(error: Exception('sin conexión')),
-      ),
-    );
+  test(
+    'emite Error con acción de reintento cuando el repositorio falla',
+    () async {
+      final vm = HomeViewModel(
+        obtenerInstitucionesActivas: ObtenerInstitucionesActivas(
+          RepositorioFalso(error: Exception('sin conexión')),
+        ),
+      );
 
-    await vm.cargar();
+      await vm.cargar();
 
-    expect(vm.estado, isA<ErrorState<List<InstitucionDeportiva>>>());
-    final estado = vm.estado as ErrorState<List<InstitucionDeportiva>>;
-    expect(estado.retry, isNotNull);
-    expect(estado.message, isNotEmpty);
-  });
+      expect(vm.estado, isA<ErrorState<List<InstitucionDeportiva>>>());
+      final estado = vm.estado as ErrorState<List<InstitucionDeportiva>>;
+      expect(estado.retry, isNotNull);
+      expect(estado.message, isNotEmpty);
+    },
+  );
 }

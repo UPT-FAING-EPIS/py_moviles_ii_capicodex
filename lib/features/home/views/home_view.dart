@@ -8,9 +8,11 @@ import 'package:gameon/features/perfil/views/perfil_view/perfil_view.dart';
 import 'package:gameon/features/chat/views/chats_list_view.dart';
 import 'package:gameon/features/notificaciones/views/notificaciones_view.dart';
 import 'package:gameon/features/notificaciones/viewmodels/notificaciones_viewmodel.dart';
+
 import '../viewmodels/home_viewmodel.dart';
 import 'institucion_detail_view.dart';
 import 'mapa_instituciones_view.dart';
+
 import 'package:provider/provider.dart';
 import 'package:gameon/features/perfil/viewmodels/perfil_viewmodel.dart';
 import 'package:gameon/features/perfil/views/login_page/login_page.dart';
@@ -218,9 +220,9 @@ class _HomeTabScaffoldState extends State<HomeTabScaffold> {
 
   @override
   Widget build(BuildContext context) {
-    final safeTop = MediaQuery.of(
-      context,
-    ).padding.top; // para extender el header tras la barra de estado
+    final safeTop = MediaQuery.of(context)
+        .padding
+        .top; // para extender el header tras la barra de estado
 
     // Opción B: barra de estado transparente y header que ocupa el área superior
     final overlay = SystemUiOverlayStyle(
@@ -452,7 +454,9 @@ class _HomeTabScaffoldState extends State<HomeTabScaffold> {
 
                   if (estado is Loading<List<InstitucionDeportiva>>) {
                     return Center(
-                      child: CircularProgressIndicator(color: Colors.green[600]),
+                      child: CircularProgressIndicator(
+                        color: Colors.green[600],
+                      ),
                     );
                   }
 
@@ -461,16 +465,26 @@ class _HomeTabScaffoldState extends State<HomeTabScaffold> {
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Icon(Icons.error_outline, size: 64, color: Colors.grey[400]),
+                          Icon(
+                            Icons.error_outline,
+                            size: 64,
+                            color: Colors.grey[400],
+                          ),
                           const SizedBox(height: 16),
                           const Text(
                             'Error al cargar instalaciones',
-                            style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w600,
+                            ),
                           ),
                           const SizedBox(height: 8),
                           Padding(
                             padding: const EdgeInsets.symmetric(horizontal: 32),
-                            child: Text(estado.message, textAlign: TextAlign.center),
+                            child: Text(
+                              estado.message,
+                              textAlign: TextAlign.center,
+                            ),
                           ),
                           const SizedBox(height: 16),
                           FilledButton.icon(
@@ -488,11 +502,18 @@ class _HomeTabScaffoldState extends State<HomeTabScaffold> {
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Icon(Icons.sports_soccer, size: 80, color: Colors.grey[300]),
+                          Icon(
+                            Icons.sports_soccer,
+                            size: 80,
+                            color: Colors.grey[300],
+                          ),
                           const SizedBox(height: 16),
                           const Text(
                             'No hay instalaciones disponibles',
-                            style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w600,
+                            ),
                           ),
                           const SizedBox(height: 8),
                           TextButton.icon(

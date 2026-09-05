@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:gameon/features/home/models/institucion_deportiva.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:geolocator/geolocator.dart';
+
 import 'institucion_detail_view.dart';
 
 class MapaInstitucionesView extends StatefulWidget {
