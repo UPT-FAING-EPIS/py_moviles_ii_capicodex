@@ -20,8 +20,8 @@ jobs:
       - name: Instalar dependencias
         run: flutter pub get
 
-      - name: Formato Taller 02
-        run: dart format --output=none --set-exit-if-changed lib/features/home test/features/home
+      - name: Verificar secretos
+        run: docker run --rm -v "$PWD":/src aquasec/trivy:latest fs --scanners secret --exit-code 1 /src
 
       - name: Análisis estático Taller 02
         run: flutter analyze lib/features/home test/features/home
