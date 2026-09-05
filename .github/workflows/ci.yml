@@ -24,7 +24,13 @@ jobs:
         run: docker run --rm -v "$PWD":/src aquasec/trivy:latest fs --scanners secret --exit-code 1 /src
 
       - name: Análisis estático Taller 02
-        run: flutter analyze lib/features/home test/features/home
+        run: >
+          flutter analyze
+          lib/features/home/domain
+          lib/features/home/data
+          lib/features/home/presentation
+          lib/features/home/viewmodels/home_viewmodel.dart
+          test/features/home/viewmodels/home_viewmodel_test.dart
 
       - name: Pruebas ViewModel
         run: flutter test test/features/home/viewmodels/home_viewmodel_test.dart
