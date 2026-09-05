@@ -1,0 +1,46 @@
+PRIORIDAD DEL PRODUCT BACKLOG - GAMEON NETWORK
+Fórmula: índice = valor x 0.6 + riesgo x 0.4
+
+Pos.  ID     Valor  Riesgo  Puntos  Índice  Historia
+   1  TD-01      5       5       2    5.00  Configurar arquitectura base, entornos y CI para sostener entregas verificables
+   2  TD-02      5       5       2    5.00  Implementar una capa de datos con caché para ofrecer lectura básica sin conexión
+   3  US-01      5       5       5    5.00  Como deportista amateur quiero registrarme con mi correo para crear una cuenta
+   4  US-02      5       5       3    5.00  Como usuario registrado quiero iniciar sesión con mi correo y contraseña para acceder a la aplicación
+   5  US-06      5       5       8    5.00  Como deportista amateur quiero ver instalaciones cercanas en un mapa para ubicarlas rápidamente
+   6  US-07      5       5       3    5.00  Como usuario quiero decidir si comparto mi ubicación para conservar el control de mis datos
+   7  US-08      5       5       5    5.00  Como deportista amateur quiero consultar horarios disponibles por fecha para elegir un turno
+   8  US-09      5       5       8    5.00  Como deportista amateur quiero reservar un horario disponible para asegurar el uso de la instalación
+   9  US-03      5       4       5    4.60  Como deportista amateur quiero ver una lista de instalaciones para comparar opciones
+  10  US-10      5       4       3    4.60  Como deportista amateur quiero recibir una confirmación de reserva para saber que fue registrada
+  11  US-11      5       4       5    4.60  Como usuario quiero consultar mis reservas para organizar mis actividades
+  12  SP-01      4       5       3    4.40  Investigar el SDK de mapas y su costo con un límite de cuatro horas
+  13  US-12      4       5       5    4.40  Como usuario quiero cancelar una reserva dentro del plazo permitido para liberar el horario
+  14  US-13      4       5       8    4.40  Como usuario quiero reprogramar una reserva para cambiar el horario sin crear duplicados
+  15  US-20      4       5       8    4.40  Como administrador quiero registrar una instalación para publicarla en el catálogo
+  16  US-21      4       5       5    4.40  Como administrador quiero editar una instalación propia para mantener su información actualizada
+  17  US-23      4       5       5    4.40  Como administrador quiero bloquear horarios no disponibles para evitar reservas inválidas
+  18  US-24      4       5       5    4.40  Como administrador quiero consultar las reservas de mi instalación para organizar la atención
+  19  US-25      4       5       3    4.40  Como administrador quiero actualizar el estado de una reserva para reflejar su atención
+  20  US-29      4       5       5    4.40  Como usuario quiero recuperar el acceso mediante mi correo si olvido la contraseña
+  21  US-04      5       3       3    4.20  Como deportista amateur quiero consultar el detalle de una instalación para decidir si me conviene
+  22  US-05      5       3       3    4.20  Como deportista amateur quiero filtrar instalaciones por deporte para encontrar espacios adecuados
+  23  TD-03      4       4       5    4.00  Configurar pruebas automatizadas del flujo principal para detectar regresiones
+  24  US-15      4       4       5    4.00  Como usuario quiero recibir un recordatorio antes de mi reserva para evitar olvidarla
+  25  US-22      4       4       5    4.00  Como administrador quiero definir horarios de atención para publicar turnos reservables
+  26  US-28      4       4       2    4.00  Como usuario quiero cerrar sesión para impedir el acceso desde un dispositivo compartido
+  27  SP-02      3       5       3    3.80  Investigar el servicio de notificaciones y su configuración con un límite de cuatro horas
+  28  US-30      3       5       8    3.80  Como usuario quiero solicitar la eliminación de mi cuenta para controlar mis datos personales
+  29  US-14      4       3       2    3.60  Como usuario quiero decidir si permito notificaciones para controlar los avisos que recibo
+  30  US-16      3       4       3    3.40  Como usuario quiero consultar mi perfil para revisar mis datos registrados
+  31  US-17      3       4       5    3.40  Como usuario quiero editar mi perfil para mantener mis datos actualizados
+  32  US-26      3       3       5    3.00  Como usuario quiero calificar una instalación después de una reserva para compartir mi experiencia
+  33  US-18      3       2       3    2.60  Como usuario quiero registrar mis deportes preferidos para personalizar la búsqueda
+  34  US-19      3       2       3    2.60  Como usuario quiero guardar instalaciones favoritas para encontrarlas nuevamente
+  35  US-27      3       2       2    2.60  Como usuario quiero abrir la ruta hacia una instalación para llegar con una aplicación de mapas
+
+Elementos en el backlog: 35
+Puntos totales estimados: 153
+Elementos sin estimar: 0
+Elementos de 13 puntos o más: 0
+Elementos que tratan datos personales: 27
+Elementos con requisitos de seguridad: 32
