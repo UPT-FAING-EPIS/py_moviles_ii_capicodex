@@ -9,6 +9,7 @@
 - Project: https://github.com/orgs/UPT-FAING-EPIS/projects/422/views/1
 - Estado en el Project: `En progreso` (WIP 1/3).
 - Campos: Sprint 1, 5 puntos, riesgo 5 y dato personal `Sí`.
+- Captura: [`tablero-sprint-01.png`](tablero-sprint-01.png).
 - Sprint Goal: crear una cuenta e iniciar sesión con datos persistidos por el servicio, con verificación en emulador y teléfono Android.
 
 La rama se creó desde `develop` y está vinculada al issue mediante GitHub. El avance funcional y las pruebas deben registrarse en esa rama y someterse a revisión mediante Pull Request.

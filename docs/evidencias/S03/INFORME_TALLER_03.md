@@ -56,5 +56,5 @@ El Sprint 1 se planificó con una capacidad efectiva estimada de 69 horas y un c
 - Anexo B: criterios Gherkin versionados en `docs/sprints/criterios/`.
 - Anexo C: registro de estimación en `docs/sprints/ESTIMACION.md`.
 - Anexo D: Sprint Backlog en `docs/sprints/sprint-01/SPRINT_BACKLOG.md`.
-- Anexo E: Project privado y diseño versionado del tablero en `docs/sprints/TABLERO.md`.
+- Anexo E: Project privado, diseño versionado y capturas `tablero-sprint-01.png` y `tablero-wip.png`.
 - Anexo F: registro verificable del Pull Request en `docs/evidencias/S03/pr-taller-03.md`.

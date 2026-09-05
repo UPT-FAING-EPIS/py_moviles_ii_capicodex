@@ -34,6 +34,7 @@
 - `TD-01` y `US-02` están en `Sprint Backlog`, con 2 y 3 puntos.
 - `US-01` está en `En progreso`, con 5 puntos, responsable y rama vinculada.
 - Los tres elementos tienen `Sprint 1`, riesgo y tratamiento de datos personales registrados en los campos del Project.
+- Evidencias: [`tablero-sprint-01.png`](../evidencias/S03/tablero-sprint-01.png) y [`tablero-wip.png`](../evidencias/S03/tablero-wip.png).
 
 ## Automatizaciones recomendadas
 
