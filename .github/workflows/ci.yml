@@ -1,0 +1,39 @@
+name: CI Taller 02
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  calidad:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configurar Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+
+      - name: Instalar dependencias
+        run: flutter pub get
+
+      - name: Verificar secretos
+        run: docker run --rm -v "$PWD":/src aquasec/trivy:latest fs --scanners secret --exit-code 1 /src
+
+      - name: Análisis estático Taller 02
+        run: >
+          flutter analyze
+          lib/features/home/domain
+          lib/features/home/data
+          lib/features/home/presentation
+          lib/features/home/viewmodels/home_viewmodel.dart
+          test/features/home/viewmodels/home_viewmodel_test.dart
+
+      - name: Pruebas ViewModel
+        run: flutter test test/features/home/viewmodels/home_viewmodel_test.dart
+
+      - name: Compilar APK debug
+        run: flutter build apk --debug --android-skip-build-dependency-validation

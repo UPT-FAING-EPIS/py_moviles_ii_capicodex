@@ -1,0 +1,9 @@
+Criterio,Peso,Flutter,React Native,Kotlin Multiplatform,Nativo,Evidencia de la calificación
+Competencia actual del equipo,25,5,2,1,2,"El proyecto GameOn existente está implementado y operativo en Flutter; el equipo ya conoce Dart/Flutter. No se evidenció proyecto previo equivalente en los otros stacks."
+Soporte de capacidades requeridas,20,5,5,5,5,"GameOn requiere mapas, geolocalización, cámara, notificaciones y almacenamiento. Flutter ya usa google_maps_flutter, geolocator, image_picker y Firebase/Supabase en el repositorio."
+Madurez del ecosistema para el dominio,15,5,5,4,5,"Flutter y React Native poseen ecosistemas maduros para mapas y servicios móviles; KMP requiere mayor composición entre plataformas; nativo tiene soporte oficial completo."
+Rendimiento requerido,10,4,4,5,5,"GameOn es una app de formularios, mapas, reservas y mensajería; no requiere gráficos 3D ni procesamiento intensivo. Flutter cumple el rendimiento esperado."
+Viabilidad sin macOS,10,5,5,5,5,"El proyecto del curso tiene alcance Android. Por ello, no disponer de macOS no limita el desarrollo, compilación ni las pruebas previstas. Los cuatro stacks evaluados tienen una ruta de desarrollo Android desde el entorno disponible del equipo."
+Curva de aprendizaje,10,5,3,2,3,"Flutter obtiene ventaja por existir una base funcional; migrar a otro stack obligaría a reaprender y reimplementar funcionalidades durante cinco sprints."
+Mantenibilidad post-curso,10,5,3,2,3,"La base actual, paquetes y experiencia acumulada reducen el costo de mantenimiento en Flutter."
+PUNTAJE PONDERADO,100,4.90,3.75,3.25,3.85,"Escala 1-5. Resultado: Flutter es el stack recomendado para continuar GameOn."
