@@ -51,20 +51,18 @@ git switch release/sprint-1-presentacion
 flutter pub get
 ```
 
-La aplicación no guarda las credenciales de Supabase en el repositorio. Para ejecutarla se deben inyectar en tiempo de compilación:
+La rama de presentación utiliza la misma configuración de cliente de Supabase que la versión funcional `EXAMEN_UI_CHIRE_`, por lo que para la demostración local basta con ejecutar Flutter normalmente. La autenticación continúa realizándose mediante Supabase Auth.
+
+Para ejecutar en el emulador:
 
 ```bash
-flutter run \
-  --dart-define=SUPABASE_URL=<URL_REAL> \
-  --dart-define=SUPABASE_ANON_KEY=<ANON_KEY_REAL>
+flutter run -d emulator-5554 --android-skip-build-dependency-validation
 ```
 
 Para compilar el APK:
 
 ```bash
-flutter build apk --debug \
-  --dart-define=SUPABASE_URL=<URL_REAL> \
-  --dart-define=SUPABASE_ANON_KEY=<ANON_KEY_REAL>
+flutter build apk --debug --android-skip-build-dependency-validation
 ```
 
 ## Verificación antes de presentar
@@ -106,7 +104,7 @@ docs/
 
 ## Seguridad
 
-Las credenciales de Supabase se inyectan mediante `--dart-define` y no deben versionarse. Las configuraciones cliente de Firebase incluidas en Flutter no sustituyen las reglas de seguridad del backend; Firestore y Storage deben permanecer protegidos mediante reglas adecuadas.
+La aplicación utiliza una clave cliente anónima de Supabase; no debe confundirse con una clave service_role ni con credenciales administrativas. Las configuraciones cliente de Firebase incluidas en Flutter no sustituyen las reglas de seguridad del backend; Firestore y Storage deben permanecer protegidos mediante reglas adecuadas.
 
 ## Equipo
 
