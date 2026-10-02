@@ -16,7 +16,6 @@ class LoginPage extends StatefulWidget {
 
 class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
   late final TabController _tabController;
-  late final PerfilViewModel _vm;
 
   // Formulario de login
   final _loginFormKey = GlobalKey<FormState>();
@@ -34,7 +33,6 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
-    _vm = PerfilViewModel();
   }
 
   @override
@@ -59,142 +57,139 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: overlay,
-      child: ChangeNotifierProvider.value(
-        value: _vm,
-        child: Scaffold(
-          backgroundColor: Colors.grey[50],
-          body: Column(
-            children: [
-              // Header moderno con gradiente verde
-              Container(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [Colors.green.shade600, Colors.green.shade800],
-                  ),
-                  borderRadius: const BorderRadius.only(
-                    bottomLeft: Radius.circular(30),
-                    bottomRight: Radius.circular(30),
-                  ),
+      child: Scaffold(
+        backgroundColor: Colors.grey[50],
+        body: Column(
+          children: [
+            // Header moderno con gradiente verde
+            Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [Colors.green.shade600, Colors.green.shade800],
                 ),
-                child: SafeArea(
-                  bottom: false,
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(24, 20, 24, 32),
-                    child: Column(
-                      children: [
-                        Row(
-                          children: [
-                            // Botón de regresar
-                            Container(
-                              decoration: BoxDecoration(
-                                color: Colors.white.withOpacity(0.2),
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: IconButton(
-                                icon: const Icon(
-                                  Icons.arrow_back,
-                                  color: Colors.white,
-                                ),
-                                onPressed: () => Navigator.pop(context),
-                              ),
+                borderRadius: const BorderRadius.only(
+                  bottomLeft: Radius.circular(30),
+                  bottomRight: Radius.circular(30),
+                ),
+              ),
+              child: SafeArea(
+                bottom: false,
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(24, 20, 24, 32),
+                  child: Column(
+                    children: [
+                      Row(
+                        children: [
+                          // Botón de regresar
+                          Container(
+                            decoration: BoxDecoration(
+                              color: Colors.white.withOpacity(0.2),
+                              borderRadius: BorderRadius.circular(12),
                             ),
-                            const SizedBox(width: 16),
-                            // Título
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    'Bienvenido',
-                                    style: TextStyle(
-                                      color: Colors.white.withOpacity(0.9),
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.w400,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 4),
-                                  const Text(
-                                    'GameOn',
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 24,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            // Icono decorativo
-                            Container(
-                              padding: const EdgeInsets.all(12),
-                              decoration: BoxDecoration(
-                                color: Colors.white.withOpacity(0.2),
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: const Icon(
-                                Icons.sports_soccer,
+                            child: IconButton(
+                              icon: const Icon(
+                                Icons.arrow_back,
                                 color: Colors.white,
-                                size: 28,
+                              ),
+                              onPressed: () => Navigator.pop(context),
+                            ),
+                          ),
+                          const SizedBox(width: 16),
+                          // Título
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Bienvenido',
+                                  style: TextStyle(
+                                    color: Colors.white.withOpacity(0.9),
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w400,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                const Text(
+                                  'GameOn',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 24,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          // Icono decorativo
+                          Container(
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withOpacity(0.2),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: const Icon(
+                              Icons.sports_soccer,
+                              color: Colors.white,
+                              size: 28,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 24),
+                      // TabBar
+                      Container(
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.2),
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        padding: const EdgeInsets.all(4),
+                        child: TabBar(
+                          controller: _tabController,
+                          indicator: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          indicatorSize: TabBarIndicatorSize.tab,
+                          labelColor: Colors.green[700],
+                          unselectedLabelColor: Colors.white,
+                          labelStyle: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 15,
+                          ),
+                          labelPadding: EdgeInsets.zero,
+                          dividerColor: Colors.transparent,
+                          tabs: const [
+                            Tab(
+                              child: SizedBox(
+                                height: 48,
+                                child: Center(child: Text('Iniciar Sesión')),
+                              ),
+                            ),
+                            Tab(
+                              child: SizedBox(
+                                height: 48,
+                                child: Center(child: Text('Crear Cuenta')),
                               ),
                             ),
                           ],
                         ),
-                        const SizedBox(height: 24),
-                        // TabBar
-                        Container(
-                          decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.2),
-                            borderRadius: BorderRadius.circular(16),
-                          ),
-                          padding: const EdgeInsets.all(4),
-                          child: TabBar(
-                            controller: _tabController,
-                            indicator: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            indicatorSize: TabBarIndicatorSize.tab,
-                            labelColor: Colors.green[700],
-                            unselectedLabelColor: Colors.white,
-                            labelStyle: const TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 15,
-                            ),
-                            labelPadding: EdgeInsets.zero,
-                            dividerColor: Colors.transparent,
-                            tabs: const [
-                              Tab(
-                                child: SizedBox(
-                                  height: 48,
-                                  child: Center(child: Text('Iniciar Sesión')),
-                                ),
-                              ),
-                              Tab(
-                                child: SizedBox(
-                                  height: 48,
-                                  child: Center(child: Text('Crear Cuenta')),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
                 ),
               ),
-              const SizedBox(height: 20),
-              // Contenido con tabs
-              Expanded(
-                child: TabBarView(
-                  controller: _tabController,
-                  children: [_buildLoginTab(), _buildSignupTab()],
-                ),
+            ),
+            const SizedBox(height: 20),
+            // Contenido con tabs
+            Expanded(
+              child: TabBarView(
+                controller: _tabController,
+                children: [_buildLoginTab(), _buildSignupTab()],
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
@@ -460,7 +455,7 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
   Future<void> _handleLogin() async {
     if (!(_loginFormKey.currentState?.validate() ?? false)) return;
 
-    final res = await _vm.login(
+    final res = await context.read<PerfilViewModel>().login(
       email: _emailLoginCtrl.text.trim(),
       password: _passLoginCtrl.text.trim(),
     );
@@ -509,7 +504,7 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
   Future<void> _handleSignup() async {
     if (!(_signupFormKey.currentState?.validate() ?? false)) return;
 
-    final res = await _vm.signUp(
+    final res = await context.read<PerfilViewModel>().signUp(
       fullName: _fullNameCtrl.text.trim(),
       email: _emailSignupCtrl.text.trim(),
       password: _passSignupCtrl.text.trim(),
