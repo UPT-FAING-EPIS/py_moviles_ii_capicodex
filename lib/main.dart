@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -9,62 +11,36 @@ import 'features/perfil/views/session_gate.dart';
 import 'core/services/notification_service.dart';
 import 'core/services/notification_navigation_service.dart';
 
-// ============================================================================
-// GLOBAL KEYS
-// ============================================================================
-
-/// Navigator key global para permitir navegación sin BuildContext
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
-// ============================================================================
-// GLOBAL SERVICES
-// ============================================================================
-
-/// Instancia global del servicio de notificaciones
-/// Se inicializa en main() y se puede usar en toda la app
 late final NotificationService notificationService;
 
-// ============================================================================
-// MAIN - PUNTO DE ENTRADA DE LA APP
-// ============================================================================
-
-void main() async {
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // --------------------------------------------------------------------------
-  // INICIALIZACIÓN DE SUPABASE
-  // --------------------------------------------------------------------------
+  debugPrint('[BOOT] Inicializando Supabase...');
   await Supabase.initialize(
     url: 'https://pqhpvowpirqyodgdguuw.supabase.co',
     anonKey:
         'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBxaHB2b3dwaXJxeW9kZ2RndXV3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTcxOTQ3MDksImV4cCI6MjA3Mjc3MDcwOX0.d6EyyKnHHP_3BKNqRIIx3CvMShL96Ww21pNgMDmnRHk',
   );
+  debugPrint('[BOOT] Supabase listo');
 
-  // --------------------------------------------------------------------------
-  // INICIALIZACIÓN DE FIREBASE
-  // --------------------------------------------------------------------------
+  debugPrint('[BOOT] Inicializando Firebase...');
   try {
     await Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform,
-    );
-  } catch (error) {
-    debugPrint('Firebase no pudo inicializarse: $error');
+    ).timeout(const Duration(seconds: 10));
+    debugPrint('[BOOT] Firebase listo');
+  } catch (error, stackTrace) {
+    debugPrint('[BOOT] Firebase no pudo inicializarse: $error');
+    debugPrintStack(stackTrace: stackTrace);
   }
 
-  // --------------------------------------------------------------------------
-  // INICIALIZACIÓN DE SERVICIOS DE NOTIFICACIONES
-  // --------------------------------------------------------------------------
   final navigationService = NotificationNavigationService(navigatorKey);
   notificationService = NotificationService(navigationService);
-  try {
-    await notificationService.initialize();
-  } catch (error) {
-    debugPrint('Notificaciones no disponibles: $error');
-  }
 
-  // --------------------------------------------------------------------------
-  // INICIAR LA APP
-  // --------------------------------------------------------------------------
+  debugPrint('[BOOT] Mostrando interfaz...');
   runApp(
     MultiProvider(
       providers: [
@@ -75,11 +51,19 @@ void main() async {
       child: const MainApp(),
     ),
   );
-}
 
-// ============================================================================
-// WIDGET PRINCIPAL DE LA APP
-// ============================================================================
+  // Las notificaciones no deben bloquear la primera pantalla.
+  unawaited(
+    notificationService
+        .initialize()
+        .timeout(const Duration(seconds: 10))
+        .then((_) => debugPrint('[BOOT] Notificaciones listas'))
+        .catchError((Object error, StackTrace stackTrace) {
+          debugPrint('[BOOT] Notificaciones no disponibles: $error');
+          return null;
+        }),
+  );
+}
 
 class MainApp extends StatelessWidget {
   const MainApp({super.key});
@@ -87,6 +71,7 @@ class MainApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      debugShowCheckedModeBanner: false,
       navigatorKey: navigatorKey,
       localizationsDelegates: const [
         GlobalMaterialLocalizations.delegate,
