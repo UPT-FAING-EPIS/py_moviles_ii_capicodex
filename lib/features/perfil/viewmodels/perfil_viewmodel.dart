@@ -1,8 +1,11 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:developer' as developer;
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/usuario_deportista.dart';
+import '../services/perfil_json_loader.dart';
+import '../services/session_local_storage.dart';
 import 'package:gameon/features/chat/services/user_sync_service.dart';
 import 'package:gameon/core/services/notification_service.dart';
 
@@ -14,18 +17,26 @@ class PerfilViewModel extends ChangeNotifier {
   bool _isLoggingIn = false;
   bool get isLoggingIn => _isLoggingIn;
 
+  bool _sesionRestaurada = false;
+  bool get sesionRestaurada => _sesionRestaurada;
+
   UsuarioDeportista? _profile;
   UsuarioDeportista? get profile => _profile;
   bool get isLoggedIn => supabase.auth.currentSession != null;
 
   final UserSyncService _userSyncService = UserSyncService();
   final NotificationService? _notificationService;
+  final SessionLocalStorage _sessionLocalStorage;
   Timer? _heartbeatTimer;
   StreamSubscription<String>? _tokenRefreshSubscription;
+  StreamSubscription<AuthState>? _authStateSubscription;
 
-  PerfilViewModel([this._notificationService]) {
+  PerfilViewModel([
+    this._notificationService,
+    SessionLocalStorage? sessionLocalStorage,
+  ]) : _sessionLocalStorage = sessionLocalStorage ?? SessionLocalStorage() {
     // Escucha cambios de autenticación para cargar / limpiar perfil
-    supabase.auth.onAuthStateChange.listen((event) {
+    _authStateSubscription = supabase.auth.onAuthStateChange.listen((event) {
       final session = event.session;
       switch (event.event) {
         case AuthChangeEvent.signedIn:
@@ -33,9 +44,12 @@ class PerfilViewModel extends ChangeNotifier {
           if (session?.user != null) {
             _loadProfile();
             _registerFcmToken();
-            _userSyncService.setPresence(
-              userId: session!.user.id,
-              isOnline: true,
+            _runNonCritical(
+              () => _userSyncService.setPresence(
+                userId: session!.user.id,
+                isOnline: true,
+              ),
+              'actualizar presencia',
             );
             startHeartbeat();
           }
@@ -44,6 +58,7 @@ class PerfilViewModel extends ChangeNotifier {
         case AuthChangeEvent.userDeleted:
           stopHeartbeat();
           _profile = null;
+          _sessionLocalStorage.clearAuthenticatedUserId();
           notifyListeners();
           break;
         default:
@@ -54,11 +69,7 @@ class PerfilViewModel extends ChangeNotifier {
           }
       }
     });
-    // Si ya hay sesión al crear el VM (hot reload), cargar perfil.
-    if (supabase.auth.currentSession?.user != null) {
-      _loadProfile();
-      _registerFcmToken();
-    }
+    _restorePersistentSession();
     // Escuchar rotación del token y actualizar en Supabase
     _tokenRefreshSubscription = _notificationService?.onTokenRefresh.listen((
       token,
@@ -68,6 +79,26 @@ class PerfilViewModel extends ChangeNotifier {
   }
 
   final supabase = Supabase.instance.client;
+
+  /// Verifica el identificador local contra la sesión que Supabase restaura.
+  /// Si hay coincidencia, carga el perfil antes de abrir la vista principal.
+  Future<void> _restorePersistentSession() async {
+    final storedAuthId = await _sessionLocalStorage.readAuthenticatedUserId();
+    final currentUser = supabase.auth.currentUser;
+
+    if (currentUser != null) {
+      if (storedAuthId != currentUser.id) {
+        await _sessionLocalStorage.saveAuthenticatedUserId(currentUser.id);
+      }
+      await _loadProfile();
+      await _registerFcmToken();
+    } else if (storedAuthId != null) {
+      await _sessionLocalStorage.clearAuthenticatedUserId();
+    }
+
+    _sesionRestaurada = true;
+    notifyListeners();
+  }
 
   Future<SignupResult> signUp({
     required String fullName,
@@ -94,15 +125,14 @@ class PerfilViewModel extends ChangeNotifier {
           'No se pudo crear el usuario (flujo pendiente).',
         );
       }
+      await _sessionLocalStorage.saveAuthenticatedUserId(user.id);
       final session = supabase.auth.currentSession;
       developer.log('session null? ${session == null}');
       developer.log('access token length: ${session?.accessToken.length}');
       developer.log('user id: ${session?.user.id}');
 
-      final parts = fullName
-          .split(RegExp(r'\s+'))
-          .where((p) => p.isNotEmpty)
-          .toList();
+      final parts =
+          fullName.split(RegExp(r'\s+')).where((p) => p.isNotEmpty).toList();
       final nombre = parts.isNotEmpty ? parts.first : 'Usuario';
       final apellidos = parts.length > 1 ? parts.sublist(1).join(' ') : '';
 
@@ -171,11 +201,12 @@ class PerfilViewModel extends ChangeNotifier {
         developer.log(
           'VM _loadProfile: intento ${attempt + 1}/$maxRetries para auth_id=${user.id}',
         );
-        final data = await supabase
-            .from('usuarios_deportistas')
-            .select()
-            .eq('auth_id', user.id)
-            .maybeSingle();
+        final data =
+            await supabase
+                .from('usuarios_deportistas')
+                .select()
+                .eq('auth_id', user.id)
+                .maybeSingle();
         if (data != null) {
           // Cargar deportes favoritos del usuario
           final usuarioId = int.tryParse(data['id'].toString());
@@ -186,10 +217,11 @@ class PerfilViewModel extends ChangeNotifier {
                   .select('deportes(nombre)')
                   .eq('usuario_id', usuarioId);
 
-              final deportes = deportesData
-                  .map((e) => e['deportes']?['nombre']?.toString() ?? '')
-                  .where((n) => n.isNotEmpty)
-                  .toList();
+              final deportes =
+                  deportesData
+                      .map((e) => e['deportes']?['nombre']?.toString() ?? '')
+                      .where((n) => n.isNotEmpty)
+                      .toList();
 
               data['deportes_favoritos'] = deportes;
             } catch (e) {
@@ -198,13 +230,23 @@ class PerfilViewModel extends ChangeNotifier {
             }
           }
 
-          _profile = UsuarioDeportista.fromJson(data);
+          // Centraliza la lectura defensiva del JSON que entrega Supabase.
+          // El loader reutiliza el mismo fromJson que se prueba sin red.
+          final estadoPerfil = const PerfilJsonLoader().leer(jsonEncode(data));
+          if (estadoPerfil.tieneError) {
+            developer.log('VM _loadProfile: ${estadoPerfil.error}');
+            break;
+          }
+          _profile = estadoPerfil.perfil;
           developer.log(
             'VM _loadProfile: perfil cargado exitosamente ${_profile!.nombreCompleto}',
           );
           // Sincronizar usuario a Firebase tras cargar perfil
-          await _userSyncService.syncCurrentUser();
           notifyListeners();
+          await _runNonCritical(
+            _userSyncService.syncCurrentUser,
+            'sincronizar usuario con Firebase',
+          );
           return; // Éxito, salir del bucle
         } else {
           developer.log(
@@ -249,14 +291,15 @@ class PerfilViewModel extends ChangeNotifier {
 
   Future<void> signOut() async {
     stopHeartbeat();
-    _tokenRefreshSubscription?.cancel();
     await supabase.auth.signOut();
+    await _sessionLocalStorage.clearAuthenticatedUserId();
     _profile = null;
     notifyListeners();
   }
 
   @override
   void dispose() {
+    _authStateSubscription?.cancel();
     _tokenRefreshSubscription?.cancel();
     _heartbeatTimer?.cancel();
     super.dispose();
@@ -296,10 +339,14 @@ class PerfilViewModel extends ChangeNotifier {
       if (resp.session == null) {
         return LoginResult.error('Credenciales inválidas');
       }
+      await _sessionLocalStorage.saveAuthenticatedUserId(resp.session!.user.id);
       await _loadProfile();
       // Actualizar FCM token tras iniciar sesión
       await _registerFcmToken();
-      await _userSyncService.setCurrentUserPresence(true);
+      await _runNonCritical(
+        () => _userSyncService.setCurrentUserPresence(true),
+        'actualizar presencia',
+      );
       return LoginResult.success();
     } on AuthException catch (e) {
       developer.log('VM login AuthException: ${e.message}', error: e);
@@ -310,6 +357,21 @@ class PerfilViewModel extends ChangeNotifier {
     } finally {
       _isLoggingIn = false;
       notifyListeners();
+    }
+  }
+
+  Future<void> _runNonCritical(
+    Future<void> Function() operation,
+    String description,
+  ) async {
+    try {
+      await operation();
+    } catch (e, st) {
+      developer.log(
+        'VM: no se pudo $description: $e',
+        error: e,
+        stackTrace: st,
+      );
     }
   }
 
