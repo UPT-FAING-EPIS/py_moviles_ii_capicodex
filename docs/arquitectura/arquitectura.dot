@@ -1,0 +1,42 @@
+digraph GameOnArchitecture {
+  graph [rankdir=TB, bgcolor="white", fontname="Arial", nodesep=0.35, ranksep=0.45, pad=0.2];
+  node [shape=box, style="rounded,filled", fillcolor="white", color="#333333", fontname="Arial", fontsize=10, margin="0.18,0.10"];
+  edge [color="#555555", arrowsize=0.8, fontname="Arial", fontsize=9];
+
+  subgraph cluster_presentation {
+    label="Presentation"; color="#A7C7A1"; style="rounded";
+    view [label="HomeView"];
+    vm [label="HomeViewModel"];
+    state [label="UiState\nLoading · Success · Empty · Error"];
+    view -> vm;
+    vm -> state;
+    state -> view;
+  }
+
+  subgraph cluster_domain {
+    label="Domain"; color="#C7B8A3"; style="rounded";
+    usecase [label="ObtenerInstitucionesActivas"];
+    repoif [label="InstitucionesRepository\n(interface)"];
+    entity [label="InstitucionDeportiva\n(entidad)"];
+    usecase -> repoif;
+  }
+
+  subgraph cluster_data {
+    label="Data"; color="#B8C6D9"; style="rounded";
+    repoimpl [label="InstitucionesRepositoryImpl"];
+    ds [label="SupabaseInstituciones\nRemoteDataSource"];
+    dto [label="InstitucionDeportivaDto"];
+    mapper [label="InstitucionDeportivaMapper"];
+    repoimpl -> ds;
+    ds -> dto;
+    dto -> mapper;
+  }
+
+  supabase [shape=cylinder, label="Supabase", fillcolor="#F3F3F3"];
+
+  vm -> usecase;
+  repoif -> repoimpl [style=dashed, label="implementa"];
+  ds -> supabase;
+  mapper -> entity;
+  entity -> vm [label="datos de dominio"];
+}
