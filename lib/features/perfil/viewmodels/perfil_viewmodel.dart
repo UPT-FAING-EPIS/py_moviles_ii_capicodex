@@ -83,21 +83,40 @@ class PerfilViewModel extends ChangeNotifier {
   /// Verifica el identificador local contra la sesión que Supabase restaura.
   /// Si hay coincidencia, carga el perfil antes de abrir la vista principal.
   Future<void> _restorePersistentSession() async {
-    final storedAuthId = await _sessionLocalStorage.readAuthenticatedUserId();
-    final currentUser = supabase.auth.currentUser;
+    try {
+      final storedAuthId = await _sessionLocalStorage.readAuthenticatedUserId();
+      final currentUser = supabase.auth.currentUser;
 
-    if (currentUser != null) {
-      if (storedAuthId != currentUser.id) {
-        await _sessionLocalStorage.saveAuthenticatedUserId(currentUser.id);
+      if (currentUser != null) {
+        if (storedAuthId != currentUser.id) {
+          await _sessionLocalStorage.saveAuthenticatedUserId(currentUser.id);
+        }
+
+        try {
+          await _loadProfile().timeout(const Duration(seconds: 8));
+        } catch (e, st) {
+          developer.log(
+            'VM: la restauración del perfil excedió el tiempo o falló: $e',
+            error: e,
+            stackTrace: st,
+          );
+        }
+
+        // FCM es complementario: no debe bloquear el Home.
+        unawaited(_registerFcmToken());
+      } else if (storedAuthId != null) {
+        await _sessionLocalStorage.clearAuthenticatedUserId();
       }
-      await _loadProfile();
-      await _registerFcmToken();
-    } else if (storedAuthId != null) {
-      await _sessionLocalStorage.clearAuthenticatedUserId();
+    } catch (e, st) {
+      developer.log(
+        'VM: error restaurando sesión persistente: $e',
+        error: e,
+        stackTrace: st,
+      );
+    } finally {
+      _sesionRestaurada = true;
+      notifyListeners();
     }
-
-    _sesionRestaurada = true;
-    notifyListeners();
   }
 
   Future<SignupResult> signUp({
