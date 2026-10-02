@@ -82,7 +82,7 @@ Tomar capturas de:
 8. GitHub Actions en verde.
 9. Pull Request de la rama de presentación.
 
-No capturar contraseñas ni valores de `SUPABASE_ANON_KEY`.
+No capturar contraseñas ni exponer credenciales administrativas del backend.
 
 ## Comandos previos
 
@@ -95,12 +95,10 @@ flutter test
 flutter build apk --debug
 ```
 
-Para ejecutar con el backend real:
+Para ejecutar la versión de presentación en Android:
 
 ```bash
-flutter run \
-  --dart-define=SUPABASE_URL=<URL_REAL> \
-  --dart-define=SUPABASE_ANON_KEY=<ANON_KEY_REAL>
+flutter run -d emulator-5554 --android-skip-build-dependency-validation
 ```
 
 ## Criterio para mover tarjetas a Listo
