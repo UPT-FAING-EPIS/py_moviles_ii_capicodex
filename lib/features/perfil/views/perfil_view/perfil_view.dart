@@ -17,7 +17,6 @@ class PerfilView extends StatefulWidget {
 }
 
 class _PerfilViewState extends State<PerfilView> with TickerProviderStateMixin {
-  late final PerfilViewModel _vm;
   // GlobalKeys formularios
   final _loginFormKey = GlobalKey<FormState>();
   final _signupFormKey = GlobalKey<FormState>();
@@ -29,12 +28,6 @@ class _PerfilViewState extends State<PerfilView> with TickerProviderStateMixin {
   final _fullNameCtrl = TextEditingController();
   final _emailSignupCtrl = TextEditingController();
   final _passSignupCtrl = TextEditingController();
-
-  @override
-  void initState() {
-    super.initState();
-    _vm = PerfilViewModel();
-  }
 
   @override
   void dispose() {
@@ -60,45 +53,39 @@ class _PerfilViewState extends State<PerfilView> with TickerProviderStateMixin {
           initialIndex: initialTab,
         );
         final theme = Theme.of(ctx);
-        return ChangeNotifierProvider<PerfilViewModel>.value(
-          value: _vm,
-          child: Padding(
-            padding: EdgeInsets.only(
-              bottom: MediaQuery.of(ctx).viewInsets.bottom,
-            ),
-            child: SizedBox(
-              height: MediaQuery.of(ctx).size.height * 0.69,
-              child: Column(
-                children: [
-                  Container(
-                    margin: const EdgeInsets.only(top: 12, bottom: 8),
-                    width: 50,
-                    height: 5,
-                    decoration: BoxDecoration(
-                      color: Colors.grey[300],
-                      borderRadius: BorderRadius.circular(10),
-                    ),
+        return Padding(
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(ctx).viewInsets.bottom,
+          ),
+          child: SizedBox(
+            height: MediaQuery.of(ctx).size.height * 0.69,
+            child: Column(
+              children: [
+                Container(
+                  margin: const EdgeInsets.only(top: 12, bottom: 8),
+                  width: 50,
+                  height: 5,
+                  decoration: BoxDecoration(
+                    color: Colors.grey[300],
+                    borderRadius: BorderRadius.circular(10),
                   ),
-                  TabBar(
+                ),
+                TabBar(
+                  controller: tabController,
+                  labelColor: Colors.green[700],
+                  indicatorColor: Colors.green[700],
+                  tabs: const [
+                    Tab(text: 'Ingresar'),
+                    Tab(text: 'Crear cuenta'),
+                  ],
+                ),
+                Expanded(
+                  child: TabBarView(
                     controller: tabController,
-                    labelColor: Colors.green[700],
-                    indicatorColor: Colors.green[700],
-                    tabs: const [
-                      Tab(text: 'Ingresar'),
-                      Tab(text: 'Crear cuenta'),
-                    ],
+                    children: [_buildLoginForm(theme), _buildSignupForm(theme)],
                   ),
-                  Expanded(
-                    child: TabBarView(
-                      controller: tabController,
-                      children: [
-                        _buildLoginForm(theme),
-                        _buildSignupForm(theme),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
         );
@@ -110,23 +97,20 @@ class _PerfilViewState extends State<PerfilView> with TickerProviderStateMixin {
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
     final paddingTop = MediaQuery.of(context).padding.top;
-    return ChangeNotifierProvider<PerfilViewModel>.value(
-      value: _vm,
-      child: Consumer<PerfilViewModel>(
-        builder: (context, vm, _) {
-          if (vm.profile != null) {
-            return PerfilAuthenticatedView(
-              profile: vm.profile!,
-              onLogout: vm.signOut,
-            );
-          }
-          return PerfilUnauthenticatedView(
-            size: size,
-            paddingTop: paddingTop,
-            onOpenAuth: () => _openAuthSheet(initialTab: 0),
+    return Consumer<PerfilViewModel>(
+      builder: (context, vm, _) {
+        if (vm.profile != null) {
+          return PerfilAuthenticatedView(
+            profile: vm.profile!,
+            onLogout: vm.signOut,
           );
-        },
-      ),
+        }
+        return PerfilUnauthenticatedView(
+          size: size,
+          paddingTop: paddingTop,
+          onOpenAuth: () => _openAuthSheet(initialTab: 0),
+        );
+      },
     );
   }
 
