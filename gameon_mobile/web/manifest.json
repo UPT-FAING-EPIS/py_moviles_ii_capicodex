@@ -1,6 +1,6 @@
 {
-    "name": "gameon_mobile",
-    "short_name": "gameon_mobile",
+    "name": "gameon",
+    "short_name": "gameon",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",
