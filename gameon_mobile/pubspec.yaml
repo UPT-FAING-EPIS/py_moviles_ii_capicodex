@@ -49,3 +49,8 @@ flutter:
   assets:
     - assets/theme/fondo_futbol.jpeg
     - assets/theme/fondo_tenis.jpeg
+    - assets/theme/fondo_tenis_estilo_wimbledon_cesped.jpeg
+    - assets/theme/fondo_tenis_estilo_roland_garros_polvoladrillo.jpeg
+    - assets/theme/fondo_tenis_estilo_usopen_acrilicobitonoazul.jpeg
+    - assets/theme/fondo_voley.jpeg
+    - assets/theme/fondo_basquet.png

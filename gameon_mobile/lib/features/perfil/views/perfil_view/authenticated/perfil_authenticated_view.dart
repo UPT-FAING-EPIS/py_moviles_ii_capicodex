@@ -788,6 +788,11 @@ class PerfilAuthenticatedView extends StatelessWidget {
               DropdownMenuItem(value: AppVisualTheme.dark, child: Text('Oscuro')),
               DropdownMenuItem(value: AppVisualTheme.football, child: Text('Fútbol')),
               DropdownMenuItem(value: AppVisualTheme.tennis, child: Text('Tenis')),
+              DropdownMenuItem(value: AppVisualTheme.wimbledon, child: Text('Wimbledon')),
+              DropdownMenuItem(value: AppVisualTheme.rolandGarros, child: Text('Roland Garros')),
+              DropdownMenuItem(value: AppVisualTheme.usOpen, child: Text('US Open')),
+              DropdownMenuItem(value: AppVisualTheme.volleyball, child: Text('Vóley')),
+              DropdownMenuItem(value: AppVisualTheme.basketball, child: Text('Básquet')),
             ],
           ),
         );
@@ -800,6 +805,11 @@ class PerfilAuthenticatedView extends StatelessWidget {
     AppVisualTheme.dark => Icons.dark_mode_outlined,
     AppVisualTheme.football => Icons.sports_soccer_outlined,
     AppVisualTheme.tennis => Icons.sports_tennis_outlined,
+    AppVisualTheme.wimbledon => Icons.sports_tennis_outlined,
+    AppVisualTheme.rolandGarros => Icons.sports_tennis_outlined,
+    AppVisualTheme.usOpen => Icons.sports_tennis_outlined,
+    AppVisualTheme.volleyball => Icons.sports_volleyball_outlined,
+    AppVisualTheme.basketball => Icons.sports_basketball_outlined,
   };
 
   void _navigateToEditPerfil(BuildContext context) {
