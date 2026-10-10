@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:gameon/core/theme/app_theme.dart';
 
 class MessageBubble extends StatelessWidget {
   final String messageId;
@@ -58,6 +59,9 @@ class MessageBubble extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       child: Align(
@@ -78,16 +82,23 @@ class MessageBubble extends StatelessWidget {
                   vertical: 10,
                 ),
                 decoration: BoxDecoration(
-                  color: isMe ? Colors.green.shade600 : Colors.white,
+                  color: isMe ? AppColors.primary : colors.surface,
                   borderRadius: BorderRadius.only(
                     topLeft: const Radius.circular(16),
                     topRight: const Radius.circular(16),
                     bottomLeft: Radius.circular(isMe ? 16 : 4),
                     bottomRight: Radius.circular(isMe ? 4 : 16),
                   ),
+                  border: isMe
+                      ? Border.all(color: AppColors.primaryDark)
+                      : Border.all(
+                          color: isDark
+                              ? AppColors.primaryDark
+                              : Colors.transparent,
+                        ),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.05),
+                      color: Colors.black.withValues(alpha: isDark ? .24 : .05),
                       blurRadius: 5,
                       offset: const Offset(0, 2),
                     ),
@@ -109,7 +120,9 @@ class MessageBubble extends StatelessWidget {
                             return Container(
                               width: 200,
                               height: 200,
-                              color: Colors.grey.shade200,
+                              color: isDark
+                                  ? AppColors.darkBackground
+                                  : Colors.grey.shade200,
                               child: Center(
                                 child: CircularProgressIndicator(
                                   value:
@@ -130,7 +143,7 @@ class MessageBubble extends StatelessWidget {
                       Text(
                         text,
                         style: TextStyle(
-                          color: isMe ? Colors.white : Colors.black87,
+                          color: isMe ? Colors.white : colors.onSurface,
                           fontSize: 15,
                           height: 1.4,
                         ),
@@ -143,7 +156,9 @@ class MessageBubble extends StatelessWidget {
                         Text(
                           _formatTime(timestamp),
                           style: TextStyle(
-                            color: isMe ? Colors.white70 : Colors.grey.shade600,
+                            color: isMe
+                                ? Colors.white70
+                                : theme.hintColor,
                             fontSize: 11,
                           ),
                         ),
