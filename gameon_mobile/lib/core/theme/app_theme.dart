@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 enum AppVisualTheme {
-  light, dark, football, tennis, wimbledon, rolandGarros, usOpen, volleyball, basketball,
+  light, dark, football, wimbledon, rolandGarros, usOpen, volleyball, basketball,
 }
 
 /// Paleta compartida de GameOn. Mantiene el modo claro existente y aporta una
@@ -18,7 +18,6 @@ abstract final class AppColors {
 abstract final class AppTheme {
   static String? headerBackgroundFor(AppVisualTheme selection) => switch (selection) {
     AppVisualTheme.football => 'assets/theme/fondo_futbol.jpeg',
-    AppVisualTheme.tennis => 'assets/theme/fondo_tenis_estilo_wimbledon_cesped.jpeg',
     AppVisualTheme.wimbledon => 'assets/theme/fondo_tenis_estilo_wimbledon_cesped.jpeg',
     AppVisualTheme.rolandGarros => 'assets/theme/fondo_tenis_estilo_roland_garros_polvoladrillo.jpeg',
     AppVisualTheme.usOpen => 'assets/theme/fondo_tenis_estilo_usopen_acrilicobitonoazul.jpeg',
@@ -38,15 +37,6 @@ abstract final class AppTheme {
       surface: const Color(0xFF15281B),
       onSurface: const Color(0xFFF2F7E9),
       border: const Color(0xFF4D6F3D),
-    ),
-    AppVisualTheme.tennis => _sportTheme(
-      brightness: Brightness.light,
-      primary: const Color(0xFF176B86),
-      secondary: const Color(0xFFD4E640),
-      background: const Color(0xFFF1E4C8),
-      surface: const Color(0xFFFCF5E7),
-      onSurface: const Color(0xFF17333D),
-      border: const Color(0xFF4C8CA2),
     ),
     AppVisualTheme.wimbledon => _sportTheme(brightness: Brightness.dark, primary: const Color(0xFF5F8F25), secondary: const Color(0xFFC8E84E), background: const Color(0xFF13200F), surface: const Color(0xFF24361B), onSurface: const Color(0xFFF6F7E8), border: const Color(0xFF8A5BA8)),
     AppVisualTheme.rolandGarros => _sportTheme(brightness: Brightness.dark, primary: const Color(0xFFC65A2E), secondary: const Color(0xFFFFC85A), background: const Color(0xFF28150F), surface: const Color(0xFF472419), onSurface: const Color(0xFFFFF3E9), border: const Color(0xFFE6894D)),
