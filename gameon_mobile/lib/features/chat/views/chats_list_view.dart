@@ -10,6 +10,7 @@ import '../models/conversation.dart';
 import 'conversation_view.dart';
 import 'find_players_view.dart';
 import 'bot_conversation_view.dart';
+import 'package:gameon/core/theme/app_theme.dart';
 
 class ChatsListView extends StatefulWidget {
   const ChatsListView({super.key});
@@ -46,6 +47,8 @@ class _ChatsListViewState extends State<ChatsListView> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
     final overlay = SystemUiOverlayStyle(
       statusBarColor: Colors.transparent,
       statusBarIconBrightness: Brightness.light,
@@ -58,7 +61,7 @@ class _ChatsListViewState extends State<ChatsListView> {
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: overlay,
       child: Scaffold(
-        backgroundColor: Colors.grey[50],
+        backgroundColor: theme.scaffoldBackgroundColor,
         body: Column(
           children: [
             // Header moderno con gradiente verde
@@ -67,7 +70,7 @@ class _ChatsListViewState extends State<ChatsListView> {
                 gradient: LinearGradient(
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
-                  colors: [Colors.green.shade600, Colors.green.shade800],
+                  colors: const [AppColors.primary, AppColors.primaryDark],
                 ),
                 borderRadius: const BorderRadius.only(
                   bottomLeft: Radius.circular(30),
@@ -146,7 +149,7 @@ class _ChatsListViewState extends State<ChatsListView> {
                       // Campo de búsqueda
                       Container(
                         decoration: BoxDecoration(
-                          color: Colors.white,
+                          color: colors.surface,
                           borderRadius: BorderRadius.circular(16),
                         ),
                         child: TextField(
@@ -166,7 +169,7 @@ class _ChatsListViewState extends State<ChatsListView> {
                             hintText: 'Buscar conversaciones...',
                             prefixIcon: const Icon(
                               Icons.search,
-                              color: Colors.grey,
+                              color: AppColors.accent,
                             ),
                             border: InputBorder.none,
                             contentPadding: const EdgeInsets.symmetric(
@@ -177,7 +180,7 @@ class _ChatsListViewState extends State<ChatsListView> {
                                 ? IconButton(
                                     icon: const Icon(
                                       Icons.clear,
-                                      color: Colors.grey,
+                                      color: AppColors.accent,
                                     ),
                                     onPressed: () {
                                       _searchController.clear();
@@ -224,7 +227,7 @@ class _ChatsListViewState extends State<ChatsListView> {
               );
             }
           },
-          backgroundColor: Colors.green.shade700,
+          backgroundColor: AppColors.primary,
           icon: const Icon(Icons.person_add, color: Colors.white),
           label: const Text(
             'Buscar jugadores',
@@ -360,6 +363,9 @@ class _ChatsListViewState extends State<ChatsListView> {
   }
 
   Widget _buildBotListItem() {
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
     return InkWell(
       onTap: () {
         Navigator.push(
@@ -370,9 +376,12 @@ class _ChatsListViewState extends State<ChatsListView> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: colors.surface,
           border: Border(
-            bottom: BorderSide(color: Colors.grey.shade200, width: 1),
+            bottom: BorderSide(
+              color: isDark ? AppColors.primaryDark : Colors.grey.shade200,
+              width: 1,
+            ),
           ),
         ),
         child: Row(
@@ -382,7 +391,7 @@ class _ChatsListViewState extends State<ChatsListView> {
               children: [
                 CircleAvatar(
                   radius: 28,
-                  backgroundColor: Colors.blue.shade700,
+                  backgroundColor: AppColors.accent,
                   child: const Icon(
                     Icons.smart_toy_rounded,
                     color: Colors.white,
@@ -397,7 +406,7 @@ class _ChatsListViewState extends State<ChatsListView> {
                     width: 16,
                     height: 16,
                     decoration: BoxDecoration(
-                      color: Colors.blue.shade700,
+                      color: AppColors.accent,
                       shape: BoxShape.circle,
                       border: Border.all(color: Colors.white, width: 2),
                     ),
@@ -417,12 +426,12 @@ class _ChatsListViewState extends State<ChatsListView> {
                     children: [
                       Row(
                         children: [
-                          const Text(
+                          Text(
                             'Asistente GameOn',
                             style: TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.w600,
-                              color: Colors.black87,
+                              color: colors.onSurface,
                             ),
                           ),
                           const SizedBox(width: 6),
@@ -432,7 +441,7 @@ class _ChatsListViewState extends State<ChatsListView> {
                               vertical: 2,
                             ),
                             decoration: BoxDecoration(
-                              color: Colors.blue.shade700,
+                              color: AppColors.accent,
                               borderRadius: BorderRadius.circular(8),
                             ),
                             child: const Text(
@@ -450,7 +459,7 @@ class _ChatsListViewState extends State<ChatsListView> {
                         'Ahora',
                         style: TextStyle(
                           fontSize: 12,
-                          color: Colors.grey.shade600,
+                          color: theme.hintColor,
                         ),
                       ),
                     ],
@@ -461,7 +470,7 @@ class _ChatsListViewState extends State<ChatsListView> {
                     '¿En qué puedo ayudarte hoy?',
                     style: TextStyle(
                       fontSize: 14,
-                      color: Colors.grey.shade600,
+                      color: theme.hintColor,
                       fontWeight: FontWeight.w400,
                     ),
                     maxLines: 2,
@@ -502,6 +511,9 @@ class _ConversationListItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final hasUnread = conversation.getUnreadCountForUser(currentUserId) > 0;
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
 
     return Dismissible(
       key: Key(conversation.id),
@@ -541,9 +553,14 @@ class _ConversationListItem extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
           decoration: BoxDecoration(
-            color: hasUnread ? Colors.green.shade50 : Colors.white,
+            color: hasUnread
+                ? AppColors.primary.withValues(alpha: isDark ? .24 : .10)
+                : colors.surface,
             border: Border(
-              bottom: BorderSide(color: Colors.grey.shade200, width: 1),
+              bottom: BorderSide(
+                color: isDark ? AppColors.primaryDark : Colors.grey.shade200,
+                width: 1,
+              ),
             ),
           ),
           child: Row(
@@ -553,7 +570,7 @@ class _ConversationListItem extends StatelessWidget {
                 children: [
                   CircleAvatar(
                     radius: 28,
-                    backgroundColor: Colors.green.shade100,
+                    backgroundColor: AppColors.primary.withValues(alpha: .22),
                     backgroundImage: otherUserAvatar != null
                         ? NetworkImage(otherUserAvatar!)
                         : null,
@@ -561,7 +578,7 @@ class _ConversationListItem extends StatelessWidget {
                         ? Text(
                             otherUserName[0].toUpperCase(),
                             style: TextStyle(
-                              color: Colors.green.shade700,
+                              color: AppColors.primary,
                               fontWeight: FontWeight.bold,
                               fontSize: 20,
                             ),
@@ -577,7 +594,7 @@ class _ConversationListItem extends StatelessWidget {
                         width: 16,
                         height: 16,
                         decoration: BoxDecoration(
-                          color: Colors.green.shade700,
+                          color: AppColors.primary,
                           shape: BoxShape.circle,
                           border: Border.all(color: Colors.white, width: 2),
                         ),
@@ -603,7 +620,7 @@ class _ConversationListItem extends StatelessWidget {
                               fontWeight: hasUnread
                                   ? FontWeight.bold
                                   : FontWeight.w600,
-                              color: Colors.black87,
+                              color: colors.onSurface,
                             ),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
@@ -617,8 +634,8 @@ class _ConversationListItem extends StatelessWidget {
                           style: TextStyle(
                             fontSize: 12,
                             color: hasUnread
-                                ? Colors.green.shade700
-                                : Colors.grey.shade600,
+                                ? AppColors.primary
+                                : theme.hintColor,
                             fontWeight: hasUnread
                                 ? FontWeight.w600
                                 : FontWeight.normal,
@@ -638,8 +655,8 @@ class _ConversationListItem extends StatelessWidget {
                             style: TextStyle(
                               fontSize: 14,
                               color: hasUnread
-                                  ? Colors.black87
-                                  : Colors.grey.shade600,
+                                  ? colors.onSurface
+                                  : theme.hintColor,
                               fontWeight: hasUnread
                                   ? FontWeight.w500
                                   : FontWeight.normal,
@@ -656,7 +673,7 @@ class _ConversationListItem extends StatelessWidget {
                               vertical: 4,
                             ),
                             decoration: BoxDecoration(
-                              color: Colors.green.shade700,
+                              color: AppColors.primary,
                               borderRadius: BorderRadius.circular(12),
                             ),
                             child: Text(
