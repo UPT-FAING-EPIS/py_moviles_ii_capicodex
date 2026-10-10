@@ -27,6 +27,7 @@ class PerfilAuthenticatedView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final p = profile;
+    final theme = Theme.of(context);
 
     final overlay = SystemUiOverlayStyle(
       statusBarColor: Colors.transparent,
@@ -37,7 +38,7 @@ class PerfilAuthenticatedView extends StatelessWidget {
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: overlay,
       child: Scaffold(
-        backgroundColor: Colors.grey[50],
+        backgroundColor: theme.scaffoldBackgroundColor,
         body: Column(
           children: [
             // Header moderno con gradiente verde (incluye avatar y badges)
@@ -46,7 +47,7 @@ class PerfilAuthenticatedView extends StatelessWidget {
                 gradient: LinearGradient(
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
-                  colors: [Colors.green.shade600, Colors.green.shade800],
+                  colors: const [AppColors.primary, AppColors.primaryDark],
                 ),
                 borderRadius: const BorderRadius.only(
                   bottomLeft: Radius.circular(30),
@@ -118,15 +119,15 @@ class PerfilAuthenticatedView extends StatelessWidget {
                 child: Column(
                   children: [
                     // Estadísticas en cards horizontales
-                    _buildStatsRow(p),
+                    _buildStatsRow(context, p),
                     const SizedBox(height: 16),
                     // Sección de deportes favoritos (siempre si hay deportes)
                     if (p.deportesFavoritos.isNotEmpty)
-                      _buildDeportesSection(p),
+                      _buildDeportesSection(context, p),
                     if (p.deportesFavoritos.isNotEmpty)
                       const SizedBox(height: 16),
                     // Información personal
-                    _buildInfoSection(p),
+                    _buildInfoSection(context, p),
                     const SizedBox(height: 16),
                     // Opciones de configuración
                     _buildOptionsSection(context, p),
@@ -295,11 +296,12 @@ class PerfilAuthenticatedView extends StatelessWidget {
   }
 
   // Fila de estadísticas
-  Widget _buildStatsRow(UsuarioDeportista p) {
+  Widget _buildStatsRow(BuildContext context, UsuarioDeportista p) {
     return Row(
       children: [
         Expanded(
           child: _buildStatCard(
+            context: context,
             icon: Icons.event_available,
             value: '0',
             label: 'Reservas',
@@ -309,6 +311,7 @@ class PerfilAuthenticatedView extends StatelessWidget {
         const SizedBox(width: 12),
         Expanded(
           child: _buildStatCard(
+            context: context,
             icon: Icons.star,
             value: '4.5',
             label: 'Rating',
@@ -318,6 +321,7 @@ class PerfilAuthenticatedView extends StatelessWidget {
         const SizedBox(width: 12),
         Expanded(
           child: _buildStatCard(
+            context: context,
             icon: Icons.calendar_today,
             value: _getYearFromDate(p.createdAt),
             label: 'Desde',
@@ -329,6 +333,7 @@ class PerfilAuthenticatedView extends StatelessWidget {
   }
 
   Widget _buildStatCard({
+    required BuildContext context,
     required IconData icon,
     required String value,
     required String label,
@@ -337,9 +342,13 @@ class PerfilAuthenticatedView extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.grey[200]!),
+        border: Border.all(
+          color: Theme.of(context).brightness == Brightness.dark
+              ? AppColors.primaryDark
+              : Colors.grey[200]!,
+        ),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.04),
@@ -361,7 +370,7 @@ class PerfilAuthenticatedView extends StatelessWidget {
             style: TextStyle(
               fontSize: 20,
               fontWeight: FontWeight.bold,
-              color: Colors.black87,
+              color: Theme.of(context).colorScheme.onSurface,
             ),
           ),
           const SizedBox(height: 2),
@@ -369,7 +378,7 @@ class PerfilAuthenticatedView extends StatelessWidget {
             label,
             style: TextStyle(
               fontSize: 11,
-              color: Colors.grey[600],
+              color: Theme.of(context).hintColor,
               fontWeight: FontWeight.w500,
             ),
           ),
@@ -384,12 +393,16 @@ class PerfilAuthenticatedView extends StatelessWidget {
   }
 
   // Sección de deportes favoritos
-  Widget _buildDeportesSection(UsuarioDeportista p) {
+  Widget _buildDeportesSection(BuildContext context, UsuarioDeportista p) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.grey[200]!),
+        border: Border.all(
+          color: Theme.of(context).brightness == Brightness.dark
+              ? AppColors.primaryDark
+              : Colors.grey[200]!,
+        ),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.04),
@@ -405,14 +418,14 @@ class PerfilAuthenticatedView extends StatelessWidget {
             padding: const EdgeInsets.fromLTRB(20, 16, 20, 12),
             child: Row(
               children: [
-                Icon(Icons.sports, color: Colors.grey[700], size: 18),
+                Icon(Icons.sports, color: Theme.of(context).hintColor, size: 18),
                 const SizedBox(width: 8),
                 Text(
                   'Mis Deportes',
                   style: TextStyle(
                     fontSize: 15,
                     fontWeight: FontWeight.bold,
-                    color: Colors.black87,
+                    color: Theme.of(context).colorScheme.onSurface,
                   ),
                 ),
               ],
@@ -424,7 +437,7 @@ class PerfilAuthenticatedView extends StatelessWidget {
               spacing: 8,
               runSpacing: 8,
               children: p.deportesFavoritos
-                  .map((deporte) => _buildDeporteCard(deporte))
+                  .map((deporte) => _buildDeporteCard(context, deporte))
                   .toList(),
             ),
           ),
@@ -433,7 +446,7 @@ class PerfilAuthenticatedView extends StatelessWidget {
     );
   }
 
-  Widget _buildDeporteCard(String deporte) {
+  Widget _buildDeporteCard(BuildContext context, String deporte) {
     final deporteData = _getDeporteData(deporte);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
@@ -464,12 +477,16 @@ class PerfilAuthenticatedView extends StatelessWidget {
   }
 
   // Sección de información
-  Widget _buildInfoSection(UsuarioDeportista p) {
+  Widget _buildInfoSection(BuildContext context, UsuarioDeportista p) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.grey[200]!),
+        border: Border.all(
+          color: Theme.of(context).brightness == Brightness.dark
+              ? AppColors.primaryDark
+              : Colors.grey[200]!,
+        ),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.04),
@@ -485,14 +502,18 @@ class PerfilAuthenticatedView extends StatelessWidget {
             padding: const EdgeInsets.all(20),
             child: Row(
               children: [
-                Icon(Icons.person_outline, color: Colors.grey[700], size: 20),
+                Icon(
+                  Icons.person_outline,
+                  color: Theme.of(context).hintColor,
+                  size: 20,
+                ),
                 const SizedBox(width: 10),
                 Text(
                   'Información Personal',
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
-                    color: Colors.black87,
+                    color: Theme.of(context).colorScheme.onSurface,
                   ),
                 ),
               ],
@@ -500,30 +521,35 @@ class PerfilAuthenticatedView extends StatelessWidget {
           ),
           Divider(height: 1, color: Colors.grey[200]),
           _buildInfoItem(
+            context: context,
             icon: Icons.badge_outlined,
             label: 'Nombre completo',
             value: p.nombreCompleto,
           ),
           Divider(height: 1, color: Colors.grey[200], indent: 52),
           _buildInfoItem(
+            context: context,
             icon: Icons.alternate_email,
             label: 'Usuario',
             value: p.username.isEmpty ? '—' : '@${p.username}',
           ),
           Divider(height: 1, color: Colors.grey[200], indent: 52),
           _buildInfoItem(
+            context: context,
             icon: Icons.phone_outlined,
             label: 'Teléfono',
             value: p.telefono.isEmpty ? '—' : p.telefono,
           ),
           Divider(height: 1, color: Colors.grey[200], indent: 52),
           _buildInfoItem(
+            context: context,
             icon: Icons.cake_outlined,
             label: 'Edad',
             value: p.edad?.toString() ?? '—',
           ),
           Divider(height: 1, color: Colors.grey[200], indent: 52),
           _buildInfoItem(
+            context: context,
             icon: Icons.calendar_month_outlined,
             label: 'Miembro desde',
             value: _formatDate(p.createdAt),
@@ -534,6 +560,7 @@ class PerfilAuthenticatedView extends StatelessWidget {
   }
 
   Widget _buildInfoItem({
+    required BuildContext context,
     required IconData icon,
     required String label,
     required String value,
@@ -542,7 +569,7 @@ class PerfilAuthenticatedView extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
       child: Row(
         children: [
-          Icon(icon, size: 20, color: Colors.grey[400]),
+          Icon(icon, size: 20, color: Theme.of(context).hintColor),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
@@ -552,17 +579,17 @@ class PerfilAuthenticatedView extends StatelessWidget {
                   label,
                   style: TextStyle(
                     fontSize: 12,
-                    color: Colors.grey[600],
+                    color: Theme.of(context).hintColor,
                     fontWeight: FontWeight.w500,
                   ),
                 ),
                 const SizedBox(height: 4),
                 Text(
                   value,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 15,
                     fontWeight: FontWeight.w600,
-                    color: Colors.black87,
+                    color: Theme.of(context).colorScheme.onSurface,
                   ),
                 ),
               ],
@@ -575,11 +602,16 @@ class PerfilAuthenticatedView extends StatelessWidget {
 
   // Sección de opciones
   Widget _buildOptionsSection(BuildContext context, UsuarioDeportista p) {
+    final theme = Theme.of(context);
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: theme.colorScheme.surface,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.grey[200]!),
+        border: Border.all(
+          color: theme.brightness == Brightness.dark
+              ? AppColors.primaryDark
+              : Colors.grey[200]!,
+        ),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.04),
@@ -591,7 +623,7 @@ class PerfilAuthenticatedView extends StatelessWidget {
       child: Column(
         children: [
           _buildThemeOption(context),
-          Divider(height: 1, color: Colors.grey[200]),
+          Divider(height: 1, color: theme.dividerColor),
           _buildOptionItem(
             context: context,
             icon: Icons.edit_outlined,
@@ -602,7 +634,7 @@ class PerfilAuthenticatedView extends StatelessWidget {
               _navigateToEditPerfil(context);
             },
           ),
-          Divider(height: 1, color: Colors.grey[200]),
+          Divider(height: 1, color: theme.dividerColor),
           _buildOptionItem(
             context: context,
             icon: Icons.notifications_outlined,
@@ -618,7 +650,7 @@ class PerfilAuthenticatedView extends StatelessWidget {
               );
             },
           ),
-          Divider(height: 1, color: Colors.grey[200]),
+          Divider(height: 1, color: theme.dividerColor),
           _buildOptionItem(
             context: context,
             icon: Icons.help_outline,
@@ -632,7 +664,7 @@ class PerfilAuthenticatedView extends StatelessWidget {
               );
             },
           ),
-          Divider(height: 1, color: Colors.grey[200]),
+          Divider(height: 1, color: theme.dividerColor),
           _buildOptionItem(
             context: context,
             icon: Icons.logout,
@@ -682,18 +714,27 @@ class PerfilAuthenticatedView extends StatelessWidget {
                       style: TextStyle(
                         fontSize: 15,
                         fontWeight: FontWeight.w600,
-                        color: isDestructive ? color : Colors.black87,
+                        color: isDestructive
+                            ? color
+                            : Theme.of(context).colorScheme.onSurface,
                       ),
                     ),
                     const SizedBox(height: 2),
                     Text(
                       subtitle,
-                      style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Theme.of(context).hintColor,
+                      ),
                     ),
                   ],
                 ),
               ),
-              Icon(Icons.chevron_right, size: 20, color: Colors.grey[400]),
+              Icon(
+                Icons.chevron_right,
+                size: 20,
+                color: Theme.of(context).hintColor,
+              ),
             ],
           ),
         ),
