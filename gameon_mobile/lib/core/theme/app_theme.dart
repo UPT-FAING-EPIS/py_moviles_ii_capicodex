@@ -25,12 +25,12 @@ abstract final class AppTheme {
     AppVisualTheme.dark => dark,
     AppVisualTheme.football => _sportTheme(
       brightness: Brightness.dark,
-      primary: const Color(0xFFB6D63A),
-      secondary: const Color(0xFFE8F46A),
-      background: const Color(0xFF0D2417),
-      surface: const Color(0xFF193A25),
+      primary: const Color(0xFF1F8A55),
+      secondary: const Color(0xFFC7E84A),
+      background: const Color(0xFF0B1710),
+      surface: const Color(0xFF15281B),
       onSurface: const Color(0xFFF2F7E9),
-      border: const Color(0xFFDAF27A),
+      border: const Color(0xFF4D6F3D),
     ),
     AppVisualTheme.tennis => _sportTheme(
       brightness: Brightness.light,

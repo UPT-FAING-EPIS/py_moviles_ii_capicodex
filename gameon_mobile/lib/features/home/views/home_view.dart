@@ -36,6 +36,8 @@ class _HomeViewState extends State<HomeView> with WidgetsBindingObserver {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
+    final isFootball = context.watch<ThemeController>().selection ==
+        AppVisualTheme.football;
     final pages = <Widget>[
       const HomeTabScaffold(),
       const ReservasListView(),
@@ -48,29 +50,29 @@ class _HomeViewState extends State<HomeView> with WidgetsBindingObserver {
       bottomNavigationBar: NavigationBar(
         selectedIndex: _currentIndex,
         onDestinationSelected: (i) => setState(() => _currentIndex = i),
-        backgroundColor: colors.surface,
-        indicatorColor: AppColors.primary.withValues(alpha: .22),
+        backgroundColor: isFootball ? const Color(0xFF07110B) : colors.surface,
+        indicatorColor: colors.secondary.withValues(alpha: .26),
         elevation: 8,
         labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
         destinations: [
           NavigationDestination(
             icon: Icon(Icons.home_outlined, color: theme.hintColor),
-            selectedIcon: const Icon(Icons.home, color: AppColors.primary),
+            selectedIcon: Icon(Icons.home, color: colors.secondary),
             label: 'Inicio',
           ),
           NavigationDestination(
             icon: Icon(Icons.event_note_outlined, color: theme.hintColor),
-            selectedIcon: const Icon(Icons.event_note, color: AppColors.primary),
+            selectedIcon: Icon(Icons.event_note, color: colors.secondary),
             label: 'Reservas',
           ),
           NavigationDestination(
             icon: Icon(Icons.chat_bubble_outline, color: theme.hintColor),
-            selectedIcon: const Icon(Icons.chat_bubble, color: AppColors.primary),
+            selectedIcon: Icon(Icons.chat_bubble, color: colors.secondary),
             label: 'Chat',
           ),
           NavigationDestination(
             icon: Icon(Icons.person_outline, color: theme.hintColor),
-            selectedIcon: const Icon(Icons.person, color: AppColors.primary),
+            selectedIcon: Icon(Icons.person, color: colors.secondary),
             label: 'Perfil',
           ),
         ],
@@ -247,9 +249,9 @@ class _HomeTabScaffoldState extends State<HomeTabScaffold> {
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                   colors: [
-                    colors.primary.withValues(alpha: backgroundImage == null ? 1 : .82),
+                    colors.primary.withValues(alpha: backgroundImage == null ? 1 : .78),
                     colors.primaryContainer.withValues(
-                      alpha: backgroundImage == null ? 1 : .88,
+                      alpha: backgroundImage == null ? 1 : .84,
                     ),
                   ],
                 ),

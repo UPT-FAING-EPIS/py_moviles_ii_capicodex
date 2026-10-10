@@ -28,6 +28,9 @@ class PerfilAuthenticatedView extends StatelessWidget {
   Widget build(BuildContext context) {
     final p = profile;
     final theme = Theme.of(context);
+    final headerBackground = AppTheme.headerBackgroundFor(
+      context.watch<ThemeController>().selection,
+    );
 
     final overlay = SystemUiOverlayStyle(
       statusBarColor: Colors.transparent,
@@ -47,8 +50,18 @@ class PerfilAuthenticatedView extends StatelessWidget {
                 gradient: LinearGradient(
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
-                  colors: const [AppColors.primary, AppColors.primaryDark],
+                  colors: [
+                    theme.colorScheme.primary,
+                    theme.colorScheme.primaryContainer,
+                  ],
                 ),
+                image: headerBackground == null
+                    ? null
+                    : DecorationImage(
+                        image: AssetImage(headerBackground),
+                        fit: BoxFit.cover,
+                        opacity: .32,
+                      ),
                 borderRadius: const BorderRadius.only(
                   bottomLeft: Radius.circular(30),
                   bottomRight: Radius.circular(30),

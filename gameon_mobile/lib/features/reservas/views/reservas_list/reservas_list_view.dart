@@ -6,6 +6,7 @@ import 'package:gameon/features/perfil/views/login_page/login_page.dart';
 import '../../viewmodels/reservas_list_viewmodel.dart';
 import 'reserva_card.dart';
 import 'package:gameon/core/theme/app_theme.dart';
+import 'package:gameon/core/theme/theme_controller.dart';
 
 class ReservasListView extends StatefulWidget {
   const ReservasListView({super.key});
@@ -51,6 +52,9 @@ class _ReservasListViewState extends State<ReservasListView> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
+    final headerBackground = AppTheme.headerBackgroundFor(
+      context.watch<ThemeController>().selection,
+    );
     // Barra de estado transparente con iconos claros
     final overlay = SystemUiOverlayStyle(
       statusBarColor: Colors.transparent,
@@ -73,8 +77,15 @@ class _ReservasListViewState extends State<ReservasListView> {
                   gradient: LinearGradient(
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
-                    colors: const [AppColors.primary, AppColors.primaryDark],
+                    colors: [colors.primary, colors.primaryContainer],
                   ),
+                  image: headerBackground == null
+                      ? null
+                      : DecorationImage(
+                          image: AssetImage(headerBackground),
+                          fit: BoxFit.cover,
+                          opacity: .38,
+                        ),
                   borderRadius: const BorderRadius.only(
                     bottomLeft: Radius.circular(30),
                     bottomRight: Radius.circular(30),
@@ -219,8 +230,15 @@ class _ReservasListViewState extends State<ReservasListView> {
                       gradient: LinearGradient(
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
-                        colors: const [AppColors.primary, AppColors.primaryDark],
+                        colors: [colors.primary, colors.primaryContainer],
                       ),
+                      image: headerBackground == null
+                          ? null
+                          : DecorationImage(
+                              image: AssetImage(headerBackground),
+                              fit: BoxFit.cover,
+                              opacity: .38,
+                            ),
                       borderRadius: const BorderRadius.only(
                         bottomLeft: Radius.circular(30),
                         bottomRight: Radius.circular(30),

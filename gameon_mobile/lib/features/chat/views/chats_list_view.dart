@@ -11,6 +11,7 @@ import 'conversation_view.dart';
 import 'find_players_view.dart';
 import 'bot_conversation_view.dart';
 import 'package:gameon/core/theme/app_theme.dart';
+import 'package:gameon/core/theme/theme_controller.dart';
 
 class ChatsListView extends StatefulWidget {
   const ChatsListView({super.key});
@@ -49,6 +50,9 @@ class _ChatsListViewState extends State<ChatsListView> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
+    final headerBackground = AppTheme.headerBackgroundFor(
+      context.watch<ThemeController>().selection,
+    );
     final overlay = SystemUiOverlayStyle(
       statusBarColor: Colors.transparent,
       statusBarIconBrightness: Brightness.light,
@@ -70,8 +74,15 @@ class _ChatsListViewState extends State<ChatsListView> {
                 gradient: LinearGradient(
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
-                  colors: const [AppColors.primary, AppColors.primaryDark],
+                  colors: [colors.primary, colors.primaryContainer],
                 ),
+                image: headerBackground == null
+                    ? null
+                    : DecorationImage(
+                        image: AssetImage(headerBackground),
+                        fit: BoxFit.cover,
+                        opacity: .34,
+                      ),
                 borderRadius: const BorderRadius.only(
                   bottomLeft: Radius.circular(30),
                   bottomRight: Radius.circular(30),
