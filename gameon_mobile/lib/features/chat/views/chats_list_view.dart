@@ -178,9 +178,9 @@ class _ChatsListViewState extends State<ChatsListView> {
                               : null,
                           decoration: InputDecoration(
                             hintText: 'Buscar conversaciones...',
-                            prefixIcon: const Icon(
+                            prefixIcon: Icon(
                               Icons.search,
-                              color: AppColors.accent,
+                              color: colors.secondary,
                             ),
                             border: InputBorder.none,
                             contentPadding: const EdgeInsets.symmetric(
@@ -189,9 +189,9 @@ class _ChatsListViewState extends State<ChatsListView> {
                             ),
                             suffixIcon: _searchController.text.isNotEmpty
                                 ? IconButton(
-                                    icon: const Icon(
+                                    icon: Icon(
                                       Icons.clear,
-                                      color: AppColors.accent,
+                                      color: colors.secondary,
                                     ),
                                     onPressed: () {
                                       _searchController.clear();
@@ -238,11 +238,15 @@ class _ChatsListViewState extends State<ChatsListView> {
               );
             }
           },
-          backgroundColor: AppColors.primary,
-          icon: const Icon(Icons.person_add, color: Colors.white),
-          label: const Text(
+          backgroundColor: colors.primary,
+          foregroundColor: colors.onPrimary,
+          icon: Icon(Icons.person_add, color: colors.onPrimary),
+          label: Text(
             'Buscar jugadores',
-            style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
+            style: TextStyle(
+              color: colors.onPrimary,
+              fontWeight: FontWeight.w600,
+            ),
           ),
         ),
       ),
@@ -376,7 +380,6 @@ class _ChatsListViewState extends State<ChatsListView> {
   Widget _buildBotListItem() {
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
-    final isDark = theme.brightness == Brightness.dark;
     return InkWell(
       onTap: () {
         Navigator.push(
@@ -389,10 +392,7 @@ class _ChatsListViewState extends State<ChatsListView> {
         decoration: BoxDecoration(
           color: colors.surface,
           border: Border(
-            bottom: BorderSide(
-              color: isDark ? AppColors.primaryDark : Colors.grey.shade200,
-              width: 1,
-            ),
+            bottom: BorderSide(color: theme.dividerColor, width: 1),
           ),
         ),
         child: Row(
@@ -402,10 +402,10 @@ class _ChatsListViewState extends State<ChatsListView> {
               children: [
                 CircleAvatar(
                   radius: 28,
-                  backgroundColor: AppColors.accent,
-                  child: const Icon(
+                  backgroundColor: colors.primary,
+                  child: Icon(
                     Icons.smart_toy_rounded,
-                    color: Colors.white,
+                    color: colors.onPrimary,
                     size: 26,
                   ),
                 ),
@@ -417,7 +417,7 @@ class _ChatsListViewState extends State<ChatsListView> {
                     width: 16,
                     height: 16,
                     decoration: BoxDecoration(
-                      color: AppColors.accent,
+                      color: colors.secondary,
                       shape: BoxShape.circle,
                       border: Border.all(color: Colors.white, width: 2),
                     ),
@@ -452,13 +452,13 @@ class _ChatsListViewState extends State<ChatsListView> {
                               vertical: 2,
                             ),
                             decoration: BoxDecoration(
-                              color: AppColors.accent,
+                              color: colors.secondary,
                               borderRadius: BorderRadius.circular(8),
                             ),
-                            child: const Text(
+                            child: Text(
                               'BOT',
                               style: TextStyle(
-                                color: Colors.white,
+                                color: colors.onSecondary,
                                 fontSize: 9,
                                 fontWeight: FontWeight.bold,
                               ),
@@ -468,10 +468,7 @@ class _ChatsListViewState extends State<ChatsListView> {
                       ),
                       Text(
                         'Ahora',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: theme.hintColor,
-                        ),
+                        style: TextStyle(fontSize: 12, color: theme.hintColor),
                       ),
                     ],
                   ),
@@ -565,13 +562,10 @@ class _ConversationListItem extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
           decoration: BoxDecoration(
             color: hasUnread
-                ? AppColors.primary.withValues(alpha: isDark ? .24 : .10)
+                ? colors.primary.withValues(alpha: isDark ? .24 : .10)
                 : colors.surface,
             border: Border(
-              bottom: BorderSide(
-                color: isDark ? AppColors.primaryDark : Colors.grey.shade200,
-                width: 1,
-              ),
+              bottom: BorderSide(color: theme.dividerColor, width: 1),
             ),
           ),
           child: Row(
@@ -581,7 +575,7 @@ class _ConversationListItem extends StatelessWidget {
                 children: [
                   CircleAvatar(
                     radius: 28,
-                    backgroundColor: AppColors.primary.withValues(alpha: .22),
+                    backgroundColor: colors.primary.withValues(alpha: .22),
                     backgroundImage: otherUserAvatar != null
                         ? NetworkImage(otherUserAvatar!)
                         : null,
@@ -589,7 +583,7 @@ class _ConversationListItem extends StatelessWidget {
                         ? Text(
                             otherUserName[0].toUpperCase(),
                             style: TextStyle(
-                              color: AppColors.primary,
+                              color: colors.primary,
                               fontWeight: FontWeight.bold,
                               fontSize: 20,
                             ),
@@ -605,7 +599,7 @@ class _ConversationListItem extends StatelessWidget {
                         width: 16,
                         height: 16,
                         decoration: BoxDecoration(
-                          color: AppColors.primary,
+                          color: colors.primary,
                           shape: BoxShape.circle,
                           border: Border.all(color: Colors.white, width: 2),
                         ),
@@ -644,9 +638,7 @@ class _ConversationListItem extends StatelessWidget {
                           ),
                           style: TextStyle(
                             fontSize: 12,
-                            color: hasUnread
-                                ? AppColors.primary
-                                : theme.hintColor,
+                            color: hasUnread ? colors.primary : theme.hintColor,
                             fontWeight: hasUnread
                                 ? FontWeight.w600
                                 : FontWeight.normal,
@@ -684,13 +676,13 @@ class _ConversationListItem extends StatelessWidget {
                               vertical: 4,
                             ),
                             decoration: BoxDecoration(
-                              color: AppColors.primary,
+                              color: colors.primary,
                               borderRadius: BorderRadius.circular(12),
                             ),
                             child: Text(
                               '${conversation.getUnreadCountForUser(currentUserId)}',
-                              style: const TextStyle(
-                                color: Colors.white,
+                              style: TextStyle(
+                                color: colors.onPrimary,
                                 fontSize: 11,
                                 fontWeight: FontWeight.bold,
                               ),

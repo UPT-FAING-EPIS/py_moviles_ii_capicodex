@@ -101,18 +101,23 @@ class PerfilAuthenticatedView extends StatelessWidget {
                               ],
                             ),
                           ),
-                          // Icono decorativo
-                          Container(
-                            padding: const EdgeInsets.all(10),
-                            decoration: BoxDecoration(
-                              color: Colors.white.withOpacity(0.2),
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: const Icon(
-                              Icons.person,
-                              color: Colors.white,
-                              size: 24,
-                            ),
+                          Row(
+                            children: [
+                              _buildThemeMenu(context),
+                              const SizedBox(width: 8),
+                              Container(
+                                padding: const EdgeInsets.all(10),
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withOpacity(0.2),
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: const Icon(
+                                  Icons.person,
+                                  color: Colors.white,
+                                  size: 24,
+                                ),
+                              ),
+                            ],
                           ),
                         ],
                       ),
@@ -357,11 +362,7 @@ class PerfilAuthenticatedView extends StatelessWidget {
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: Theme.of(context).brightness == Brightness.dark
-              ? AppColors.primaryDark
-              : Colors.grey[200]!,
-        ),
+        border: Border.all(color: Theme.of(context).dividerColor),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.04),
@@ -411,11 +412,7 @@ class PerfilAuthenticatedView extends StatelessWidget {
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: Theme.of(context).brightness == Brightness.dark
-              ? AppColors.primaryDark
-              : Colors.grey[200]!,
-        ),
+        border: Border.all(color: Theme.of(context).dividerColor),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.04),
@@ -431,7 +428,11 @@ class PerfilAuthenticatedView extends StatelessWidget {
             padding: const EdgeInsets.fromLTRB(20, 16, 20, 12),
             child: Row(
               children: [
-                Icon(Icons.sports, color: Theme.of(context).hintColor, size: 18),
+                Icon(
+                  Icons.sports,
+                  color: Theme.of(context).hintColor,
+                  size: 18,
+                ),
                 const SizedBox(width: 8),
                 Text(
                   'Mis Deportes',
@@ -495,11 +496,7 @@ class PerfilAuthenticatedView extends StatelessWidget {
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: Theme.of(context).brightness == Brightness.dark
-              ? AppColors.primaryDark
-              : Colors.grey[200]!,
-        ),
+        border: Border.all(color: Theme.of(context).dividerColor),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.04),
@@ -620,11 +617,7 @@ class PerfilAuthenticatedView extends StatelessWidget {
       decoration: BoxDecoration(
         color: theme.colorScheme.surface,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: theme.brightness == Brightness.dark
-              ? AppColors.primaryDark
-              : Colors.grey[200]!,
-        ),
+        border: Border.all(color: theme.dividerColor),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.04),
@@ -635,8 +628,6 @@ class PerfilAuthenticatedView extends StatelessWidget {
       ),
       child: Column(
         children: [
-          _buildThemeOption(context),
-          Divider(height: 1, color: theme.dividerColor),
           _buildOptionItem(
             context: context,
             icon: Icons.edit_outlined,
@@ -755,49 +746,56 @@ class PerfilAuthenticatedView extends StatelessWidget {
     );
   }
 
-  Widget _buildThemeOption(BuildContext context) {
+  Widget _buildThemeMenu(BuildContext context) {
     return Consumer<ThemeController>(
       builder: (context, themeController, _) {
-        return ListTile(
-          contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-          leading: Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.primary.withValues(alpha: .12),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Icon(
+        final colors = Theme.of(context).colorScheme;
+        return Container(
+          decoration: BoxDecoration(
+            color: Colors.white.withOpacity(.2),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: PopupMenuButton<AppVisualTheme>(
+            tooltip: 'Cambiar tema visual',
+            icon: Icon(
               _themeIcon(themeController.selection),
-              color: Theme.of(context).colorScheme.primary,
-              size: 20,
+              color: Colors.white,
             ),
-          ),
-          title: const Text(
-            'Tema visual',
-            style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
-          ),
-          subtitle: Text('Claro, Oscuro, Fútbol o Tenis'),
-          trailing: DropdownButton<AppVisualTheme>(
-            value: themeController.selection,
-            underline: const SizedBox(),
-            onChanged: (selection) {
-              if (selection != null) themeController.select(selection);
-            },
-            items: const [
-              DropdownMenuItem(value: AppVisualTheme.light, child: Text('Claro')),
-              DropdownMenuItem(value: AppVisualTheme.dark, child: Text('Oscuro')),
-              DropdownMenuItem(value: AppVisualTheme.football, child: Text('Fútbol')),
-              DropdownMenuItem(value: AppVisualTheme.wimbledon, child: Text('Tenis Wimbledon')),
-              DropdownMenuItem(value: AppVisualTheme.rolandGarros, child: Text('Tenis Roland Garros')),
-              DropdownMenuItem(value: AppVisualTheme.usOpen, child: Text('Tenis US Open')),
-              DropdownMenuItem(value: AppVisualTheme.volleyball, child: Text('Vóley')),
-              DropdownMenuItem(value: AppVisualTheme.basketball, child: Text('Básquet')),
+            color: colors.surface,
+            onSelected: (selection) => themeController.select(selection),
+            itemBuilder: (_) => [
+              for (final selection in AppVisualTheme.values)
+                PopupMenuItem(
+                  value: selection,
+                  child: Row(
+                    children: [
+                      Icon(
+                        _themeIcon(selection),
+                        color: colors.primary,
+                        size: 20,
+                      ),
+                      const SizedBox(width: 12),
+                      Text(_themeName(selection)),
+                    ],
+                  ),
+                ),
             ],
           ),
         );
       },
     );
   }
+
+  String _themeName(AppVisualTheme selection) => switch (selection) {
+    AppVisualTheme.light => 'Claro',
+    AppVisualTheme.dark => 'Oscuro',
+    AppVisualTheme.football => 'Fútbol',
+    AppVisualTheme.wimbledon => 'Tenis Wimbledon',
+    AppVisualTheme.rolandGarros => 'Tenis Roland Garros',
+    AppVisualTheme.usOpen => 'Tenis US Open',
+    AppVisualTheme.volleyball => 'Vóley',
+    AppVisualTheme.basketball => 'Básquet',
+  };
 
   IconData _themeIcon(AppVisualTheme selection) => switch (selection) {
     AppVisualTheme.light => Icons.light_mode_outlined,

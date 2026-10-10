@@ -36,8 +36,8 @@ class _HomeViewState extends State<HomeView> with WidgetsBindingObserver {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
-    final isFootball = context.watch<ThemeController>().selection ==
-        AppVisualTheme.football;
+    final isFootball =
+        context.watch<ThemeController>().selection == AppVisualTheme.football;
     final pages = <Widget>[
       const HomeTabScaffold(),
       const ReservasListView(),
@@ -249,7 +249,9 @@ class _HomeTabScaffoldState extends State<HomeTabScaffold> {
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                   colors: [
-                    colors.primary.withValues(alpha: backgroundImage == null ? 1 : .78),
+                    colors.primary.withValues(
+                      alpha: backgroundImage == null ? 1 : .78,
+                    ),
                     colors.primaryContainer.withValues(
                       alpha: backgroundImage == null ? 1 : .84,
                     ),
@@ -632,7 +634,7 @@ class _HomeTabScaffoldState extends State<HomeTabScaffold> {
                     gradient: LinearGradient(
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
-                      colors: const [AppColors.primary, AppColors.primaryDark],
+                      colors: [colors.primary, colors.primaryContainer],
                     ),
                   ),
                   child: ClipRRect(
@@ -706,7 +708,7 @@ class _HomeTabScaffoldState extends State<HomeTabScaffold> {
                             inst.telefono,
                             style: TextStyle(
                               fontSize: 13,
-                                color: theme.hintColor,
+                              color: theme.hintColor,
                             ),
                           ),
                         ],
@@ -719,7 +721,7 @@ class _HomeTabScaffoldState extends State<HomeTabScaffold> {
                           vertical: 6,
                         ),
                         decoration: BoxDecoration(
-                          color: AppColors.primary.withValues(
+                          color: colors.primary.withValues(
                             alpha: isDark ? .20 : .10,
                           ),
                           borderRadius: BorderRadius.circular(8),
@@ -730,7 +732,7 @@ class _HomeTabScaffoldState extends State<HomeTabScaffold> {
                             Icon(
                               Icons.payments_outlined,
                               size: 16,
-                              color: AppColors.accent,
+                              color: colors.secondary,
                             ),
                             const SizedBox(width: 6),
                             Text(
@@ -738,7 +740,7 @@ class _HomeTabScaffoldState extends State<HomeTabScaffold> {
                               style: TextStyle(
                                 fontWeight: FontWeight.bold,
                                 fontSize: 16,
-                                color: AppColors.primary,
+                                color: colors.secondary,
                               ),
                             ),
                           ],
@@ -751,7 +753,7 @@ class _HomeTabScaffoldState extends State<HomeTabScaffold> {
                 Icon(
                   Icons.arrow_forward_ios,
                   size: 20,
-                  color: AppColors.accent,
+                  color: colors.secondary,
                 ),
               ],
             ),

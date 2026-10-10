@@ -1,7 +1,14 @@
 import 'package:flutter/material.dart';
 
 enum AppVisualTheme {
-  light, dark, football, wimbledon, rolandGarros, usOpen, volleyball, basketball,
+  light,
+  dark,
+  football,
+  wimbledon,
+  rolandGarros,
+  usOpen,
+  volleyball,
+  basketball,
 }
 
 /// Paleta compartida de GameOn. Mantiene el modo claro existente y aporta una
@@ -16,34 +23,79 @@ abstract final class AppColors {
 }
 
 abstract final class AppTheme {
-  static String? headerBackgroundFor(AppVisualTheme selection) => switch (selection) {
-    AppVisualTheme.football => 'assets/theme/fondo_futbol.jpeg',
-    AppVisualTheme.wimbledon => 'assets/theme/fondo_tenis_estilo_wimbledon_cesped.jpeg',
-    AppVisualTheme.rolandGarros => 'assets/theme/fondo_tenis_estilo_roland_garros_polvoladrillo.jpeg',
-    AppVisualTheme.usOpen => 'assets/theme/fondo_tenis_estilo_usopen_acrilicobitonoazul.jpeg',
-    AppVisualTheme.volleyball => 'assets/theme/fondo_voley.jpeg',
-    AppVisualTheme.basketball => 'assets/theme/fondo_basquet.png',
-    _ => null,
-  };
+  static String? headerBackgroundFor(AppVisualTheme selection) =>
+      switch (selection) {
+        AppVisualTheme.football => 'assets/theme/fondo_futbol.jpeg',
+        AppVisualTheme.wimbledon =>
+          'assets/theme/fondo_tenis_estilo_wimbledon_cesped.png',
+        AppVisualTheme.rolandGarros =>
+          'assets/theme/fondo_tenis_estilo_roland_garros_polvoladrillo.jpeg',
+        AppVisualTheme.usOpen =>
+          'assets/theme/fondo_tenis_estilo_usopen_acrilicobitonoazul.png',
+        AppVisualTheme.volleyball => 'assets/theme/fondo_voley.png',
+        AppVisualTheme.basketball => 'assets/theme/fondo_basquet.png',
+        _ => null,
+      };
 
-  static ThemeData forVisualTheme(AppVisualTheme selection) => switch (selection) {
-    AppVisualTheme.light => light,
-    AppVisualTheme.dark => dark,
-    AppVisualTheme.football => _sportTheme(
-      brightness: Brightness.dark,
-      primary: const Color(0xFF1F8A55),
-      secondary: const Color(0xFFC7E84A),
-      background: const Color(0xFF0B1710),
-      surface: const Color(0xFF15281B),
-      onSurface: const Color(0xFFF2F7E9),
-      border: const Color(0xFF4D6F3D),
-    ),
-    AppVisualTheme.wimbledon => _sportTheme(brightness: Brightness.dark, primary: const Color(0xFF5F8F25), secondary: const Color(0xFFC8E84E), background: const Color(0xFF13200F), surface: const Color(0xFF24361B), onSurface: const Color(0xFFF6F7E8), border: const Color(0xFF8A5BA8)),
-    AppVisualTheme.rolandGarros => _sportTheme(brightness: Brightness.dark, primary: const Color(0xFFC65A2E), secondary: const Color(0xFFFFC85A), background: const Color(0xFF28150F), surface: const Color(0xFF472419), onSurface: const Color(0xFFFFF3E9), border: const Color(0xFFE6894D)),
-    AppVisualTheme.usOpen => _sportTheme(brightness: Brightness.dark, primary: const Color(0xFF0789D1), secondary: const Color(0xFF4ED7FF), background: const Color(0xFF081B35), surface: const Color(0xFF102E52), onSurface: const Color(0xFFF0F8FF), border: const Color(0xFF2875B8)),
-    AppVisualTheme.volleyball => _sportTheme(brightness: Brightness.light, primary: const Color(0xFF2B6F88), secondary: const Color(0xFFFFB547), background: const Color(0xFFE9D1A8), surface: const Color(0xFFFFF7E9), onSurface: const Color(0xFF20333A), border: const Color(0xFFB68348)),
-    AppVisualTheme.basketball => _sportTheme(brightness: Brightness.dark, primary: const Color(0xFFD86922), secondary: const Color(0xFFFFB547), background: const Color(0xFF211007), surface: const Color(0xFF402112), onSurface: const Color(0xFFFFF4E8), border: const Color(0xFF98542B)),
-  };
+  static ThemeData forVisualTheme(AppVisualTheme selection) =>
+      switch (selection) {
+        AppVisualTheme.light => light,
+        AppVisualTheme.dark => dark,
+        AppVisualTheme.football => _sportTheme(
+          brightness: Brightness.dark,
+          primary: const Color(0xFF1F8A55),
+          secondary: const Color(0xFFC7E84A),
+          background: const Color(0xFF0B1710),
+          surface: const Color(0xFF15281B),
+          onSurface: const Color(0xFFF2F7E9),
+          border: const Color(0xFF4D6F3D),
+        ),
+        AppVisualTheme.wimbledon => _sportTheme(
+          brightness: Brightness.dark,
+          primary: const Color(0xFF5F8F25),
+          secondary: const Color(0xFFC8E84E),
+          background: const Color(0xFF13200F),
+          surface: const Color(0xFF24361B),
+          onSurface: const Color(0xFFF6F7E8),
+          border: const Color(0xFF8A5BA8),
+        ),
+        AppVisualTheme.rolandGarros => _sportTheme(
+          brightness: Brightness.dark,
+          primary: const Color(0xFFC65A2E),
+          secondary: const Color(0xFFFFC85A),
+          background: const Color(0xFF28150F),
+          surface: const Color(0xFF472419),
+          onSurface: const Color(0xFFFFF3E9),
+          border: const Color(0xFFE6894D),
+        ),
+        AppVisualTheme.usOpen => _sportTheme(
+          brightness: Brightness.dark,
+          primary: const Color(0xFF0789D1),
+          secondary: const Color(0xFF4ED7FF),
+          background: const Color(0xFF081B35),
+          surface: const Color(0xFF102E52),
+          onSurface: const Color(0xFFF0F8FF),
+          border: const Color(0xFF2875B8),
+        ),
+        AppVisualTheme.volleyball => _sportTheme(
+          brightness: Brightness.light,
+          primary: const Color(0xFF2B6F88),
+          secondary: const Color(0xFFFFB547),
+          background: const Color(0xFFE9D1A8),
+          surface: const Color(0xFFFFF7E9),
+          onSurface: const Color(0xFF20333A),
+          border: const Color(0xFFB68348),
+        ),
+        AppVisualTheme.basketball => _sportTheme(
+          brightness: Brightness.dark,
+          primary: const Color(0xFFD86922),
+          secondary: const Color(0xFFFFB547),
+          background: const Color(0xFF211007),
+          surface: const Color(0xFF402112),
+          onSurface: const Color(0xFFFFF4E8),
+          border: const Color(0xFF98542B),
+        ),
+      };
 
   static ThemeData _sportTheme({
     required Brightness brightness,
@@ -95,6 +147,7 @@ abstract final class AppTheme {
       ),
     );
   }
+
   static ThemeData get light => ThemeData(
     useMaterial3: true,
     colorScheme: ColorScheme.fromSeed(
