@@ -12,6 +12,7 @@ import 'mapa_instituciones_view.dart';
 import 'package:provider/provider.dart';
 import 'package:gameon/features/perfil/viewmodels/perfil_viewmodel.dart';
 import 'package:gameon/features/perfil/views/login_page/login_page.dart';
+import 'package:gameon/core/theme/app_theme.dart';
 
 // HomeView: controla tabs y bottom navigation
 class HomeView extends StatefulWidget {
@@ -32,6 +33,8 @@ class _HomeViewState extends State<HomeView> with WidgetsBindingObserver {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
     final pages = <Widget>[
       const HomeTabScaffold(),
       const ReservasListView(),
@@ -44,29 +47,29 @@ class _HomeViewState extends State<HomeView> with WidgetsBindingObserver {
       bottomNavigationBar: NavigationBar(
         selectedIndex: _currentIndex,
         onDestinationSelected: (i) => setState(() => _currentIndex = i),
-        backgroundColor: Colors.white,
-        indicatorColor: Colors.black12,
+        backgroundColor: colors.surface,
+        indicatorColor: AppColors.primary.withValues(alpha: .22),
         elevation: 8,
         labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
         destinations: [
           NavigationDestination(
-            icon: Icon(Icons.home_outlined, color: Colors.black54),
-            selectedIcon: Icon(Icons.home, color: Colors.green.shade700),
+            icon: Icon(Icons.home_outlined, color: theme.hintColor),
+            selectedIcon: const Icon(Icons.home, color: AppColors.primary),
             label: 'Inicio',
           ),
           NavigationDestination(
-            icon: Icon(Icons.event_note_outlined, color: Colors.black54),
-            selectedIcon: Icon(Icons.event_note, color: Colors.green.shade700),
+            icon: Icon(Icons.event_note_outlined, color: theme.hintColor),
+            selectedIcon: const Icon(Icons.event_note, color: AppColors.primary),
             label: 'Reservas',
           ),
           NavigationDestination(
-            icon: Icon(Icons.chat_bubble_outline, color: Colors.black54),
-            selectedIcon: Icon(Icons.chat_bubble, color: Colors.green.shade700),
+            icon: Icon(Icons.chat_bubble_outline, color: theme.hintColor),
+            selectedIcon: const Icon(Icons.chat_bubble, color: AppColors.primary),
             label: 'Chat',
           ),
           NavigationDestination(
-            icon: Icon(Icons.person_outline, color: Colors.black54),
-            selectedIcon: Icon(Icons.person, color: Colors.green.shade700),
+            icon: Icon(Icons.person_outline, color: theme.hintColor),
+            selectedIcon: const Icon(Icons.person, color: AppColors.primary),
             label: 'Perfil',
           ),
         ],
@@ -213,6 +216,8 @@ class _HomeTabScaffoldState extends State<HomeTabScaffold> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
     final safeTop = MediaQuery.of(
       context,
     ).padding.top; // para extender el header tras la barra de estado
@@ -228,7 +233,7 @@ class _HomeTabScaffoldState extends State<HomeTabScaffold> {
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: overlay,
       child: Scaffold(
-        backgroundColor: Colors.grey[50],
+        backgroundColor: theme.scaffoldBackgroundColor,
         body: Column(
           children: [
             // Header moderno con gradiente verde, extendido tras la barra de estado
@@ -237,7 +242,7 @@ class _HomeTabScaffoldState extends State<HomeTabScaffold> {
                 gradient: LinearGradient(
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
-                  colors: [Colors.green.shade600, Colors.green.shade800],
+                  colors: const [AppColors.primary, AppColors.primaryDark],
                 ),
                 borderRadius: const BorderRadius.only(
                   bottomLeft: Radius.circular(30),
@@ -363,7 +368,7 @@ class _HomeTabScaffoldState extends State<HomeTabScaffold> {
                         Expanded(
                           child: Container(
                             decoration: BoxDecoration(
-                              color: Colors.white,
+                              color: colors.surface,
                               borderRadius: BorderRadius.circular(16),
                               boxShadow: [
                                 BoxShadow(
@@ -377,10 +382,10 @@ class _HomeTabScaffoldState extends State<HomeTabScaffold> {
                               controller: _searchController,
                               decoration: InputDecoration(
                                 hintText: 'Buscar instalaciones... ',
-                                hintStyle: TextStyle(color: Colors.grey[400]),
+                                hintStyle: TextStyle(color: theme.hintColor),
                                 prefixIcon: Icon(
                                   Icons.search,
-                                  color: Colors.green[600],
+                                  color: AppColors.accent,
                                 ),
                                 contentPadding: const EdgeInsets.symmetric(
                                   vertical: 16,
@@ -391,7 +396,7 @@ class _HomeTabScaffoldState extends State<HomeTabScaffold> {
                                     ? IconButton(
                                         icon: Icon(
                                           Icons.clear,
-                                          color: Colors.grey[600],
+                                          color: theme.hintColor,
                                         ),
                                         onPressed: () =>
                                             _searchController.clear(),
@@ -405,7 +410,7 @@ class _HomeTabScaffoldState extends State<HomeTabScaffold> {
                         // Botón de mapa
                         Container(
                           decoration: BoxDecoration(
-                            color: Colors.white,
+                            color: colors.surface,
                             borderRadius: BorderRadius.circular(16),
                             boxShadow: [
                               BoxShadow(
@@ -424,7 +429,7 @@ class _HomeTabScaffoldState extends State<HomeTabScaffold> {
                                 padding: const EdgeInsets.all(16),
                                 child: Icon(
                                   Icons.map_outlined,
-                                  color: Colors.green[600],
+                                  color: AppColors.accent,
                                   size: 24,
                                 ),
                               ),
@@ -568,14 +573,17 @@ class _HomeTabScaffoldState extends State<HomeTabScaffold> {
 
   // Card moderna con diseño mejorado
   Widget _buildModernCard(BuildContext context, InstitucionDeportiva inst) {
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: colors.surface,
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.1),
+            color: Colors.black.withValues(alpha: isDark ? 0.28 : 0.1),
             blurRadius: 15,
             offset: const Offset(0, 5),
           ),
@@ -606,7 +614,7 @@ class _HomeTabScaffoldState extends State<HomeTabScaffold> {
                     gradient: LinearGradient(
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
-                      colors: [Colors.green[400]!, Colors.green[700]!],
+                      colors: const [AppColors.primary, AppColors.primaryDark],
                     ),
                   ),
                   child: ClipRRect(
@@ -637,10 +645,10 @@ class _HomeTabScaffoldState extends State<HomeTabScaffold> {
                     children: [
                       Text(
                         inst.nombre,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontWeight: FontWeight.bold,
                           fontSize: 18,
-                          color: Colors.black87,
+                          color: colors.onSurface,
                         ),
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
@@ -651,7 +659,7 @@ class _HomeTabScaffoldState extends State<HomeTabScaffold> {
                           Icon(
                             Icons.location_on_outlined,
                             size: 16,
-                            color: Colors.grey[600],
+                            color: theme.hintColor,
                           ),
                           const SizedBox(width: 4),
                           Expanded(
@@ -659,7 +667,7 @@ class _HomeTabScaffoldState extends State<HomeTabScaffold> {
                               inst.direccion,
                               style: TextStyle(
                                 fontSize: 13,
-                                color: Colors.grey[600],
+                                color: theme.hintColor,
                               ),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
@@ -673,14 +681,14 @@ class _HomeTabScaffoldState extends State<HomeTabScaffold> {
                           Icon(
                             Icons.phone_outlined,
                             size: 16,
-                            color: Colors.grey[600],
+                            color: theme.hintColor,
                           ),
                           const SizedBox(width: 4),
                           Text(
                             inst.telefono,
                             style: TextStyle(
                               fontSize: 13,
-                              color: Colors.grey[600],
+                                color: theme.hintColor,
                             ),
                           ),
                         ],
@@ -693,7 +701,9 @@ class _HomeTabScaffoldState extends State<HomeTabScaffold> {
                           vertical: 6,
                         ),
                         decoration: BoxDecoration(
-                          color: Colors.green[50],
+                          color: AppColors.primary.withValues(
+                            alpha: isDark ? .20 : .10,
+                          ),
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Row(
@@ -702,7 +712,7 @@ class _HomeTabScaffoldState extends State<HomeTabScaffold> {
                             Icon(
                               Icons.payments_outlined,
                               size: 16,
-                              color: Colors.green[700],
+                              color: AppColors.accent,
                             ),
                             const SizedBox(width: 6),
                             Text(
@@ -710,7 +720,7 @@ class _HomeTabScaffoldState extends State<HomeTabScaffold> {
                               style: TextStyle(
                                 fontWeight: FontWeight.bold,
                                 fontSize: 16,
-                                color: Colors.green[700],
+                                color: AppColors.primary,
                               ),
                             ),
                           ],
@@ -723,7 +733,7 @@ class _HomeTabScaffoldState extends State<HomeTabScaffold> {
                 Icon(
                   Icons.arrow_forward_ios,
                   size: 20,
-                  color: Colors.green[600],
+                  color: AppColors.accent,
                 ),
               ],
             ),
