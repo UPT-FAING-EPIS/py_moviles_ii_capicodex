@@ -18,7 +18,7 @@ abstract final class AppColors {
 abstract final class AppTheme {
   static String? headerBackgroundFor(AppVisualTheme selection) => switch (selection) {
     AppVisualTheme.football => 'assets/theme/fondo_futbol.jpeg',
-    AppVisualTheme.tennis => 'assets/theme/fondo_tenis.jpeg',
+    AppVisualTheme.tennis => 'assets/theme/fondo_tenis_estilo_wimbledon_cesped.jpeg',
     AppVisualTheme.wimbledon => 'assets/theme/fondo_tenis_estilo_wimbledon_cesped.jpeg',
     AppVisualTheme.rolandGarros => 'assets/theme/fondo_tenis_estilo_roland_garros_polvoladrillo.jpeg',
     AppVisualTheme.usOpen => 'assets/theme/fondo_tenis_estilo_usopen_acrilicobitonoazul.jpeg',
