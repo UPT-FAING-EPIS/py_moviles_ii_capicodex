@@ -7,6 +7,8 @@ import 'package:gameon/features/perfil/viewmodels/perfil_viewmodel.dart';
 import 'package:gameon/features/perfil/views/perfil_view/authenticated/help_support_view.dart';
 import 'package:gameon/features/perfil/views/perfil_view/authenticated/notification_settings_view.dart';
 import 'package:provider/provider.dart';
+import 'package:gameon/core/theme/app_theme.dart';
+import 'package:gameon/core/theme/theme_controller.dart';
 
 String _formatDate(DateTime? dt) {
   if (dt == null) return '—';
@@ -588,6 +590,8 @@ class PerfilAuthenticatedView extends StatelessWidget {
       ),
       child: Column(
         children: [
+          _buildThemeOption(context),
+          Divider(height: 1, color: Colors.grey[200]),
           _buildOptionItem(
             context: context,
             icon: Icons.edit_outlined,
@@ -694,6 +698,44 @@ class PerfilAuthenticatedView extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildThemeOption(BuildContext context) {
+    return Consumer<ThemeController>(
+      builder: (context, themeController, _) {
+        return SwitchListTile.adaptive(
+          contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+          value: themeController.isDarkMode,
+          activeTrackColor: AppColors.primary,
+          activeThumbColor: Colors.white,
+          secondary: Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: AppColors.primary.withValues(alpha: .12),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(
+              themeController.isDarkMode
+                  ? Icons.dark_mode_outlined
+                  : Icons.light_mode_outlined,
+              color: AppColors.primary,
+              size: 20,
+            ),
+          ),
+          title: const Text(
+            'Modo oscuro',
+            style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
+          ),
+          subtitle: Text(
+            themeController.isDarkMode
+                ? 'Interfaz oscura activada'
+                : 'Usar interfaz clara',
+            style: TextStyle(fontSize: 12, color: Theme.of(context).hintColor),
+          ),
+          onChanged: themeController.setDarkMode,
+        );
+      },
     );
   }
 

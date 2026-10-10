@@ -9,6 +9,7 @@ import 'features/perfil/viewmodels/perfil_viewmodel.dart';
 import 'core/services/notification_service.dart';
 import 'core/services/notification_navigation_service.dart';
 import 'core/theme/app_theme.dart';
+import 'core/theme/theme_controller.dart';
 
 // ============================================================================
 // GLOBAL KEYS
@@ -52,6 +53,8 @@ void main() async {
   final navigationService = NotificationNavigationService(navigatorKey);
   notificationService = NotificationService(navigationService);
   await notificationService.initialize();
+  final themeController = ThemeController();
+  await themeController.load();
 
   // --------------------------------------------------------------------------
   // INICIAR LA APP
@@ -59,6 +62,7 @@ void main() async {
   runApp(
     MultiProvider(
       providers: [
+        ChangeNotifierProvider.value(value: themeController),
         ChangeNotifierProvider(
           create: (_) => PerfilViewModel(notificationService),
         ),
@@ -77,11 +81,12 @@ class MainApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final themeController = context.watch<ThemeController>();
     return MaterialApp(
       navigatorKey: navigatorKey,
       theme: AppTheme.light,
       darkTheme: AppTheme.dark,
-      themeMode: ThemeMode.system,
+      themeMode: themeController.mode,
       localizationsDelegates: const [
         GlobalMaterialLocalizations.delegate,
         GlobalWidgetsLocalizations.delegate,
