@@ -5,6 +5,7 @@ import 'package:gameon/features/perfil/viewmodels/perfil_viewmodel.dart';
 import 'package:gameon/features/perfil/views/login_page/login_page.dart';
 import '../../viewmodels/reservas_list_viewmodel.dart';
 import 'reserva_card.dart';
+import 'package:gameon/core/theme/app_theme.dart';
 
 class ReservasListView extends StatefulWidget {
   const ReservasListView({super.key});
@@ -48,6 +49,8 @@ class _ReservasListViewState extends State<ReservasListView> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
     // Barra de estado transparente con iconos claros
     final overlay = SystemUiOverlayStyle(
       statusBarColor: Colors.transparent,
@@ -61,7 +64,7 @@ class _ReservasListViewState extends State<ReservasListView> {
       return AnnotatedRegion<SystemUiOverlayStyle>(
         value: overlay,
         child: Scaffold(
-          backgroundColor: Colors.grey[50],
+          backgroundColor: theme.scaffoldBackgroundColor,
           body: Column(
             children: [
               // Header moderno con gradiente verde
@@ -70,7 +73,7 @@ class _ReservasListViewState extends State<ReservasListView> {
                   gradient: LinearGradient(
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
-                    colors: [Colors.green.shade600, Colors.green.shade800],
+                    colors: const [AppColors.primary, AppColors.primaryDark],
                   ),
                   borderRadius: const BorderRadius.only(
                     bottomLeft: Radius.circular(30),
@@ -146,7 +149,7 @@ class _ReservasListViewState extends State<ReservasListView> {
                           style: TextStyle(
                             fontSize: 22,
                             fontWeight: FontWeight.bold,
-                            color: Colors.black87,
+                            color: colors.onSurface,
                           ),
                         ),
                         const SizedBox(height: 8),
@@ -154,7 +157,7 @@ class _ReservasListViewState extends State<ReservasListView> {
                           'Debes iniciar sesión para ver tus reservas',
                           style: TextStyle(
                             fontSize: 14,
-                            color: Colors.grey[600],
+                            color: theme.hintColor,
                           ),
                           textAlign: TextAlign.center,
                         ),
@@ -169,7 +172,7 @@ class _ReservasListViewState extends State<ReservasListView> {
                             );
                           },
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.green[700],
+                            backgroundColor: AppColors.primary,
                             foregroundColor: Colors.white,
                             padding: const EdgeInsets.symmetric(
                               horizontal: 32,
@@ -207,7 +210,7 @@ class _ReservasListViewState extends State<ReservasListView> {
           future: _ensureData(),
           builder: (context, snapshot) {
             return Scaffold(
-              backgroundColor: Colors.grey[50],
+              backgroundColor: theme.scaffoldBackgroundColor,
               body: Column(
                 children: [
                   // Header moderno con gradiente verde
@@ -216,7 +219,7 @@ class _ReservasListViewState extends State<ReservasListView> {
                       gradient: LinearGradient(
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
-                        colors: [Colors.green.shade600, Colors.green.shade800],
+                        colors: const [AppColors.primary, AppColors.primaryDark],
                       ),
                       borderRadius: const BorderRadius.only(
                         bottomLeft: Radius.circular(30),
@@ -338,7 +341,7 @@ class _ReservasListViewState extends State<ReservasListView> {
                         if (m.cargando && m.reservas.isEmpty) {
                           return Center(
                             child: CircularProgressIndicator(
-                              color: Colors.green[600],
+                              color: AppColors.accent,
                             ),
                           );
                         }
@@ -359,7 +362,7 @@ class _ReservasListViewState extends State<ReservasListView> {
                                   style: TextStyle(
                                     fontSize: 18,
                                     fontWeight: FontWeight.w600,
-                                    color: Colors.black87,
+                                    color: colors.onSurface,
                                   ),
                                 ),
                                 const SizedBox(height: 8),
@@ -371,7 +374,7 @@ class _ReservasListViewState extends State<ReservasListView> {
                                     m.error!,
                                     style: TextStyle(
                                       fontSize: 14,
-                                      color: Colors.grey[500],
+                                      color: theme.hintColor,
                                     ),
                                     textAlign: TextAlign.center,
                                   ),
@@ -391,7 +394,7 @@ class _ReservasListViewState extends State<ReservasListView> {
                                   icon: const Icon(Icons.refresh),
                                   label: const Text('Reintentar'),
                                   style: ElevatedButton.styleFrom(
-                                    backgroundColor: Colors.green[700],
+                                    backgroundColor: AppColors.primary,
                                     foregroundColor: Colors.white,
                                     padding: const EdgeInsets.symmetric(
                                       horizontal: 24,
@@ -424,7 +427,7 @@ class _ReservasListViewState extends State<ReservasListView> {
                                   style: TextStyle(
                                     fontSize: 18,
                                     fontWeight: FontWeight.w600,
-                                    color: Colors.black87,
+                                    color: colors.onSurface,
                                   ),
                                 ),
                                 const SizedBox(height: 8),
@@ -436,7 +439,7 @@ class _ReservasListViewState extends State<ReservasListView> {
                                     'Cuando realices una reserva aparecerá aquí para que puedas hacer seguimiento fácilmente.',
                                     style: TextStyle(
                                       fontSize: 14,
-                                      color: Colors.grey[600],
+                                      color: theme.hintColor,
                                     ),
                                     textAlign: TextAlign.center,
                                   ),

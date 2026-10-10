@@ -4,6 +4,7 @@ import 'package:gameon/features/reservas/views/reservas_list/widgets/info_chip.d
 import 'package:provider/provider.dart';
 import '../../viewmodels/reservas_list_viewmodel.dart';
 import 'reserva_detail_view.dart';
+import 'package:gameon/core/theme/app_theme.dart';
 
 class ReservaCard extends StatefulWidget {
   final dynamic reserva; // Reserva
@@ -40,6 +41,9 @@ class ReservaCardState extends State<ReservaCard> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
     final r = widget.reserva;
     final estado = r.estado as String;
     final colorEstado = _estadoColor(estado, context);
@@ -61,15 +65,18 @@ class ReservaCardState extends State<ReservaCard> {
       margin: const EdgeInsets.only(bottom: 14),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(20),
-        color: Colors.white,
+        color: colors.surface,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(.08),
+            color: Colors.black.withValues(alpha: isDark ? .28 : .08),
             blurRadius: 15,
             offset: const Offset(0, 4),
           ),
         ],
-        border: Border.all(color: colorEstado.withOpacity(.15), width: 2),
+        border: Border.all(
+          color: colorEstado.withValues(alpha: isDark ? .50 : .15),
+          width: 2,
+        ),
       ),
       child: Material(
         color: Colors.transparent,
@@ -115,7 +122,7 @@ class ReservaCardState extends State<ReservaCard> {
                             style: TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.bold,
-                              color: Colors.grey[800],
+                              color: colors.onSurface,
                             ),
                           ),
                           const SizedBox(height: 4),
@@ -124,7 +131,7 @@ class ReservaCardState extends State<ReservaCard> {
                             style: TextStyle(
                               fontSize: 14,
                               fontWeight: FontWeight.w600,
-                              color: Colors.grey[700],
+                              color: colors.onSurface.withValues(alpha: .82),
                             ),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
@@ -164,7 +171,7 @@ class ReservaCardState extends State<ReservaCard> {
                       Icon(
                         Icons.location_on,
                         size: 16,
-                        color: Colors.grey[600],
+                        color: theme.hintColor,
                       ),
                       const SizedBox(width: 6),
                       Expanded(
@@ -172,7 +179,7 @@ class ReservaCardState extends State<ReservaCard> {
                           instNombre,
                           style: TextStyle(
                             fontSize: 13,
-                            color: Colors.grey[700],
+                            color: colors.onSurface.withValues(alpha: .82),
                             fontWeight: FontWeight.w600,
                           ),
                           maxLines: 1,
@@ -201,7 +208,7 @@ class ReservaCardState extends State<ReservaCard> {
                       InfoChip(
                         icon: Icons.payments,
                         label: 'S/. ${r.montoPagado.toStringAsFixed(2)}',
-                        color: Colors.green,
+                        color: AppColors.primary,
                       ),
                   ],
                 ),
@@ -228,7 +235,7 @@ class ReservaCardState extends State<ReservaCard> {
         return Colors.orange.shade600;
       case 'confirmada':
       case 'pagada':
-        return Colors.green.shade600;
+        return AppColors.primary;
       case 'cancelada':
         return Colors.red.shade600;
       default:
