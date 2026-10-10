@@ -5,6 +5,7 @@ import 'package:gameon/features/home/models/horario_atencion.dart';
 import 'package:gameon/features/home/models/deporte.dart';
 import 'package:gameon/features/home/viewmodels/institucion_detail_viewmodel.dart';
 import 'areas_deportivas_view.dart';
+import 'package:gameon/core/theme/app_theme.dart';
 
 class InstitucionDetailView extends StatefulWidget {
   final InstitucionDeportiva institucion;
@@ -31,6 +32,7 @@ class _InstitucionDetailViewState extends State<InstitucionDetailView> {
   @override
   Widget build(BuildContext context) {
     final institucion = widget.institucion;
+    final theme = Theme.of(context);
 
     // Barra de estado transparente como HomeView
     final overlay = SystemUiOverlayStyle(
@@ -42,7 +44,7 @@ class _InstitucionDetailViewState extends State<InstitucionDetailView> {
     final safeTop = MediaQuery.of(context).padding.top;
 
     return Scaffold(
-      backgroundColor: Colors.grey[50],
+      backgroundColor: theme.scaffoldBackgroundColor,
       body: AnnotatedRegion<SystemUiOverlayStyle>(
         value: overlay,
         child: Column(
@@ -76,8 +78,8 @@ class _InstitucionDetailViewState extends State<InstitucionDetailView> {
                                       begin: Alignment.topLeft,
                                       end: Alignment.bottomRight,
                                       colors: [
-                                        Colors.green[600]!,
-                                        Colors.green[800]!,
+                                        AppColors.primary,
+                                        AppColors.primaryDark,
                                       ],
                                     ),
                                   ),
@@ -96,8 +98,8 @@ class _InstitucionDetailViewState extends State<InstitucionDetailView> {
                                 begin: Alignment.topLeft,
                                 end: Alignment.bottomRight,
                                 colors: [
-                                  Colors.green[600]!,
-                                  Colors.green[800]!,
+                                  AppColors.primary,
+                                  AppColors.primaryDark,
                                 ],
                               ),
                             ),
@@ -205,23 +207,23 @@ class _InstitucionDetailViewState extends State<InstitucionDetailView> {
                     _buildMainActionButton(context, institucion),
                     const SizedBox(height: 20),
                     // Tarjeta de información de contacto
-                    _buildContactCard(institucion),
+                    _buildContactCard(context, institucion),
                     const SizedBox(height: 16),
                     // Tarjeta de precio
-                    _buildPriceCard(institucion),
+                    _buildPriceCard(context, institucion),
                     const SizedBox(height: 16),
                     // Tarjeta de descripción (si existe)
                     if (institucion.descripcion != null &&
                         institucion.descripcion!.isNotEmpty)
-                      _buildDescriptionCard(institucion),
+                      _buildDescriptionCard(context, institucion),
                     if (institucion.descripcion != null &&
                         institucion.descripcion!.isNotEmpty)
                       const SizedBox(height: 16),
                     // Tarjeta de horarios
-                    _buildScheduleCard(),
+                    _buildScheduleCard(context),
                     const SizedBox(height: 16),
                     // Tarjeta de deportes
-                    _buildSportsCard(),
+                    _buildSportsCard(context),
                     const SizedBox(height: 24),
                   ],
                 ),
@@ -268,12 +270,12 @@ class _InstitucionDetailViewState extends State<InstitucionDetailView> {
         gradient: LinearGradient(
           begin: Alignment.centerLeft,
           end: Alignment.centerRight,
-          colors: [Colors.green[600]!, Colors.green[700]!],
+          colors: const [AppColors.primary, AppColors.primaryDark],
         ),
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Colors.green.withOpacity(0.3),
+            color: AppColors.primary.withValues(alpha: 0.3),
             blurRadius: 15,
             offset: const Offset(0, 8),
           ),
@@ -328,10 +330,16 @@ class _InstitucionDetailViewState extends State<InstitucionDetailView> {
     );
   }
 
-  Widget _buildContactCard(InstitucionDeportiva institucion) {
+  Widget _buildContactCard(BuildContext context, InstitucionDeportiva institucion) {
+    final theme = Theme.of(context);
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: theme.colorScheme.surface,
+        border: Border.all(
+          color: theme.brightness == Brightness.dark
+              ? AppColors.primaryDark
+              : Colors.transparent,
+        ),
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
@@ -351,12 +359,12 @@ class _InstitucionDetailViewState extends State<InstitucionDetailView> {
                 Container(
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: Colors.green[50],
+                    color: AppColors.primary.withValues(alpha: .12),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Icon(
                     Icons.contact_phone_outlined,
-                    color: Colors.green[700],
+                    color: AppColors.primary,
                     size: 24,
                   ),
                 ),
@@ -366,20 +374,22 @@ class _InstitucionDetailViewState extends State<InstitucionDetailView> {
                   style: TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
-                    color: Colors.green[700],
+                    color: AppColors.primary,
                   ),
                 ),
               ],
             ),
             const SizedBox(height: 20),
             _buildContactRow(
+              context,
               Icons.phone_outlined,
               'Teléfono',
               institucion.telefono,
-              Colors.blue,
+              AppColors.accent,
             ),
             const SizedBox(height: 12),
             _buildContactRow(
+              context,
               Icons.email_outlined,
               'Email',
               institucion.email,
@@ -387,6 +397,7 @@ class _InstitucionDetailViewState extends State<InstitucionDetailView> {
             ),
             const SizedBox(height: 12),
             _buildContactRow(
+              context,
               Icons.location_on_outlined,
               'Dirección',
               institucion.direccion,
@@ -399,6 +410,7 @@ class _InstitucionDetailViewState extends State<InstitucionDetailView> {
   }
 
   Widget _buildContactRow(
+    BuildContext context,
     IconData icon,
     String label,
     String value,
@@ -407,9 +419,11 @@ class _InstitucionDetailViewState extends State<InstitucionDetailView> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.grey[50],
+        color: Theme.of(context).brightness == Brightness.dark
+            ? AppColors.darkBackground
+            : Colors.grey[50],
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey[200]!),
+        border: Border.all(color: Theme.of(context).dividerColor),
       ),
       child: Row(
         children: [
@@ -430,17 +444,17 @@ class _InstitucionDetailViewState extends State<InstitucionDetailView> {
                   label,
                   style: TextStyle(
                     fontSize: 12,
-                    color: Colors.grey[600],
+                    color: Theme.of(context).hintColor,
                     fontWeight: FontWeight.w500,
                   ),
                 ),
                 const SizedBox(height: 2),
                 Text(
                   value,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 15,
                     fontWeight: FontWeight.w600,
-                    color: Colors.black87,
+                    color: Theme.of(context).colorScheme.onSurface,
                   ),
                 ),
               ],
@@ -451,10 +465,16 @@ class _InstitucionDetailViewState extends State<InstitucionDetailView> {
     );
   }
 
-  Widget _buildPriceCard(InstitucionDeportiva institucion) {
+  Widget _buildPriceCard(BuildContext context, InstitucionDeportiva institucion) {
+    final theme = Theme.of(context);
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: theme.colorScheme.surface,
+        border: Border.all(
+          color: theme.brightness == Brightness.dark
+              ? AppColors.primaryDark
+              : Colors.transparent,
+        ),
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
@@ -472,7 +492,7 @@ class _InstitucionDetailViewState extends State<InstitucionDetailView> {
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
                 gradient: LinearGradient(
-                  colors: [Colors.green[600]!, Colors.green[700]!],
+                  colors: const [AppColors.primary, AppColors.primaryDark],
                 ),
                 borderRadius: BorderRadius.circular(16),
               ),
@@ -491,7 +511,7 @@ class _InstitucionDetailViewState extends State<InstitucionDetailView> {
                     'Tarifa desde',
                     style: TextStyle(
                       fontSize: 14,
-                      color: Colors.grey[600],
+                      color: theme.hintColor,
                       fontWeight: FontWeight.w500,
                     ),
                   ),
@@ -501,12 +521,12 @@ class _InstitucionDetailViewState extends State<InstitucionDetailView> {
                     style: TextStyle(
                       fontSize: 28,
                       fontWeight: FontWeight.bold,
-                      color: Colors.green[700],
+                      color: AppColors.primary,
                     ),
                   ),
                   Text(
                     'por hora',
-                    style: TextStyle(fontSize: 12, color: Colors.grey[500]),
+                    style: TextStyle(fontSize: 12, color: theme.hintColor),
                   ),
                 ],
               ),
@@ -514,14 +534,14 @@ class _InstitucionDetailViewState extends State<InstitucionDetailView> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               decoration: BoxDecoration(
-                color: Colors.green[50],
+                color: AppColors.primary.withValues(alpha: .12),
                 borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: Colors.green[200]!),
+                border: Border.all(color: AppColors.primaryDark),
               ),
               child: Text(
                 'Mejor precio',
                 style: TextStyle(
-                  color: Colors.green[700],
+                  color: AppColors.primary,
                   fontWeight: FontWeight.bold,
                   fontSize: 12,
                 ),
@@ -533,10 +553,19 @@ class _InstitucionDetailViewState extends State<InstitucionDetailView> {
     );
   }
 
-  Widget _buildDescriptionCard(InstitucionDeportiva institucion) {
+  Widget _buildDescriptionCard(
+    BuildContext context,
+    InstitucionDeportiva institucion,
+  ) {
+    final theme = Theme.of(context);
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: theme.colorScheme.surface,
+        border: Border.all(
+          color: theme.brightness == Brightness.dark
+              ? AppColors.primaryDark
+              : Colors.transparent,
+        ),
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
@@ -556,12 +585,12 @@ class _InstitucionDetailViewState extends State<InstitucionDetailView> {
                 Container(
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: Colors.green[50],
+                    color: AppColors.primary.withValues(alpha: .12),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Icon(
                     Icons.description_outlined,
-                    color: Colors.green[700],
+                    color: AppColors.primary,
                     size: 24,
                   ),
                 ),
@@ -571,7 +600,7 @@ class _InstitucionDetailViewState extends State<InstitucionDetailView> {
                   style: TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
-                    color: Colors.green[700],
+                    color: AppColors.primary,
                   ),
                 ),
               ],
@@ -582,7 +611,7 @@ class _InstitucionDetailViewState extends State<InstitucionDetailView> {
               style: TextStyle(
                 fontSize: 15,
                 height: 1.6,
-                color: Colors.grey[700],
+                color: theme.colorScheme.onSurface.withValues(alpha: .78),
               ),
             ),
           ],
@@ -591,10 +620,16 @@ class _InstitucionDetailViewState extends State<InstitucionDetailView> {
     );
   }
 
-  Widget _buildScheduleCard() {
+  Widget _buildScheduleCard(BuildContext context) {
+    final theme = Theme.of(context);
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: theme.colorScheme.surface,
+        border: Border.all(
+          color: theme.brightness == Brightness.dark
+              ? AppColors.primaryDark
+              : Colors.transparent,
+        ),
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
@@ -614,12 +649,12 @@ class _InstitucionDetailViewState extends State<InstitucionDetailView> {
                 Container(
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: Colors.green[50],
+                    color: AppColors.primary.withValues(alpha: .12),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Icon(
                     Icons.access_time_outlined,
-                    color: Colors.green[700],
+                    color: AppColors.primary,
                     size: 24,
                   ),
                 ),
@@ -629,7 +664,7 @@ class _InstitucionDetailViewState extends State<InstitucionDetailView> {
                   style: TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
-                    color: Colors.green[700],
+                    color: AppColors.primary,
                   ),
                 ),
               ],
@@ -643,7 +678,7 @@ class _InstitucionDetailViewState extends State<InstitucionDetailView> {
                     padding: const EdgeInsets.symmetric(vertical: 20),
                     child: Center(
                       child: CircularProgressIndicator(
-                        color: Colors.green[600],
+                        color: AppColors.accent,
                       ),
                     ),
                   );
@@ -661,7 +696,9 @@ class _InstitucionDetailViewState extends State<InstitucionDetailView> {
                   );
                 }
                 return Column(
-                  children: horarios.map((h) => _buildScheduleItem(h)).toList(),
+                  children: horarios
+                      .map((h) => _buildScheduleItem(context, h))
+                      .toList(),
                 );
               },
             ),
@@ -671,14 +708,16 @@ class _InstitucionDetailViewState extends State<InstitucionDetailView> {
     );
   }
 
-  Widget _buildScheduleItem(HorarioAtencion horario) {
+  Widget _buildScheduleItem(BuildContext context, HorarioAtencion horario) {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.grey[50],
+        color: Theme.of(context).brightness == Brightness.dark
+            ? AppColors.darkBackground
+            : Colors.grey[50],
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey[200]!),
+        border: Border.all(color: Theme.of(context).dividerColor),
       ),
       child: Row(
         children: [
@@ -686,7 +725,7 @@ class _InstitucionDetailViewState extends State<InstitucionDetailView> {
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             decoration: BoxDecoration(
               gradient: LinearGradient(
-                colors: [Colors.green[600]!, Colors.green[700]!],
+                colors: const [AppColors.primary, AppColors.primaryDark],
               ),
               borderRadius: BorderRadius.circular(8),
             ),
@@ -700,14 +739,14 @@ class _InstitucionDetailViewState extends State<InstitucionDetailView> {
             ),
           ),
           const SizedBox(width: 16),
-          Icon(Icons.schedule, size: 18, color: Colors.grey[600]),
+          Icon(Icons.schedule, size: 18, color: Theme.of(context).hintColor),
           const SizedBox(width: 8),
           Text(
             '${horario.horaApertura} - ${horario.horaCierre}',
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 15,
               fontWeight: FontWeight.w600,
-              color: Colors.black87,
+              color: Theme.of(context).colorScheme.onSurface,
             ),
           ),
         ],
@@ -715,10 +754,16 @@ class _InstitucionDetailViewState extends State<InstitucionDetailView> {
     );
   }
 
-  Widget _buildSportsCard() {
+  Widget _buildSportsCard(BuildContext context) {
+    final theme = Theme.of(context);
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: theme.colorScheme.surface,
+        border: Border.all(
+          color: theme.brightness == Brightness.dark
+              ? AppColors.primaryDark
+              : Colors.transparent,
+        ),
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
@@ -787,7 +832,9 @@ class _InstitucionDetailViewState extends State<InstitucionDetailView> {
                 return Wrap(
                   spacing: 12,
                   runSpacing: 12,
-                  children: deportes.map((d) => _buildSportChip(d)).toList(),
+                  children: deportes
+                      .map((d) => _buildSportChip(context, d))
+                      .toList(),
                 );
               },
             ),
@@ -797,7 +844,7 @@ class _InstitucionDetailViewState extends State<InstitucionDetailView> {
     );
   }
 
-  Widget _buildSportChip(Deporte deporte) {
+  Widget _buildSportChip(BuildContext context, Deporte deporte) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
