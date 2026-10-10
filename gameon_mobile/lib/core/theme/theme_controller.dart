@@ -1,29 +1,28 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'app_theme.dart';
 
 /// Persiste la preferencia visual elegida desde el perfil.
 class ThemeController extends ChangeNotifier {
-  static const _preferenceKey = 'dark_mode_enabled';
-  ThemeMode _mode = ThemeMode.system;
+  static const _preferenceKey = 'visual_theme';
+  AppVisualTheme _selection = AppVisualTheme.light;
 
-  ThemeMode get mode => _mode;
-  bool get isDarkMode => _mode == ThemeMode.dark;
+  AppVisualTheme get selection => _selection;
+  bool get isDarkMode => _selection == AppVisualTheme.dark;
 
   Future<void> load() async {
     final preferences = await SharedPreferences.getInstance();
-    final enabled = preferences.getBool(_preferenceKey);
-    _mode = enabled == null
-        ? ThemeMode.system
-        : enabled
-        ? ThemeMode.dark
-        : ThemeMode.light;
+    final saved = preferences.getString(_preferenceKey);
+    final legacyDarkMode = preferences.getBool('dark_mode_enabled');
+    _selection = AppVisualTheme.values.where((item) => item.name == saved).firstOrNull ??
+        (legacyDarkMode == true ? AppVisualTheme.dark : AppVisualTheme.light);
     notifyListeners();
   }
 
-  Future<void> setDarkMode(bool enabled) async {
-    _mode = enabled ? ThemeMode.dark : ThemeMode.light;
+  Future<void> select(AppVisualTheme selection) async {
+    _selection = selection;
     notifyListeners();
     final preferences = await SharedPreferences.getInstance();
-    await preferences.setBool(_preferenceKey, enabled);
+    await preferences.setString(_preferenceKey, selection.name);
   }
 }

@@ -745,40 +745,49 @@ class PerfilAuthenticatedView extends StatelessWidget {
   Widget _buildThemeOption(BuildContext context) {
     return Consumer<ThemeController>(
       builder: (context, themeController, _) {
-        return SwitchListTile.adaptive(
+        return ListTile(
           contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-          value: themeController.isDarkMode,
-          activeTrackColor: AppColors.primary,
-          activeThumbColor: Colors.white,
-          secondary: Container(
+          leading: Container(
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: AppColors.primary.withValues(alpha: .12),
+              color: Theme.of(context).colorScheme.primary.withValues(alpha: .12),
               borderRadius: BorderRadius.circular(12),
             ),
             child: Icon(
-              themeController.isDarkMode
-                  ? Icons.dark_mode_outlined
-                  : Icons.light_mode_outlined,
-              color: AppColors.primary,
+              _themeIcon(themeController.selection),
+              color: Theme.of(context).colorScheme.primary,
               size: 20,
             ),
           ),
           title: const Text(
-            'Modo oscuro',
+            'Tema visual',
             style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
           ),
-          subtitle: Text(
-            themeController.isDarkMode
-                ? 'Interfaz oscura activada'
-                : 'Usar interfaz clara',
-            style: TextStyle(fontSize: 12, color: Theme.of(context).hintColor),
+          subtitle: Text('Claro, Oscuro, Fútbol o Tenis'),
+          trailing: DropdownButton<AppVisualTheme>(
+            value: themeController.selection,
+            underline: const SizedBox(),
+            onChanged: (selection) {
+              if (selection != null) themeController.select(selection);
+            },
+            items: const [
+              DropdownMenuItem(value: AppVisualTheme.light, child: Text('Claro')),
+              DropdownMenuItem(value: AppVisualTheme.dark, child: Text('Oscuro')),
+              DropdownMenuItem(value: AppVisualTheme.football, child: Text('Fútbol')),
+              DropdownMenuItem(value: AppVisualTheme.tennis, child: Text('Tenis')),
+            ],
           ),
-          onChanged: themeController.setDarkMode,
         );
       },
     );
   }
+
+  IconData _themeIcon(AppVisualTheme selection) => switch (selection) {
+    AppVisualTheme.light => Icons.light_mode_outlined,
+    AppVisualTheme.dark => Icons.dark_mode_outlined,
+    AppVisualTheme.football => Icons.sports_soccer_outlined,
+    AppVisualTheme.tennis => Icons.sports_tennis_outlined,
+  };
 
   void _navigateToEditPerfil(BuildContext context) {
     // Obtener el PerfilViewModel del contexto actual

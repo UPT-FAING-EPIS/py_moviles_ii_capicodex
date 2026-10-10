@@ -84,9 +84,8 @@ class MainApp extends StatelessWidget {
     final themeController = context.watch<ThemeController>();
     return MaterialApp(
       navigatorKey: navigatorKey,
-      theme: AppTheme.light,
-      darkTheme: AppTheme.dark,
-      themeMode: themeController.mode,
+      theme: AppTheme.forVisualTheme(themeController.selection),
+      themeMode: ThemeMode.light,
       localizationsDelegates: const [
         GlobalMaterialLocalizations.delegate,
         GlobalWidgetsLocalizations.delegate,

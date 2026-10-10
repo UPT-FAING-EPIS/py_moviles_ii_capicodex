@@ -13,6 +13,7 @@ import 'package:provider/provider.dart';
 import 'package:gameon/features/perfil/viewmodels/perfil_viewmodel.dart';
 import 'package:gameon/features/perfil/views/login_page/login_page.dart';
 import 'package:gameon/core/theme/app_theme.dart';
+import 'package:gameon/core/theme/theme_controller.dart';
 
 // HomeView: controla tabs y bottom navigation
 class HomeView extends StatefulWidget {
@@ -218,6 +219,9 @@ class _HomeTabScaffoldState extends State<HomeTabScaffold> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
+    final backgroundImage = AppTheme.headerBackgroundFor(
+      context.watch<ThemeController>().selection,
+    );
     final safeTop = MediaQuery.of(
       context,
     ).padding.top; // para extender el header tras la barra de estado
@@ -242,8 +246,20 @@ class _HomeTabScaffoldState extends State<HomeTabScaffold> {
                 gradient: LinearGradient(
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
-                  colors: const [AppColors.primary, AppColors.primaryDark],
+                  colors: [
+                    colors.primary.withValues(alpha: backgroundImage == null ? 1 : .82),
+                    colors.primaryContainer.withValues(
+                      alpha: backgroundImage == null ? 1 : .88,
+                    ),
+                  ],
                 ),
+                image: backgroundImage == null
+                    ? null
+                    : DecorationImage(
+                        image: AssetImage(backgroundImage),
+                        fit: BoxFit.cover,
+                        opacity: .42,
+                      ),
                 borderRadius: const BorderRadius.only(
                   bottomLeft: Radius.circular(30),
                   bottomRight: Radius.circular(30),

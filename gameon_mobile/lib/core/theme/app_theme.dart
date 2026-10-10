@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+enum AppVisualTheme { light, dark, football, tennis }
+
 /// Paleta compartida de GameOn. Mantiene el modo claro existente y aporta una
 /// base oscura consistente para las nuevas pantallas.
 abstract final class AppColors {
@@ -12,6 +14,85 @@ abstract final class AppColors {
 }
 
 abstract final class AppTheme {
+  static String? headerBackgroundFor(AppVisualTheme selection) => switch (selection) {
+    AppVisualTheme.football => 'assets/theme/fondo_futbol.jpeg',
+    AppVisualTheme.tennis => 'assets/theme/fondo_tenis.jpeg',
+    _ => null,
+  };
+
+  static ThemeData forVisualTheme(AppVisualTheme selection) => switch (selection) {
+    AppVisualTheme.light => light,
+    AppVisualTheme.dark => dark,
+    AppVisualTheme.football => _sportTheme(
+      brightness: Brightness.dark,
+      primary: const Color(0xFFB6D63A),
+      secondary: const Color(0xFFE8F46A),
+      background: const Color(0xFF0D2417),
+      surface: const Color(0xFF193A25),
+      onSurface: const Color(0xFFF2F7E9),
+      border: const Color(0xFFDAF27A),
+    ),
+    AppVisualTheme.tennis => _sportTheme(
+      brightness: Brightness.light,
+      primary: const Color(0xFF176B86),
+      secondary: const Color(0xFFD4E640),
+      background: const Color(0xFFF1E4C8),
+      surface: const Color(0xFFFCF5E7),
+      onSurface: const Color(0xFF17333D),
+      border: const Color(0xFF4C8CA2),
+    ),
+  };
+
+  static ThemeData _sportTheme({
+    required Brightness brightness,
+    required Color primary,
+    required Color secondary,
+    required Color background,
+    required Color surface,
+    required Color onSurface,
+    required Color border,
+  }) {
+    final scheme = ColorScheme.fromSeed(
+      seedColor: primary,
+      brightness: brightness,
+      primary: primary,
+      secondary: secondary,
+      surface: surface,
+      onSurface: onSurface,
+    );
+    return ThemeData(
+      useMaterial3: true,
+      colorScheme: scheme,
+      scaffoldBackgroundColor: background,
+      dividerColor: border.withValues(alpha: .55),
+      cardTheme: CardThemeData(
+        color: surface,
+        elevation: 0,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(18),
+          side: BorderSide(color: border),
+        ),
+      ),
+      filledButtonTheme: FilledButtonThemeData(
+        style: FilledButton.styleFrom(
+          backgroundColor: primary,
+          foregroundColor: brightness == Brightness.dark
+              ? Colors.black
+              : Colors.white,
+          side: BorderSide(color: border),
+        ),
+      ),
+      inputDecorationTheme: InputDecorationTheme(
+        filled: true,
+        fillColor: surface,
+        hintStyle: TextStyle(color: onSurface.withValues(alpha: .65)),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide: BorderSide(color: border),
+        ),
+      ),
+    );
+  }
   static ThemeData get light => ThemeData(
     useMaterial3: true,
     colorScheme: ColorScheme.fromSeed(
