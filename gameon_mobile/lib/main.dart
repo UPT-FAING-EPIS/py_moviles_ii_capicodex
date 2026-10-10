@@ -8,6 +8,7 @@ import 'features/home/views/home_view.dart';
 import 'features/perfil/viewmodels/perfil_viewmodel.dart';
 import 'core/services/notification_service.dart';
 import 'core/services/notification_navigation_service.dart';
+import 'core/theme/app_theme.dart';
 
 // ============================================================================
 // GLOBAL KEYS
@@ -78,6 +79,9 @@ class MainApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       navigatorKey: navigatorKey,
+      theme: AppTheme.light,
+      darkTheme: AppTheme.dark,
+      themeMode: ThemeMode.system,
       localizationsDelegates: const [
         GlobalMaterialLocalizations.delegate,
         GlobalWidgetsLocalizations.delegate,
