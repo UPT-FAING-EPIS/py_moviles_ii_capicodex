@@ -23,4 +23,14 @@ class HorarioAtencion {
       horaCierre: json['hora_cierre'],
     );
   }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'institucion_deportiva_id': institucionDeportivaId,
+      'dia': dia,
+      'hora_apertura': horaApertura,
+      'hora_cierre': horaCierre,
+    };
+  }
 }

@@ -9,8 +9,13 @@ import 'package:gameon/core/theme/app_theme.dart';
 
 class InstitucionDetailView extends StatefulWidget {
   final InstitucionDeportiva institucion;
+  final InstitucionDetailViewModel? viewModel;
 
-  const InstitucionDetailView({super.key, required this.institucion});
+  const InstitucionDetailView({
+    super.key,
+    required this.institucion,
+    this.viewModel,
+  });
 
   @override
   State<InstitucionDetailView> createState() => _InstitucionDetailViewState();
@@ -18,15 +23,38 @@ class InstitucionDetailView extends StatefulWidget {
 
 class _InstitucionDetailViewState extends State<InstitucionDetailView> {
   late InstitucionDetailViewModel viewModel;
-  late Future<List<HorarioAtencion>> _horariosFuture;
-  late Future<List<Deporte>> _deportesFuture;
+  late final bool _isCustomViewModel;
 
   @override
   void initState() {
     super.initState();
-    viewModel = InstitucionDetailViewModel(widget.institucion.id);
-    _horariosFuture = viewModel.fetchHorarios();
-    _deportesFuture = viewModel.fetchDeportes();
+    _isCustomViewModel = widget.viewModel != null;
+    viewModel = widget.viewModel ?? InstitucionDetailViewModel(widget.institucion.id);
+    viewModel.addListener(_onViewModelUpdate);
+
+    // Si no tiene datos ya cargados previamente en el viewModel personalizado, cargar
+    if (!_isCustomViewModel ||
+        (viewModel.horarios.isEmpty &&
+            viewModel.deportes.isEmpty &&
+            viewModel.servicios.isEmpty &&
+            viewModel.errorMessage == null)) {
+      viewModel.loadDetail(institucion: widget.institucion);
+    }
+  }
+
+  @override
+  void dispose() {
+    viewModel.removeListener(_onViewModelUpdate);
+    if (!_isCustomViewModel) {
+      viewModel.dispose();
+    }
+    super.dispose();
+  }
+
+  void _onViewModelUpdate() {
+    if (mounted) {
+      setState(() {});
+    }
   }
 
   @override
@@ -34,8 +62,8 @@ class _InstitucionDetailViewState extends State<InstitucionDetailView> {
     final institucion = widget.institucion;
     final theme = Theme.of(context);
 
-    // Barra de estado transparente como HomeView
-    final overlay = SystemUiOverlayStyle(
+    // Barra de estado transparente
+    final overlay = const SystemUiOverlayStyle(
       statusBarColor: Colors.transparent,
       statusBarIconBrightness: Brightness.light,
       statusBarBrightness: Brightness.dark,
@@ -50,178 +78,53 @@ class _InstitucionDetailViewState extends State<InstitucionDetailView> {
         child: Column(
           children: [
             // Header con imagen de fondo de la institución
-            Container(
-              height: 300,
-              decoration: BoxDecoration(
-                borderRadius: const BorderRadius.only(
-                  bottomLeft: Radius.circular(30),
-                  bottomRight: Radius.circular(30),
-                ),
-              ),
-              child: Stack(
-                fit: StackFit.expand,
-                children: [
-                  // Imagen de fondo
-                  ClipRRect(
-                    borderRadius: const BorderRadius.only(
-                      bottomLeft: Radius.circular(30),
-                      bottomRight: Radius.circular(30),
-                    ),
-                    child: institucion.imagen != null
-                        ? Image.network(
-                            institucion.imagen!,
-                            fit: BoxFit.cover,
-                            errorBuilder: (context, error, stackTrace) =>
-                                Container(
-                                  decoration: BoxDecoration(
-                                    gradient: LinearGradient(
-                                      begin: Alignment.topLeft,
-                                      end: Alignment.bottomRight,
-                                      colors: [
-                                        AppColors.primary,
-                                        AppColors.primaryDark,
-                                      ],
-                                    ),
-                                  ),
-                                  child: const Center(
-                                    child: Icon(
-                                      Icons.sports_soccer,
-                                      size: 80,
-                                      color: Colors.white,
-                                    ),
-                                  ),
-                                ),
-                          )
-                        : Container(
-                            decoration: BoxDecoration(
-                              gradient: LinearGradient(
-                                begin: Alignment.topLeft,
-                                end: Alignment.bottomRight,
-                                colors: [
-                                  AppColors.primary,
-                                  AppColors.primaryDark,
-                                ],
-                              ),
-                            ),
-                            child: const Center(
-                              child: Icon(
-                                Icons.sports_soccer,
-                                size: 80,
-                                color: Colors.white,
-                              ),
-                            ),
-                          ),
-                  ),
-                  // Overlay oscuro para mejorar legibilidad del texto
-                  Container(
-                    decoration: BoxDecoration(
-                      borderRadius: const BorderRadius.only(
-                        bottomLeft: Radius.circular(30),
-                        bottomRight: Radius.circular(30),
-                      ),
-                      gradient: LinearGradient(
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                        colors: [
-                          Colors.black.withOpacity(0.3),
-                          Colors.black.withOpacity(0.7),
-                        ],
-                      ),
-                    ),
-                  ),
-                  // Contenido del header
-                  Padding(
-                    padding: EdgeInsets.fromLTRB(24, 12 + safeTop, 24, 20),
-                    child: Column(
-                      children: [
-                        // Barra de navegación superior
-                        Row(
-                          children: [
-                            IconButton(
-                              icon: const Icon(
-                                Icons.arrow_back,
-                                color: Colors.white,
-                                size: 24,
-                              ),
-                              onPressed: () => Navigator.pop(context),
-                              padding: EdgeInsets.zero,
-                              constraints: const BoxConstraints(),
-                            ),
-                          ],
-                        ),
-                        const Spacer(),
-                        // Información en la parte inferior
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              institucion.nombre,
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 28,
-                                fontWeight: FontWeight.bold,
-                              ),
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                            const SizedBox(height: 8),
-                            Row(
-                              children: [
-                                const Icon(
-                                  Icons.location_on_outlined,
-                                  color: Colors.white70,
-                                  size: 16,
-                                ),
-                                const SizedBox(width: 4),
-                                Expanded(
-                                  child: Text(
-                                    institucion.direccion,
-                                    style: const TextStyle(
-                                      color: Colors.white70,
-                                      fontSize: 14,
-                                    ),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                ),
-                                const SizedBox(width: 12),
-                                _buildHeaderRating(institucion.calificacion),
-                              ],
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 20),
+            _buildHeader(context, institucion, safeTop),
+            const SizedBox(height: 16),
             // Contenido scrolleable
             Expanded(
               child: SingleChildScrollView(
                 padding: const EdgeInsets.symmetric(horizontal: 20),
                 child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
+                    // Aviso de modo sin conexión con datos en caché
+                    if (viewModel.isFromCache) _buildOfflineWarningBanner(context),
+
+                    // Mensaje de error general si falló y no hay caché
+                    if (viewModel.errorMessage != null && !viewModel.isFromCache)
+                      _buildGeneralErrorBanner(context),
+
                     // Botón principal para ver áreas deportivas
                     _buildMainActionButton(context, institucion),
                     const SizedBox(height: 20),
+
                     // Tarjeta de información de contacto
                     _buildContactCard(context, institucion),
                     const SizedBox(height: 16),
-                    // Tarjeta de precio
+
+                    // Tarjeta de precio / tarifa
                     _buildPriceCard(context, institucion),
                     const SizedBox(height: 16),
+
                     // Tarjeta de descripción (si existe)
                     if (institucion.descripcion != null &&
-                        institucion.descripcion!.isNotEmpty)
+                        institucion.descripcion!.isNotEmpty) ...[
                       _buildDescriptionCard(context, institucion),
-                    if (institucion.descripcion != null &&
-                        institucion.descripcion!.isNotEmpty)
                       const SizedBox(height: 16),
+                    ],
+
+                    // Tarjeta de fotografías
+                    _buildPhotosCard(context),
+                    const SizedBox(height: 16),
+
+                    // Tarjeta de servicios complementarios
+                    _buildServicesCard(context),
+                    const SizedBox(height: 16),
+
                     // Tarjeta de horarios
                     _buildScheduleCard(context),
                     const SizedBox(height: 16),
+
                     // Tarjeta de deportes
                     _buildSportsCard(context),
                     const SizedBox(height: 24),
@@ -235,11 +138,146 @@ class _InstitucionDetailViewState extends State<InstitucionDetailView> {
     );
   }
 
+  Widget _buildHeader(
+    BuildContext context,
+    InstitucionDeportiva institucion,
+    double safeTop,
+  ) {
+    final hasImage = institucion.imagen != null && institucion.imagen!.isNotEmpty;
+
+    return Container(
+      height: 300,
+      decoration: const BoxDecoration(
+        borderRadius: BorderRadius.only(
+          bottomLeft: Radius.circular(30),
+          bottomRight: Radius.circular(30),
+        ),
+      ),
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          // Imagen de fondo
+          ClipRRect(
+            borderRadius: const BorderRadius.only(
+              bottomLeft: Radius.circular(30),
+              bottomRight: Radius.circular(30),
+            ),
+            child: hasImage
+                ? Image.network(
+                    institucion.imagen!,
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) =>
+                        _buildHeaderFallback(),
+                  )
+                : _buildHeaderFallback(),
+          ),
+          // Overlay oscuro para mejorar legibilidad del texto
+          Container(
+            decoration: BoxDecoration(
+              borderRadius: const BorderRadius.only(
+                bottomLeft: Radius.circular(30),
+                bottomRight: Radius.circular(30),
+              ),
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  Colors.black.withValues(alpha: 0.3),
+                  Colors.black.withValues(alpha: 0.7),
+                ],
+              ),
+            ),
+          ),
+          // Contenido del header
+          Padding(
+            padding: EdgeInsets.fromLTRB(24, 12 + safeTop, 24, 20),
+            child: Column(
+              children: [
+                // Barra de navegación superior
+                Row(
+                  children: [
+                    IconButton(
+                      key: const Key('institucion_back_button'),
+                      icon: const Icon(
+                        Icons.arrow_back,
+                        color: Colors.white,
+                        size: 24,
+                      ),
+                      onPressed: () => Navigator.pop(context),
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
+                    ),
+                  ],
+                ),
+                const Spacer(),
+                // Información en la parte inferior
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      institucion.nombre,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 28,
+                        fontWeight: FontWeight.bold,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        const Icon(
+                          Icons.location_on_outlined,
+                          color: Colors.white70,
+                          size: 16,
+                        ),
+                        const SizedBox(width: 4),
+                        Expanded(
+                          child: Text(
+                            institucion.direccion,
+                            style: const TextStyle(
+                              color: Colors.white70,
+                              fontSize: 14,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        _buildHeaderRating(institucion.calificacion),
+                      ],
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildHeaderFallback() {
+    return Container(
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [AppColors.primary, AppColors.primaryDark],
+        ),
+      ),
+      child: const Center(
+        child: Icon(Icons.sports_soccer, size: 80, color: Colors.white),
+      ),
+    );
+  }
+
   Widget _buildHeaderRating(double calificacion) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.2),
+        color: Colors.white.withValues(alpha: 0.2),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
@@ -260,6 +298,124 @@ class _InstitucionDetailViewState extends State<InstitucionDetailView> {
     );
   }
 
+  /// Banner de advertencia cuando se cargan datos guardados previamente en modo sin conexión
+  Widget _buildOfflineWarningBanner(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.amber.shade50,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.amber.shade400, width: 1.5),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.amber.withValues(alpha: 0.15),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.wifi_off_rounded, color: Colors.amber.shade900, size: 24),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  'Modo sin conexión',
+                  style: TextStyle(
+                    color: Colors.amber.shade900,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 15,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Text(
+            'Estás viendo la información guardada. Los datos podrían estar desactualizados.',
+            style: TextStyle(
+              color: Colors.amber.shade900,
+              fontSize: 13,
+              height: 1.3,
+            ),
+          ),
+          const SizedBox(height: 12),
+          Align(
+            alignment: Alignment.centerRight,
+            child: ElevatedButton.icon(
+              key: const Key('offline_retry_button'),
+              onPressed: () => viewModel.loadDetail(
+                institucion: widget.institucion,
+                isRetry: true,
+              ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.amber.shade800,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+              icon: const Icon(Icons.refresh, size: 16),
+              label: const Text('Reintentar', style: TextStyle(fontWeight: FontWeight.bold)),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Banner cuando el servidor falla (ej: error 500) y no hay datos en caché
+  Widget _buildGeneralErrorBanner(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.red.shade50,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.red.shade300, width: 1.5),
+      ),
+      child: Column(
+        children: [
+          Icon(Icons.error_outline_rounded, color: Colors.red.shade700, size: 40),
+          const SizedBox(height: 10),
+          Text(
+            viewModel.errorMessage ??
+                'No fue posible cargar los detalles de la instalación.',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: Colors.red.shade900,
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: 14),
+          ElevatedButton.icon(
+            key: const Key('error_retry_button'),
+            onPressed: () => viewModel.loadDetail(
+              institucion: widget.institucion,
+              isRetry: true,
+            ),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red.shade700,
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+            icon: const Icon(Icons.refresh, size: 18),
+            label: const Text('Reintentar', style: TextStyle(fontWeight: FontWeight.bold)),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildMainActionButton(
     BuildContext context,
     InstitucionDeportiva institucion,
@@ -267,10 +423,10 @@ class _InstitucionDetailViewState extends State<InstitucionDetailView> {
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
-        gradient: LinearGradient(
+        gradient: const LinearGradient(
           begin: Alignment.centerLeft,
           end: Alignment.centerRight,
-          colors: const [AppColors.primary, AppColors.primaryDark],
+          colors: [AppColors.primary, AppColors.primaryDark],
         ),
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
@@ -302,7 +458,7 @@ class _InstitucionDetailViewState extends State<InstitucionDetailView> {
                 Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.2),
+                    color: Colors.white.withValues(alpha: 0.2),
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: const Icon(
@@ -343,7 +499,7 @@ class _InstitucionDetailViewState extends State<InstitucionDetailView> {
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.1),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 15,
             offset: const Offset(0, 5),
           ),
@@ -359,17 +515,17 @@ class _InstitucionDetailViewState extends State<InstitucionDetailView> {
                 Container(
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: AppColors.primary.withValues(alpha: .12),
+                    color: AppColors.primary.withValues(alpha: 0.12),
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: Icon(
+                  child: const Icon(
                     Icons.contact_phone_outlined,
                     color: AppColors.primary,
                     size: 24,
                   ),
                 ),
                 const SizedBox(width: 12),
-                Text(
+                const Text(
                   'Información de Contacto',
                   style: TextStyle(
                     fontSize: 20,
@@ -430,7 +586,7 @@ class _InstitucionDetailViewState extends State<InstitucionDetailView> {
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: color.withOpacity(0.1),
+              color: color.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Icon(icon, color: color, size: 20),
@@ -478,7 +634,7 @@ class _InstitucionDetailViewState extends State<InstitucionDetailView> {
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.1),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 15,
             offset: const Offset(0, 5),
           ),
@@ -491,8 +647,8 @@ class _InstitucionDetailViewState extends State<InstitucionDetailView> {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: const [AppColors.primary, AppColors.primaryDark],
+                gradient: const LinearGradient(
+                  colors: [AppColors.primary, AppColors.primaryDark],
                 ),
                 borderRadius: BorderRadius.circular(16),
               ),
@@ -518,7 +674,7 @@ class _InstitucionDetailViewState extends State<InstitucionDetailView> {
                   const SizedBox(height: 4),
                   Text(
                     'S/. ${institucion.tarifa.toStringAsFixed(2)}',
-                    style: TextStyle(
+                    style: const TextStyle(
                       fontSize: 28,
                       fontWeight: FontWeight.bold,
                       color: AppColors.primary,
@@ -534,11 +690,11 @@ class _InstitucionDetailViewState extends State<InstitucionDetailView> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               decoration: BoxDecoration(
-                color: AppColors.primary.withValues(alpha: .12),
+                color: AppColors.primary.withValues(alpha: 0.12),
                 borderRadius: BorderRadius.circular(20),
                 border: Border.all(color: AppColors.primaryDark),
               ),
-              child: Text(
+              child: const Text(
                 'Mejor precio',
                 style: TextStyle(
                   color: AppColors.primary,
@@ -569,7 +725,7 @@ class _InstitucionDetailViewState extends State<InstitucionDetailView> {
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.1),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 15,
             offset: const Offset(0, 5),
           ),
@@ -585,17 +741,17 @@ class _InstitucionDetailViewState extends State<InstitucionDetailView> {
                 Container(
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: AppColors.primary.withValues(alpha: .12),
+                    color: AppColors.primary.withValues(alpha: 0.12),
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: Icon(
+                  child: const Icon(
                     Icons.description_outlined,
                     color: AppColors.primary,
                     size: 24,
                   ),
                 ),
                 const SizedBox(width: 12),
-                Text(
+                const Text(
                   'Acerca de nosotros',
                   style: TextStyle(
                     fontSize: 20,
@@ -611,7 +767,7 @@ class _InstitucionDetailViewState extends State<InstitucionDetailView> {
               style: TextStyle(
                 fontSize: 15,
                 height: 1.6,
-                color: theme.colorScheme.onSurface.withValues(alpha: .78),
+                color: theme.colorScheme.onSurface.withValues(alpha: 0.78),
               ),
             ),
           ],
@@ -620,8 +776,15 @@ class _InstitucionDetailViewState extends State<InstitucionDetailView> {
     );
   }
 
-  Widget _buildScheduleCard(BuildContext context) {
+  /// Tarjeta de Fotografías (Galería o indicación de sin fotografías)
+  Widget _buildPhotosCard(BuildContext context) {
     final theme = Theme.of(context);
+    final fotos = viewModel.fotografias.isNotEmpty
+        ? viewModel.fotografias
+        : (widget.institucion.imagen != null && widget.institucion.imagen!.isNotEmpty
+            ? [widget.institucion.imagen!]
+            : <String>[]);
+
     return Container(
       decoration: BoxDecoration(
         color: theme.colorScheme.surface,
@@ -633,7 +796,7 @@ class _InstitucionDetailViewState extends State<InstitucionDetailView> {
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.1),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 15,
             offset: const Offset(0, 5),
           ),
@@ -649,17 +812,238 @@ class _InstitucionDetailViewState extends State<InstitucionDetailView> {
                 Container(
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: AppColors.primary.withValues(alpha: .12),
+                    color: Colors.deepPurple.shade50,
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Icon(
+                    Icons.photo_library_outlined,
+                    color: Colors.deepPurple.shade700,
+                    size: 24,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Text(
+                  'Fotografías',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.deepPurple.shade700,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            if (viewModel.isLoading && fotos.isEmpty)
+              const Padding(
+                padding: EdgeInsets.symmetric(vertical: 20),
+                child: Center(child: CircularProgressIndicator()),
+              )
+            else if (fotos.isEmpty)
+              _buildEmptyState(
+                Icons.image_not_supported_outlined,
+                'Sin fotografías registradas',
+                subtitle:
+                    'Esta instalación aún no cuenta con fotografías complementarias registradas.',
+              )
+            else
+              SizedBox(
+                height: 160,
+                child: ListView.separated(
+                  scrollDirection: Axis.horizontal,
+                  itemCount: fotos.length,
+                  separatorBuilder: (context, index) => const SizedBox(width: 12),
+                  itemBuilder: (context, index) {
+                    final url = fotos[index];
+                    return ClipRRect(
+                      borderRadius: BorderRadius.circular(14),
+                      child: Container(
+                        width: 220,
+                        decoration: BoxDecoration(
+                          color: Colors.grey.shade200,
+                        ),
+                        child: Image.network(
+                          url,
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) => Container(
+                            color: Colors.grey.shade300,
+                            child: const Center(
+                              child: Icon(Icons.broken_image, size: 40, color: Colors.grey),
+                            ),
+                          ),
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// Tarjeta de Servicios complementarios (o indicación de sin servicios)
+  Widget _buildServicesCard(BuildContext context) {
+    final theme = Theme.of(context);
+    final servicios = viewModel.servicios;
+
+    return Container(
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surface,
+        border: Border.all(
+          color: theme.brightness == Brightness.dark
+              ? AppColors.primaryDark
+              : Colors.transparent,
+        ),
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 15,
+            offset: const Offset(0, 5),
+          ),
+        ],
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: Colors.teal.shade50,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(
+                    Icons.room_service_outlined,
+                    color: Colors.teal.shade700,
+                    size: 24,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Text(
+                  'Servicios',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.teal.shade700,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            if (viewModel.isLoading && servicios.isEmpty)
+              const Padding(
+                padding: EdgeInsets.symmetric(vertical: 20),
+                child: Center(child: CircularProgressIndicator()),
+              )
+            else if (servicios.isEmpty)
+              _buildEmptyState(
+                Icons.info_outline,
+                'Sin servicios registrados',
+                subtitle:
+                    'Esta instalación no cuenta con servicios adicionales registrados.',
+              )
+            else
+              Wrap(
+                spacing: 10,
+                runSpacing: 10,
+                children: servicios.map((s) => _buildServiceChip(context, s)).toList(),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildServiceChip(BuildContext context, String servicio) {
+    IconData icon = Icons.check_circle_outline;
+    final lower = servicio.toLowerCase();
+
+    if (lower.contains('estacionamiento') || lower.contains('parking')) {
+      icon = Icons.local_parking;
+    } else if (lower.contains('iluminaci') || lower.contains('led')) {
+      icon = Icons.lightbulb_outline;
+    } else if (lower.contains('vestuario') || lower.contains('ducha')) {
+      icon = Icons.shower_outlined;
+    } else if (lower.contains('cafeter') || lower.contains('snack')) {
+      icon = Icons.local_cafe_outlined;
+    } else if (lower.contains('wifi') || lower.contains('wi-fi')) {
+      icon = Icons.wifi;
+    } else if (lower.contains('csped') || lower.contains('cesped')) {
+      icon = Icons.grass;
+    }
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      decoration: BoxDecoration(
+        color: Colors.teal.shade50,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: Colors.teal.shade200, width: 1.2),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 18, color: Colors.teal.shade700),
+          const SizedBox(width: 8),
+          Text(
+            servicio,
+            style: TextStyle(
+              color: Colors.teal.shade900,
+              fontWeight: FontWeight.w600,
+              fontSize: 14,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildScheduleCard(BuildContext context) {
+    final theme = Theme.of(context);
+    final horarios = viewModel.horarios;
+
+    return Container(
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surface,
+        border: Border.all(
+          color: theme.brightness == Brightness.dark
+              ? AppColors.primaryDark
+              : Colors.transparent,
+        ),
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 15,
+            offset: const Offset(0, 5),
+          ),
+        ],
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: AppColors.primary.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Icon(
                     Icons.access_time_outlined,
                     color: AppColors.primary,
                     size: 24,
                   ),
                 ),
                 const SizedBox(width: 12),
-                Text(
+                const Text(
                   'Horarios de Atención',
                   style: TextStyle(
                     fontSize: 20,
@@ -670,38 +1054,24 @@ class _InstitucionDetailViewState extends State<InstitucionDetailView> {
               ],
             ),
             const SizedBox(height: 16),
-            FutureBuilder<List<HorarioAtencion>>(
-              future: _horariosFuture,
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 20),
-                    child: Center(
-                      child: CircularProgressIndicator(
-                        color: AppColors.accent,
-                      ),
-                    ),
-                  );
-                }
-                if (snapshot.hasError) {
-                  return _buildErrorState(
-                    'Error al cargar horarios\n${snapshot.error}',
-                  );
-                }
-                final horarios = snapshot.data ?? [];
-                if (horarios.isEmpty) {
-                  return _buildEmptyState(
-                    Icons.schedule_outlined,
-                    'No hay horarios registrados',
-                  );
-                }
-                return Column(
-                  children: horarios
-                      .map((h) => _buildScheduleItem(context, h))
-                      .toList(),
-                );
-              },
-            ),
+            if (viewModel.isLoading && horarios.isEmpty)
+              const Padding(
+                padding: EdgeInsets.symmetric(vertical: 20),
+                child: Center(child: CircularProgressIndicator()),
+              )
+            else if (horarios.isEmpty)
+              _buildEmptyState(
+                Icons.schedule_outlined,
+                'Sin horarios registrados',
+                subtitle:
+                    'Esta instalación no tiene horarios de atención registrados.',
+              )
+            else
+              Column(
+                children: horarios
+                    .map((h) => _buildScheduleItem(context, h))
+                    .toList(),
+              ),
           ],
         ),
       ),
@@ -724,8 +1094,8 @@ class _InstitucionDetailViewState extends State<InstitucionDetailView> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: const [AppColors.primary, AppColors.primaryDark],
+              gradient: const LinearGradient(
+                colors: [AppColors.primary, AppColors.primaryDark],
               ),
               borderRadius: BorderRadius.circular(8),
             ),
@@ -756,6 +1126,8 @@ class _InstitucionDetailViewState extends State<InstitucionDetailView> {
 
   Widget _buildSportsCard(BuildContext context) {
     final theme = Theme.of(context);
+    final deportes = viewModel.deportes;
+
     return Container(
       decoration: BoxDecoration(
         color: theme.colorScheme.surface,
@@ -767,7 +1139,7 @@ class _InstitucionDetailViewState extends State<InstitucionDetailView> {
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.1),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 15,
             offset: const Offset(0, 5),
           ),
@@ -783,12 +1155,12 @@ class _InstitucionDetailViewState extends State<InstitucionDetailView> {
                 Container(
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: Colors.green[50],
+                    color: Colors.green.shade50,
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Icon(
                     Icons.sports_soccer,
-                    color: Colors.green[700],
+                    color: Colors.green.shade700,
                     size: 24,
                   ),
                 ),
@@ -798,46 +1170,32 @@ class _InstitucionDetailViewState extends State<InstitucionDetailView> {
                   style: TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
-                    color: Colors.green[700],
+                    color: Colors.green.shade700,
                   ),
                 ),
               ],
             ),
             const SizedBox(height: 16),
-            FutureBuilder<List<Deporte>>(
-              future: _deportesFuture,
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 20),
-                    child: Center(
-                      child: CircularProgressIndicator(
-                        color: Colors.green[600],
-                      ),
-                    ),
-                  );
-                }
-                if (snapshot.hasError) {
-                  return _buildErrorState(
-                    'Error al cargar deportes\n${snapshot.error}',
-                  );
-                }
-                final deportes = snapshot.data ?? [];
-                if (deportes.isEmpty) {
-                  return _buildEmptyState(
-                    Icons.sports_outlined,
-                    'No hay deportes registrados',
-                  );
-                }
-                return Wrap(
-                  spacing: 12,
-                  runSpacing: 12,
-                  children: deportes
-                      .map((d) => _buildSportChip(context, d))
-                      .toList(),
-                );
-              },
-            ),
+            if (viewModel.isLoading && deportes.isEmpty)
+              const Padding(
+                padding: EdgeInsets.symmetric(vertical: 20),
+                child: Center(child: CircularProgressIndicator()),
+              )
+            else if (deportes.isEmpty)
+              _buildEmptyState(
+                Icons.sports_outlined,
+                'Sin deportes registrados',
+                subtitle:
+                    'Esta instalación no tiene deportes disponibles registrados.',
+              )
+            else
+              Wrap(
+                spacing: 12,
+                runSpacing: 12,
+                children: deportes
+                    .map((d) => _buildSportChip(context, d))
+                    .toList(),
+              ),
           ],
         ),
       ),
@@ -849,20 +1207,20 @@ class _InstitucionDetailViewState extends State<InstitucionDetailView> {
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: [Colors.green[50]!, Colors.green[100]!],
+          colors: [Colors.green.shade50, Colors.green.shade100],
         ),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.green[300]!, width: 1.5),
+        border: Border.all(color: Colors.green.shade300, width: 1.5),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.sports, size: 18, color: Colors.green[700]),
+          Icon(Icons.sports, size: 18, color: Colors.green.shade700),
           const SizedBox(width: 8),
           Text(
             deporte.nombre,
             style: TextStyle(
-              color: Colors.green[700],
+              color: Colors.green.shade800,
               fontWeight: FontWeight.bold,
               fontSize: 14,
             ),
@@ -872,34 +1230,48 @@ class _InstitucionDetailViewState extends State<InstitucionDetailView> {
     );
   }
 
-  Widget _buildErrorState(String message) {
+  Widget _buildEmptyState(
+    IconData icon,
+    String title, {
+    String? subtitle,
+  }) {
     return Padding(
-      padding: const EdgeInsets.all(20),
-      child: Column(
+      padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
+      child: Row(
         children: [
-          Icon(Icons.error_outline, size: 48, color: Colors.grey[400]),
-          const SizedBox(height: 12),
-          Text(
-            message,
-            style: TextStyle(color: Colors.black54, fontSize: 14),
-            textAlign: TextAlign.center,
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: Colors.grey.shade100,
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Icon(icon, size: 28, color: Colors.grey.shade500),
           ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildEmptyState(IconData icon, String message) {
-    return Padding(
-      padding: const EdgeInsets.all(20),
-      child: Column(
-        children: [
-          Icon(icon, size: 48, color: Colors.grey[400]),
-          const SizedBox(height: 12),
-          Text(
-            message,
-            style: TextStyle(color: Colors.black54, fontSize: 14),
-            textAlign: TextAlign.center,
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: TextStyle(
+                    color: Colors.grey.shade800,
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                if (subtitle != null) ...[
+                  const SizedBox(height: 2),
+                  Text(
+                    subtitle,
+                    style: TextStyle(
+                      color: Colors.grey.shade600,
+                      fontSize: 12,
+                    ),
+                  ),
+                ],
+              ],
+            ),
           ),
         ],
       ),
