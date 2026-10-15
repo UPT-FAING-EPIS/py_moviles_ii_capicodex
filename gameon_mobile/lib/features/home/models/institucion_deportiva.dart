@@ -29,6 +29,11 @@ class InstitucionDeportiva {
   // Estado de la instalación (1 = activa)
   final int estado;
 
+  // Lista de servicios complementarios (opcional)
+  final List<String>? servicios;
+  // Fotografías de la instalación (opcional)
+  final List<String>? fotografias;
+
   // Constructor del modelo
   InstitucionDeportiva({
     required this.id,
@@ -45,6 +50,8 @@ class InstitucionDeportiva {
     required this.email,
     this.descripcion,
     required this.estado,
+    this.servicios,
+    this.fotografias,
   });
 
   // Método para crear una instancia del modelo a partir de un JSON
@@ -64,6 +71,73 @@ class InstitucionDeportiva {
       email: json['email'],
       descripcion: json['descripcion'],
       estado: json['estado'],
+      servicios: json['servicios'] != null
+          ? List<String>.from(json['servicios'])
+          : null,
+      fotografias: json['fotografias'] != null
+          ? List<String>.from(json['fotografias'])
+          : null,
+    );
+  }
+
+  // Método para serializar a JSON
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'usuario_instalacion_id': usuarioInstalacionId,
+      'nombre': nombre,
+      'ruc': ruc,
+      'direccion': direccion,
+      'latitud': latitud,
+      'longitud': longitud,
+      'imagen': imagen,
+      'tarifa': tarifa,
+      'calificacion': calificacion,
+      'telefono': telefono,
+      'email': email,
+      'descripcion': descripcion,
+      'estado': estado,
+      if (servicios != null) 'servicios': servicios,
+      if (fotografias != null) 'fotografias': fotografias,
+    };
+  }
+
+  // Método copyWith
+  InstitucionDeportiva copyWith({
+    int? id,
+    int? usuarioInstalacionId,
+    String? nombre,
+    String? ruc,
+    String? direccion,
+    double? latitud,
+    double? longitud,
+    String? imagen,
+    double? tarifa,
+    double? calificacion,
+    String? telefono,
+    String? email,
+    String? descripcion,
+    int? estado,
+    List<String>? servicios,
+    List<String>? fotografias,
+  }) {
+    return InstitucionDeportiva(
+      id: id ?? this.id,
+      usuarioInstalacionId: usuarioInstalacionId ?? this.usuarioInstalacionId,
+      nombre: nombre ?? this.nombre,
+      ruc: ruc ?? this.ruc,
+      direccion: direccion ?? this.direccion,
+      latitud: latitud ?? this.latitud,
+      longitud: longitud ?? this.longitud,
+      imagen: imagen ?? this.imagen,
+      tarifa: tarifa ?? this.tarifa,
+      calificacion: calificacion ?? this.calificacion,
+      telefono: telefono ?? this.telefono,
+      email: email ?? this.email,
+      descripcion: descripcion ?? this.descripcion,
+      estado: estado ?? this.estado,
+      servicios: servicios ?? this.servicios,
+      fotografias: fotografias ?? this.fotografias,
     );
   }
 }
