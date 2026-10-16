@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:gameon/features/perfil/services/auth_form_validators.dart';
 
 class PasswordField extends StatefulWidget {
   final TextEditingController controller;
@@ -44,13 +45,7 @@ class _PasswordFieldState extends State<PasswordField> {
           onPressed: () => setState(() => _obscure = !_obscure),
         ),
       ),
-      validator:
-          widget.validator ??
-          (v) {
-            if (v == null || v.isEmpty) return 'Ingresa tu contraseña';
-            if (v.length < 6) return 'Mínimo 6 caracteres';
-            return null;
-          },
+      validator: widget.validator ?? AuthFormValidators.contrasena,
     );
   }
 }

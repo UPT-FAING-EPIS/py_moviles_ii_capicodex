@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:gameon/features/perfil/viewmodels/perfil_viewmodel.dart';
+import 'package:gameon/features/perfil/services/auth_form_validators.dart';
 import 'package:gameon/features/perfil/views/login_page/widgets/custom_text_field.dart';
 import 'package:gameon/features/perfil/views/login_page/widgets/custom_password_field.dart';
 import 'package:gameon/features/perfil/views/login_page/widgets/custom_button.dart';
@@ -85,7 +86,7 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
                           // Botón de regresar
                           Container(
                             decoration: BoxDecoration(
-                              color: Colors.white.withOpacity(0.2),
+                              color: Colors.white.withValues(alpha: 0.2),
                               borderRadius: BorderRadius.circular(12),
                             ),
                             child: IconButton(
@@ -105,7 +106,7 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
                                 Text(
                                   'Bienvenido',
                                   style: TextStyle(
-                                    color: Colors.white.withOpacity(0.9),
+                                    color: Colors.white.withValues(alpha: 0.9),
                                     fontSize: 14,
                                     fontWeight: FontWeight.w400,
                                   ),
@@ -126,7 +127,7 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
                           Container(
                             padding: const EdgeInsets.all(12),
                             decoration: BoxDecoration(
-                              color: Colors.white.withOpacity(0.2),
+                              color: Colors.white.withValues(alpha: 0.2),
                               borderRadius: BorderRadius.circular(12),
                             ),
                             child: const Icon(
@@ -141,7 +142,7 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
                       // TabBar
                       Container(
                         decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.2),
+                          color: Colors.white.withValues(alpha: 0.2),
                           borderRadius: BorderRadius.circular(16),
                         ),
                         padding: const EdgeInsets.all(4),
@@ -235,13 +236,7 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
                   hint: 'ejemplo@correo.com',
                   icon: Icons.email_outlined,
                   keyboardType: TextInputType.emailAddress,
-                  validator: (v) {
-                    if (v == null || v.trim().isEmpty) {
-                      return 'Ingresa tu correo';
-                    }
-                    if (!v.contains('@')) return 'Correo inválido';
-                    return null;
-                  },
+                  validator: AuthFormValidators.correo,
                 ),
                 const SizedBox(height: 20),
                 // Campo de contraseña
@@ -359,15 +354,7 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
                   label: 'Nombre Completo',
                   hint: 'Juan Pérez',
                   icon: Icons.person_outline,
-                  validator: (v) {
-                    if (v == null || v.trim().isEmpty) {
-                      return 'Ingresa tu nombre';
-                    }
-                    if (v.trim().length < 3) {
-                      return 'El nombre debe tener al menos 3 caracteres';
-                    }
-                    return null;
-                  },
+                  validator: AuthFormValidators.nombre,
                 ),
                 const SizedBox(height: 20),
                 // Campo de email
@@ -377,13 +364,7 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
                   hint: 'ejemplo@correo.com',
                   icon: Icons.email_outlined,
                   keyboardType: TextInputType.emailAddress,
-                  validator: (v) {
-                    if (v == null || v.trim().isEmpty) {
-                      return 'Ingresa tu correo';
-                    }
-                    if (!v.contains('@')) return 'Correo inválido';
-                    return null;
-                  },
+                  validator: AuthFormValidators.correo,
                 ),
                 const SizedBox(height: 20),
                 // Campo de contraseña
@@ -398,15 +379,10 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
                   controller: _pass2SignupCtrl,
                   label: 'Confirmar Contraseña',
                   hint: 'Repite tu contraseña',
-                  validator: (v) {
-                    if (v == null || v.isEmpty) {
-                      return 'Confirma tu contraseña';
-                    }
-                    if (v != _passSignupCtrl.text) {
-                      return 'Las contraseñas no coinciden';
-                    }
-                    return null;
-                  },
+                  validator: (v) => AuthFormValidators.confirmarContrasena(
+                    v,
+                    _passSignupCtrl.text,
+                  ),
                 ),
                 const SizedBox(height: 32),
                 // Botón de registro

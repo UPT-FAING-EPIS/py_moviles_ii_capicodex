@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:gameon/features/perfil/viewmodels/perfil_viewmodel.dart';
+import 'package:gameon/features/perfil/services/auth_form_validators.dart';
 import 'package:gameon/features/perfil/views/perfil_view/unauthenticated/forms/widgets/password_field.dart';
 import 'package:gameon/features/perfil/views/perfil_view/unauthenticated/forms/widgets/social_buttons.dart';
 import 'package:provider/provider.dart';
@@ -66,11 +67,7 @@ class SignupForm extends StatelessWidget {
                       ),
                     ),
                   ),
-                  validator: (v) {
-                    if (v == null || v.trim().isEmpty)
-                      return 'Ingresa tu nombre';
-                    return null;
-                  },
+                  validator: AuthFormValidators.nombre,
                 ),
                 const SizedBox(height: 14),
                 TextFormField(
@@ -97,12 +94,7 @@ class SignupForm extends StatelessWidget {
                       ),
                     ),
                   ),
-                  validator: (v) {
-                    if (v == null || v.trim().isEmpty)
-                      return 'Ingresa tu correo';
-                    if (!v.contains('@')) return 'Correo inválido';
-                    return null;
-                  },
+                  validator: AuthFormValidators.correo,
                 ),
                 const SizedBox(height: 14),
                 PasswordField(controller: passCtrl, label: 'Contraseña'),
@@ -116,8 +108,9 @@ class SignupForm extends StatelessWidget {
                   onPressed: busy
                       ? null
                       : () async {
-                          if (!(formKey.currentState?.validate() ?? false))
+                          if (!(formKey.currentState?.validate() ?? false)) {
                             return;
+                          }
                           final res = await vm.signUp(
                             fullName: fullNameCtrl.text.trim(),
                             email: emailCtrl.text.trim(),
