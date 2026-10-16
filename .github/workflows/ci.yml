@@ -1,0 +1,38 @@
+name: CI Flutter
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  pruebas:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: gameon_mobile
+
+    steps:
+      - name: Descargar código
+        uses: actions/checkout@v4
+
+      - name: Configurar Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+
+      - name: Instalar dependencias
+        run: flutter pub get
+
+      - name: Analizar validadores de autenticación
+        run: flutter analyze --no-pub lib/features/perfil/services/auth_form_validators.dart test/features/perfil/auth_form_validators_test.dart
+
+      - name: Ejecutar pruebas de la aplicación
+        run: flutter test --no-pub --coverage --reporter expanded
+
+      - name: Guardar cobertura
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cobertura-flutter
+          path: gameon_mobile/coverage/lcov.info
+          if-no-files-found: ignore
