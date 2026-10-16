@@ -1,0 +1,10 @@
+# Ejecutar localmente desde la raíz de GameOn
+flutter pub get
+flutter analyze
+flutter test test/features/home/viewmodels/home_viewmodel_test.dart
+flutter test --coverage
+flutter build apk --debug --dart-define=SUPABASE_URL=<URL_REAL> --dart-define=SUPABASE_ANON_KEY=<ANON_KEY_REAL>
+
+# Cierre del taller
+git tag -a taller-02 -m "Taller 02 · SI988"
+git push origin taller-02

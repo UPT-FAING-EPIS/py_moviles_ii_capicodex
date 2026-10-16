@@ -1,144 +1,121 @@
 # GameOn Network
 
-Aplicación móvil orientada a deportistas amateur que busca facilitar la búsqueda de instalaciones deportivas, consulta de disponibilidad, coordinación de actividades y gestión de reservas desde un solo lugar.
+Aplicación móvil Flutter orientada a deportistas amateur para descubrir instalaciones deportivas, consultar disponibilidad y gestionar actividades y reservas.
 
-Proyecto desarrollado para el curso **SI-988 · Soluciones Móviles II** de la Escuela Profesional de Ingeniería de Sistemas de la Universidad Privada de Tacna.
+Proyecto académico del curso **SI-988 · Soluciones Móviles II** de la Escuela Profesional de Ingeniería de Sistemas de la Universidad Privada de Tacna.
 
----
+## Estado de la entrega
 
-## Información del proyecto
+La rama `release/sprint-1-presentacion` consolida la versión preparada para la demostración del Sprint 1.
 
-| Campo | Detalle |
-|---|---|
-| Proyecto | GameOn Network |
-| Equipo | GameOn Team |
-| Curso | SI-988 · Soluciones Móviles II |
-| Universidad | Universidad Privada de Tacna |
-| Facultad | Facultad de Ingeniería |
-| Escuela | Ingeniería de Sistemas |
-| Modalidad | Aplicación móvil |
-| Estado | En desarrollo |
+El flujo mínimo que debe demostrarse es:
 
----
+1. Abrir GameOn Network.
+2. Ir a **Perfil**.
+3. Seleccionar **Registrarme / Iniciar sesión**.
+4. Crear una cuenta con nombre, correo y contraseña.
+5. Verificar que el usuario queda autenticado y se carga su perfil.
+6. Cerrar sesión.
+7. Iniciar sesión nuevamente con la misma cuenta.
+8. Regresar a la pantalla principal.
 
-## Problema
+Este flujo corresponde a:
 
-Actualmente, los deportistas amateur pueden encontrar dificultades para localizar instalaciones deportivas, conocer su disponibilidad, comparar alternativas y coordinar actividades.
+- **US-01:** registro mediante correo.
+- **US-02:** inicio de sesión mediante correo y contraseña.
+- **TD-01:** arquitectura base, configuración de entornos y CI.
 
-La información suele encontrarse dispersa entre redes sociales, llamadas telefónicas, grupos de mensajería, recomendaciones y consultas directas a los establecimientos.
+## Tecnologías
 
-Esto puede generar pérdida de tiempo, dificultad para coordinar partidos y poca visibilidad sobre las instalaciones deportivas disponibles.
+- Flutter / Dart
+- Provider
+- Supabase Auth y base de datos
+- Firebase Core, Cloud Firestore, Firebase Messaging y Storage
+- Google Maps / Geolocator
+- GitHub Actions
 
----
+## Requisitos
 
-## Propuesta de solución
+- Flutter estable compatible con Dart `^3.8.1`
+- Android SDK y un emulador o dispositivo Android
+- Variables de entorno de Supabase proporcionadas por el equipo
 
-**GameOn Network** busca centralizar la información relacionada con actividades e instalaciones deportivas mediante una aplicación móvil.
+## Configuración
 
-La aplicación permitirá progresivamente:
+Clonar el repositorio y cambiar a la rama de presentación:
 
-- Visualizar instalaciones deportivas cercanas.
-- Buscar espacios según el deporte.
-- Consultar información de las instalaciones.
-- Revisar horarios y disponibilidad.
-- Gestionar reservas.
-- Consultar las reservas realizadas.
-- Recibir notificaciones y recordatorios.
-- Facilitar la coordinación entre deportistas.
+```bash
+git clone https://github.com/UPT-FAING-EPIS/py_moviles_ii_capicodex.git
+cd py_moviles_ii_capicodex
+git switch release/sprint-1-presentacion
+flutter pub get
+```
 
-Como funcionalidad futura se contempla permitir la creación de partidos abiertos para encontrar otros jugadores interesados en participar.
+La rama de presentación utiliza la misma configuración de cliente de Supabase que la versión funcional `EXAMEN_UI_CHIRE_`, por lo que para la demostración local basta con ejecutar Flutter normalmente. La autenticación continúa realizándose mediante Supabase Auth.
 
----
+Para ejecutar en el emulador:
 
-## ¿Por qué una aplicación móvil?
+```bash
+flutter run -d emulator-5554 --android-skip-build-dependency-validation
+```
 
-GameOn Network requiere capacidades propias de los dispositivos móviles que permiten mejorar la experiencia del usuario.
+Para compilar el APK:
 
-Entre ellas se consideran:
+```bash
+flutter build apk --debug --android-skip-build-dependency-validation
+```
 
-- Geolocalización.
-- Visualización de instalaciones cercanas mediante mapas.
-- Notificaciones.
-- Acceso desde cualquier lugar.
-- Uso durante el desplazamiento del usuario.
-- Posible integración futura con cámara y otras capacidades del dispositivo.
+## Verificación antes de presentar
 
-Estas características permiten justificar el desarrollo de una aplicación móvil frente a una solución exclusivamente web.
+Ejecutar:
 
----
+```bash
+flutter clean
+flutter pub get
+dart format --output=none --set-exit-if-changed lib test
+flutter analyze
+flutter test
+flutter build apk --debug
+```
 
-## Público objetivo
+Además, probar manualmente el flujo **registro → perfil → cerrar sesión → login → home** en Android.
 
-El público objetivo principal está compuesto por:
+## Organización principal
 
-**Deportistas amateur de Tacna** que practican fútbol, vóley, básquet, pádel u otras disciplinas y requieren encontrar instalaciones o coordinar actividades deportivas.
+```text
+lib/
+├── core/
+├── features/
+│   ├── chat/
+│   ├── home/
+│   ├── notificaciones/
+│   ├── perfil/
+│   └── reservas/
+├── firebase_options.dart
+└── main.dart
 
-También se considera como usuario del sistema al:
+docs/
+├── arquitectura/
+├── decisiones/
+├── equipo/
+├── evidencias/
+└── sprints/
+```
 
-**Administrador de una instalación deportiva**, encargado de registrar y gestionar información relacionada con sus espacios deportivos.
+## Seguridad
 
----
+La aplicación utiliza una clave cliente anónima de Supabase; no debe confundirse con una clave service_role ni con credenciales administrativas. Las configuraciones cliente de Firebase incluidas en Flutter no sustituyen las reglas de seguridad del backend; Firestore y Storage deben permanecer protegidos mediante reglas adecuadas.
 
-## MVP
-
-Para mantener un alcance viable durante el curso, el producto mínimo viable contempla inicialmente:
-
-1. Registro e inicio de sesión.
-2. Perfil básico del usuario.
-3. Visualización de instalaciones deportivas.
-4. Geolocalización y mapa.
-5. Búsqueda y filtros por deporte.
-6. Información de cada instalación.
-7. Consulta de disponibilidad.
-8. Reserva de instalaciones.
-9. Consulta de reservas realizadas.
-10. Notificaciones y recordatorios.
-
-Las funcionalidades adicionales serán evaluadas de acuerdo con el avance de los sprints.
-
----
-
-## Equipo Scrum
+## Equipo
 
 | Integrante | Rol Scrum | Área principal |
 |---|---|---|
-| Sebastián Fuentes | Product Owner | Desarrollo móvil y diseño UI/UX |
-| Gabriela Gutierrez | Scrum Master | Backend y base de datos |
+| Sebastián Fuentes | Product Owner / Developer | Desarrollo móvil y UI/UX |
+| Gabriela Gutierrez | Scrum Master / Developer | Backend y base de datos |
 | Mayra Chire | Developer | Pruebas e integración |
 
----
+## Presentación
 
-## Organización del repositorio
+El guion de demostración y la lista de verificación se encuentran en:
 
-```text
-pro_moviles_ii_capicodex/
-│
-├── .github/
-│   └── workflows/
-│       └── ci.yml
-│
-├── app/
-│
-├── docs/
-│   ├── arquitectura/
-│   ├── decisiones/
-│   ├── entorno/
-│   ├── equipo/
-│   │   ├── EQUIPO.md
-│   │   └── ACUERDOS.md
-│   │
-│   ├── evidencias/
-│   │   └── S01/
-│   │
-│   ├── producto/
-│   │   ├── LEAN_CANVAS.md
-│   │   ├── VALIDACION.md
-│   │   └── VISION.md
-│   │
-│   └── sprints/
-│
-├── src/
-├── test/
-├── .gitignore
-├── CONTRIBUTING.md
-└── README.md
+`docs/sprints/PRESENTACION_SPRINT1.md`
