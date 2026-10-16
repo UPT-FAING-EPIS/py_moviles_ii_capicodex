@@ -7,10 +7,11 @@ import 'institucion_detail_view.dart';
 
 // US-07: estado del permiso de ubicación del usuario
 enum _UbicacionEstado {
-  cargando,      // esperando respuesta del usuario / sistema
-  concedido,     // permiso otorgado, GPS activo
-  denegado,      // rechazado en este ciclo
+  cargando, // esperando respuesta del usuario / sistema
+  concedido, // permiso otorgado, GPS activo
+  denegado, // rechazado en este ciclo
   denegadoSiempre, // bloqueado permanentemente en ajustes
+  error, // GPS o servicio de ubicación no disponible
 }
 
 // Coordenadas por defecto: Tacna, Perú
@@ -49,7 +50,24 @@ class _MapaInstitucionesViewState extends State<MapaInstitucionesView> {
   /// Punto de entrada del flujo: verifica si ya hay permiso concedido o
   /// muestra el diálogo explicativo antes de solicitarlo al SO.
   Future<void> _iniciarFlujoUbicacion() async {
-    final permiso = await Geolocator.checkPermission();
+    if (mounted) {
+      setState(() {
+        _ubicacionEstado = _UbicacionEstado.cargando;
+        _isLoadingLocation = true;
+      });
+    }
+    late final LocationPermission permiso;
+    try {
+      permiso = await Geolocator.checkPermission();
+    } catch (_) {
+      if (mounted) {
+        setState(() {
+          _ubicacionEstado = _UbicacionEstado.error;
+          _isLoadingLocation = false;
+        });
+      }
+      return;
+    }
 
     if (permiso == LocationPermission.always ||
         permiso == LocationPermission.whileInUse) {
@@ -105,7 +123,11 @@ class _MapaInstitucionesViewState extends State<MapaInstitucionesView> {
                 color: Colors.green[50],
                 shape: BoxShape.circle,
               ),
-              child: Icon(Icons.location_on, color: Colors.green[700], size: 26),
+              child: Icon(
+                Icons.location_on,
+                color: Colors.green[700],
+                size: 26,
+              ),
             ),
             const SizedBox(width: 12),
             const Expanded(
@@ -148,7 +170,7 @@ class _MapaInstitucionesViewState extends State<MapaInstitucionesView> {
                   const SizedBox(width: 8),
                   const Expanded(
                     child: Text(
-                      'Tu ubicación NO se guarda ni se comparte. '  
+                      'Tu ubicación NO se guarda ni se comparte. '
                       'Se usa solo en este momento, en tu dispositivo.',
                       style: TextStyle(fontSize: 12, height: 1.4),
                     ),
@@ -158,9 +180,13 @@ class _MapaInstitucionesViewState extends State<MapaInstitucionesView> {
             ),
             const SizedBox(height: 10),
             Text(
-              'Si prefieres no compartirla, puedes usar el mapa '  
+              'Si prefieres no compartirla, puedes usar el mapa '
               'con todas las canchas disponibles sin ver tu posición.',
-              style: TextStyle(fontSize: 12, color: Colors.grey[600], height: 1.4),
+              style: TextStyle(
+                fontSize: 12,
+                color: Colors.grey[600],
+                height: 1.4,
+              ),
             ),
           ],
         ),
@@ -199,7 +225,10 @@ class _MapaInstitucionesViewState extends State<MapaInstitucionesView> {
           Icon(icono, size: 16, color: Colors.green[600]),
           const SizedBox(width: 8),
           Expanded(
-            child: Text(texto, style: const TextStyle(fontSize: 13, height: 1.3)),
+            child: Text(
+              texto,
+              style: const TextStyle(fontSize: 13, height: 1.3),
+            ),
           ),
         ],
       ),
@@ -254,7 +283,7 @@ class _MapaInstitucionesViewState extends State<MapaInstitucionesView> {
       debugPrint('Error obteniendo ubicación: $e');
       if (mounted) {
         setState(() {
-          _ubicacionEstado = _UbicacionEstado.denegado;
+          _ubicacionEstado = _UbicacionEstado.error;
           _isLoadingLocation = false;
         });
         // Mostrar las instituciones aunque falle la ubicación
@@ -350,6 +379,17 @@ class _MapaInstitucionesViewState extends State<MapaInstitucionesView> {
   void _showAllInstitutions() {
     if (widget.instituciones.isEmpty || _controller == null) return;
 
+    if (widget.instituciones.length == 1) {
+      final institucion = widget.instituciones.first;
+      _controller!.animateCamera(
+        CameraUpdate.newLatLngZoom(
+          LatLng(institucion.latitud, institucion.longitud),
+          15,
+        ),
+      );
+      return;
+    }
+
     // Calcular los límites para mostrar todas las instituciones
     double minLat = widget.instituciones.first.latitud;
     double maxLat = widget.instituciones.first.latitud;
@@ -419,7 +459,7 @@ class _MapaInstitucionesViewState extends State<MapaInstitucionesView> {
                           // Botón atrás
                           Container(
                             decoration: BoxDecoration(
-                              color: Colors.white.withOpacity(0.2),
+                              color: Colors.white.withValues(alpha: 0.2),
                               shape: BoxShape.circle,
                             ),
                             child: IconButton(
@@ -439,7 +479,7 @@ class _MapaInstitucionesViewState extends State<MapaInstitucionesView> {
                                 Text(
                                   'Mapa',
                                   style: TextStyle(
-                                    color: Colors.white.withOpacity(0.9),
+                                    color: Colors.white.withValues(alpha: 0.9),
                                     fontSize: 14,
                                     fontWeight: FontWeight.w400,
                                   ),
@@ -459,7 +499,7 @@ class _MapaInstitucionesViewState extends State<MapaInstitucionesView> {
                           // Botón mi ubicación
                           Container(
                             decoration: BoxDecoration(
-                              color: Colors.white.withOpacity(0.2),
+                              color: Colors.white.withValues(alpha: 0.2),
                               shape: BoxShape.circle,
                             ),
                             child: IconButton(
@@ -475,7 +515,7 @@ class _MapaInstitucionesViewState extends State<MapaInstitucionesView> {
                           // Botón ver todas
                           Container(
                             decoration: BoxDecoration(
-                              color: Colors.white.withOpacity(0.2),
+                              color: Colors.white.withValues(alpha: 0.2),
                               shape: BoxShape.circle,
                             ),
                             child: IconButton(
@@ -498,7 +538,7 @@ class _MapaInstitucionesViewState extends State<MapaInstitucionesView> {
                           borderRadius: BorderRadius.circular(16),
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black.withOpacity(0.1),
+                              color: Colors.black.withValues(alpha: 0.1),
                               blurRadius: 10,
                               offset: const Offset(0, 4),
                             ),
@@ -562,11 +602,13 @@ class _MapaInstitucionesViewState extends State<MapaInstitucionesView> {
             ),
             // US-07: banner de fallback cuando la ubicación no está disponible
             if (_ubicacionEstado == _UbicacionEstado.denegado ||
-                _ubicacionEstado == _UbicacionEstado.denegadoSiempre)
+                _ubicacionEstado == _UbicacionEstado.denegadoSiempre ||
+                _ubicacionEstado == _UbicacionEstado.error)
               _BannerSinUbicacion(
                 key: const Key('banner_sin_ubicacion'),
                 denegadoPermanente:
                     _ubicacionEstado == _UbicacionEstado.denegadoSiempre,
+                errorUbicacion: _ubicacionEstado == _UbicacionEstado.error,
                 onVerTodas: _showAllInstitutions,
                 onAbrirAjustes: () => Geolocator.openAppSettings(),
                 onReintentar: _iniciarFlujoUbicacion,
@@ -594,6 +636,18 @@ class _MapaInstitucionesViewState extends State<MapaInstitucionesView> {
                       bottom: _selectedInstitucion != null ? 200 : 20,
                     ),
                   ),
+                  if (widget.instituciones.isEmpty)
+                    const Center(
+                      child: Card(
+                        margin: EdgeInsets.all(24),
+                        child: Padding(
+                          padding: EdgeInsets.all(20),
+                          child: Text(
+                            'Aún no hay instalaciones para mostrar en el mapa.',
+                          ),
+                        ),
+                      ),
+                    ),
                   // Card de detalle de institución seleccionada
                   if (_selectedInstitucion != null)
                     Positioned(
@@ -606,7 +660,7 @@ class _MapaInstitucionesViewState extends State<MapaInstitucionesView> {
                           borderRadius: BorderRadius.circular(20),
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black.withOpacity(0.15),
+                              color: Colors.black.withValues(alpha: 0.15),
                               blurRadius: 20,
                               offset: const Offset(0, 8),
                             ),
@@ -790,6 +844,7 @@ class _MapaInstitucionesViewState extends State<MapaInstitucionesView> {
 
 class _BannerSinUbicacion extends StatelessWidget {
   final bool denegadoPermanente;
+  final bool errorUbicacion;
   final VoidCallback onVerTodas;
   final VoidCallback onAbrirAjustes;
   final VoidCallback onReintentar;
@@ -797,6 +852,7 @@ class _BannerSinUbicacion extends StatelessWidget {
   const _BannerSinUbicacion({
     super.key,
     required this.denegadoPermanente,
+    required this.errorUbicacion,
     required this.onVerTodas,
     required this.onAbrirAjustes,
     required this.onReintentar,
@@ -813,7 +869,7 @@ class _BannerSinUbicacion extends StatelessWidget {
         border: Border.all(color: Colors.orange.shade200),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.06),
+            color: Colors.black.withValues(alpha: 0.06),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -821,7 +877,11 @@ class _BannerSinUbicacion extends StatelessWidget {
       ),
       child: Row(
         children: [
-          Icon(Icons.location_off_outlined, color: Colors.orange[700], size: 24),
+          Icon(
+            Icons.location_off_outlined,
+            color: Colors.orange[700],
+            size: 24,
+          ),
           const SizedBox(width: 10),
           Expanded(
             child: Column(
@@ -835,6 +895,8 @@ class _BannerSinUbicacion extends StatelessWidget {
                 Text(
                   denegadoPermanente
                       ? 'Actívala en los ajustes del sistema para centrar el mapa en ti.'
+                      : errorUbicacion
+                      ? 'No se pudo obtener tu posición. Puedes explorar el mapa o reintentar.'
                       : 'Mostrando todas las instalaciones disponibles.',
                   style: TextStyle(fontSize: 11, color: Colors.grey[600]),
                 ),
@@ -849,7 +911,10 @@ class _BannerSinUbicacion extends StatelessWidget {
               onPressed: onAbrirAjustes,
               style: TextButton.styleFrom(
                 foregroundColor: Colors.orange[700],
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 6,
+                ),
                 minimumSize: Size.zero,
                 tapTargetSize: MaterialTapTargetSize.shrinkWrap,
               ),
@@ -861,7 +926,10 @@ class _BannerSinUbicacion extends StatelessWidget {
               onPressed: onReintentar,
               style: TextButton.styleFrom(
                 foregroundColor: Colors.green[700],
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 6,
+                ),
                 minimumSize: Size.zero,
                 tapTargetSize: MaterialTapTargetSize.shrinkWrap,
               ),

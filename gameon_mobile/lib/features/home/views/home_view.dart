@@ -205,12 +205,22 @@ class _HomeTabScaffoldState extends State<HomeTabScaffold> {
           ),
         );
       }
-    } catch (e) {
+    } catch (_) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error al cargar el mapa: $e'),
+            content: const Text(
+              'No se pudieron cargar las instalaciones. Comprueba tu conexión.',
+            ),
             backgroundColor: Colors.red,
+            action: SnackBarAction(
+              label: 'Reintentar',
+              textColor: Colors.white,
+              onPressed: () {
+                setState(() => _institucionesFuture = _vm.fetchInstituciones());
+                _openMapView();
+              },
+            ),
           ),
         );
       }
@@ -283,7 +293,7 @@ class _HomeTabScaffoldState extends State<HomeTabScaffold> {
                             Text(
                               '¡Hola! 👋',
                               style: TextStyle(
-                                color: Colors.white.withOpacity(0.9),
+                                color: Colors.white.withValues(alpha: 0.9),
                                 fontSize: 16,
                                 fontWeight: FontWeight.w400,
                               ),
@@ -392,7 +402,7 @@ class _HomeTabScaffoldState extends State<HomeTabScaffold> {
                               borderRadius: BorderRadius.circular(16),
                               boxShadow: [
                                 BoxShadow(
-                                  color: Colors.black.withOpacity(0.1),
+                                  color: Colors.black.withValues(alpha: 0.1),
                                   blurRadius: 10,
                                   offset: const Offset(0, 4),
                                 ),
@@ -434,7 +444,7 @@ class _HomeTabScaffoldState extends State<HomeTabScaffold> {
                             borderRadius: BorderRadius.circular(16),
                             boxShadow: [
                               BoxShadow(
-                                color: Colors.black.withOpacity(0.1),
+                                color: Colors.black.withValues(alpha: 0.1),
                                 blurRadius: 10,
                                 offset: const Offset(0, 4),
                               ),
