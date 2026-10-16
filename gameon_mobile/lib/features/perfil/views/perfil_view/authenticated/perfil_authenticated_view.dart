@@ -17,7 +17,7 @@ String _formatDate(DateTime? dt) {
 
 class PerfilAuthenticatedView extends StatelessWidget {
   final UsuarioDeportista profile;
-  final VoidCallback onLogout;
+  final Future<void> Function() onLogout;
   const PerfilAuthenticatedView({
     super.key,
     required this.profile,
@@ -84,7 +84,7 @@ class PerfilAuthenticatedView extends StatelessWidget {
                                 Text(
                                   'Perfil',
                                   style: TextStyle(
-                                    color: Colors.white.withOpacity(0.9),
+                                    color: Colors.white.withValues(alpha: 0.9),
                                     fontSize: 13,
                                     fontWeight: FontWeight.w400,
                                   ),
@@ -108,7 +108,7 @@ class PerfilAuthenticatedView extends StatelessWidget {
                               Container(
                                 padding: const EdgeInsets.all(10),
                                 decoration: BoxDecoration(
-                                  color: Colors.white.withOpacity(0.2),
+                                  color: Colors.white.withValues(alpha: 0.2),
                                   borderRadius: BorderRadius.circular(12),
                                 ),
                                 child: const Icon(
@@ -171,10 +171,13 @@ class PerfilAuthenticatedView extends StatelessWidget {
           decoration: BoxDecoration(
             color: Colors.white,
             shape: BoxShape.circle,
-            border: Border.all(color: Colors.white.withOpacity(0.3), width: 4),
+            border: Border.all(
+              color: Colors.white.withValues(alpha: 0.3),
+              width: 4,
+            ),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.2),
+                color: Colors.black.withValues(alpha: 0.2),
                 blurRadius: 20,
                 offset: const Offset(0, 8),
               ),
@@ -291,9 +294,12 @@ class PerfilAuthenticatedView extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.2),
+        color: Colors.white.withValues(alpha: 0.2),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.white.withOpacity(0.3), width: 1),
+        border: Border.all(
+          color: Colors.white.withValues(alpha: 0.3),
+          width: 1,
+        ),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -365,7 +371,7 @@ class PerfilAuthenticatedView extends StatelessWidget {
         border: Border.all(color: Theme.of(context).dividerColor),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -415,7 +421,7 @@ class PerfilAuthenticatedView extends StatelessWidget {
         border: Border.all(color: Theme.of(context).dividerColor),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -465,10 +471,10 @@ class PerfilAuthenticatedView extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
-        color: deporteData['color'].withOpacity(0.1),
+        color: deporteData['color'].withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(10),
         border: Border.all(
-          color: deporteData['color'].withOpacity(0.3),
+          color: deporteData['color'].withValues(alpha: 0.3),
           width: 1.5,
         ),
       ),
@@ -499,7 +505,7 @@ class PerfilAuthenticatedView extends StatelessWidget {
         border: Border.all(color: Theme.of(context).dividerColor),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -620,7 +626,7 @@ class PerfilAuthenticatedView extends StatelessWidget {
         border: Border.all(color: theme.dividerColor),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -675,7 +681,21 @@ class PerfilAuthenticatedView extends StatelessWidget {
             title: 'Cerrar sesión',
             subtitle: 'Salir de tu cuenta',
             color: Colors.red,
-            onTap: onLogout,
+            onTap: () async {
+              try {
+                await onLogout();
+              } catch (_) {
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text(
+                        'No se pudo confirmar el cierre de sesión en el servidor.',
+                      ),
+                    ),
+                  );
+                }
+              }
+            },
             isDestructive: true,
           ),
         ],
@@ -703,7 +723,7 @@ class PerfilAuthenticatedView extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: color.withOpacity(0.1),
+                  color: color.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Icon(icon, size: 20, color: color),
@@ -752,7 +772,7 @@ class PerfilAuthenticatedView extends StatelessWidget {
         final colors = Theme.of(context).colorScheme;
         return Container(
           decoration: BoxDecoration(
-            color: Colors.white.withOpacity(.2),
+            color: Colors.white.withValues(alpha: .2),
             borderRadius: BorderRadius.circular(12),
           ),
           child: PopupMenuButton<AppVisualTheme>(

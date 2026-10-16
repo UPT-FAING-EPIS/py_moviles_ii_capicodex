@@ -41,7 +41,6 @@ class PerfilViewModel extends ChangeNotifier {
           }
           break;
         case AuthChangeEvent.signedOut:
-        case AuthChangeEvent.userDeleted:
           stopHeartbeat();
           _profile = null;
           notifyListeners();
@@ -87,18 +86,13 @@ class PerfilViewModel extends ChangeNotifier {
 
       final user = authResponse.user;
       developer.log(
-        'VM signUp user: ${user?.id} session: ${authResponse.session != null}',
+        'VM signUp user present: ${user != null} session: ${authResponse.session != null}',
       );
       if (user == null) {
         return SignupResult.error(
           'No se pudo crear el usuario (flujo pendiente).',
         );
       }
-      final session = supabase.auth.currentSession;
-      developer.log('session null? ${session == null}');
-      developer.log('access token length: ${session?.accessToken.length}');
-      developer.log('user id: ${session?.user.id}');
-
       final parts = fullName
           .split(RegExp(r'\s+'))
           .where((p) => p.isNotEmpty)
@@ -108,9 +102,7 @@ class PerfilViewModel extends ChangeNotifier {
 
       // Obtener FCM token
       final fcmToken = await _notificationService?.getToken();
-      developer.log(
-        'VM FCM token obtenido en signup: ${fcmToken?.substring(0, (fcmToken?.length ?? 0) > 6 ? 6 : (fcmToken?.length ?? 0))}...',
-      );
+      developer.log('VM FCM token obtenido en signup: ${fcmToken != null}');
 
       final insertPayload = {
         'nombre': nombre,
@@ -120,7 +112,7 @@ class PerfilViewModel extends ChangeNotifier {
         'auth_id': user.id,
         'fcm_token': fcmToken,
       };
-      developer.log('VM insert usuarios_deportistas => $insertPayload');
+      developer.log('VM: creando perfil de usuario');
       try {
         await supabase.from('usuarios_deportistas').insert(insertPayload);
       } on PostgrestException catch (e) {
@@ -168,9 +160,7 @@ class PerfilViewModel extends ChangeNotifier {
     int attempt = 0;
     while (attempt < maxRetries) {
       try {
-        developer.log(
-          'VM _loadProfile: intento ${attempt + 1}/$maxRetries para auth_id=${user.id}',
-        );
+        developer.log('VM _loadProfile: intento ${attempt + 1}/$maxRetries');
         final data = await supabase
             .from('usuarios_deportistas')
             .select()
@@ -198,10 +188,10 @@ class PerfilViewModel extends ChangeNotifier {
             }
           }
 
+          // Una consulta iniciada antes de salir no puede restaurar el perfil.
+          if (supabase.auth.currentUser?.id != user.id) return;
           _profile = UsuarioDeportista.fromJson(data);
-          developer.log(
-            'VM _loadProfile: perfil cargado exitosamente ${_profile!.nombreCompleto}',
-          );
+          developer.log('VM _loadProfile: perfil cargado exitosamente');
           // Sincronizar usuario a Firebase tras cargar perfil
           await _userSyncService.syncCurrentUser();
           notifyListeners();
@@ -249,10 +239,14 @@ class PerfilViewModel extends ChangeNotifier {
 
   Future<void> signOut() async {
     stopHeartbeat();
-    _tokenRefreshSubscription?.cancel();
-    await supabase.auth.signOut();
-    _profile = null;
-    notifyListeners();
+    try {
+      await supabase.auth.signOut();
+    } finally {
+      // Supabase elimina la sesión local al iniciar signOut, incluso si falla
+      // la revocación remota. Limpiamos también el perfil visible en memoria.
+      _profile = null;
+      notifyListeners();
+    }
   }
 
   @override
@@ -319,12 +313,13 @@ class PerfilViewModel extends ChangeNotifier {
       final user = supabase.auth.currentUser;
       if (user == null) return;
 
-      if (_notificationService == null) {
+      final notificationService = _notificationService;
+      if (notificationService == null) {
         developer.log('VM FCM: NotificationService no disponible');
         return;
       }
 
-      final t = token ?? await _notificationService?.getToken();
+      final t = token ?? await notificationService.getToken();
       if (t == null || t.isEmpty) return;
 
       await supabase
@@ -340,8 +335,9 @@ class PerfilViewModel extends ChangeNotifier {
 
   String _mapAuthError(String message) {
     final m = message.toLowerCase();
-    if (m.contains('invalid login credentials'))
+    if (m.contains('invalid login credentials')) {
       return 'Correo o contraseña incorrectos';
+    }
     if (m.contains('email not confirmed')) return 'Debes confirmar tu correo';
     return message;
   }

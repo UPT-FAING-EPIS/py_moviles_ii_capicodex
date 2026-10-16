@@ -23,8 +23,19 @@ jobs:
       - name: Instalar dependencias
         run: flutter pub get
 
-      - name: Analizar validadores de autenticación
-        run: flutter analyze --no-pub lib/features/perfil/services/auth_form_validators.dart test/features/perfil/auth_form_validators_test.dart
+      - name: Analizar módulos modificados del Sprint 3
+        run: >
+          flutter analyze --no-pub
+          lib/features/home/views/home_view.dart
+          lib/features/home/views/mapa_instituciones_view.dart
+          lib/features/perfil/services/auth_form_validators.dart
+          lib/features/perfil/viewmodels/perfil_viewmodel.dart
+          lib/features/perfil/views/login_page/login_page.dart
+          lib/features/perfil/views/login_page/widgets/custom_password_field.dart
+          lib/features/perfil/views/perfil_view/authenticated/perfil_authenticated_view.dart
+          lib/features/perfil/views/perfil_view/unauthenticated/forms/signup_form.dart
+          lib/features/perfil/views/perfil_view/unauthenticated/forms/widgets/password_field.dart
+          test/features/perfil/auth_form_validators_test.dart
 
       - name: Ejecutar pruebas de la aplicación
         run: flutter test --no-pub --coverage --reporter expanded
