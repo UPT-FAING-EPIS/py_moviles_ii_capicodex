@@ -2,10 +2,11 @@
     <!-- Permiso para acceso a internet -->
     <uses-permission android:name="android.permission.INTERNET" />
     
-    <!-- Permisos para ubicación y Google Maps -->
+    <!-- Permisos para ubicación y Google Maps (solo en primer plano) -->
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
-    <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" />
+    <!-- ACCESS_BACKGROUND_LOCATION eliminado: US-07 — la ubicación solo se usa
+         cuando el usuario está en la pantalla del mapa (primer plano). -->
     
     <application
         android:label="GameOn"
