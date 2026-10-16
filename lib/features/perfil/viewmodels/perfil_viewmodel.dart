@@ -55,7 +55,6 @@ class PerfilViewModel extends ChangeNotifier {
           }
           break;
         case AuthChangeEvent.signedOut:
-        case AuthChangeEvent.userDeleted:
           stopHeartbeat();
           _profile = null;
           _sessionLocalStorage.clearAuthenticatedUserId();
@@ -150,16 +149,16 @@ class PerfilViewModel extends ChangeNotifier {
       developer.log('access token length: ${session?.accessToken.length}');
       developer.log('user id: ${session?.user.id}');
 
-      final parts =
-          fullName.split(RegExp(r'\s+')).where((p) => p.isNotEmpty).toList();
+      final parts = fullName
+          .split(RegExp(r'\s+'))
+          .where((p) => p.isNotEmpty)
+          .toList();
       final nombre = parts.isNotEmpty ? parts.first : 'Usuario';
       final apellidos = parts.length > 1 ? parts.sublist(1).join(' ') : '';
 
       // Obtener FCM token
       final fcmToken = await _notificationService?.getToken();
-      developer.log(
-        'VM FCM token obtenido en signup: ${fcmToken?.substring(0, (fcmToken?.length ?? 0) > 6 ? 6 : (fcmToken?.length ?? 0))}...',
-      );
+      developer.log('VM FCM token obtenido en signup: ${fcmToken != null}');
 
       final insertPayload = {
         'nombre': nombre,
@@ -220,12 +219,11 @@ class PerfilViewModel extends ChangeNotifier {
         developer.log(
           'VM _loadProfile: intento ${attempt + 1}/$maxRetries para auth_id=${user.id}',
         );
-        final data =
-            await supabase
-                .from('usuarios_deportistas')
-                .select()
-                .eq('auth_id', user.id)
-                .maybeSingle();
+        final data = await supabase
+            .from('usuarios_deportistas')
+            .select()
+            .eq('auth_id', user.id)
+            .maybeSingle();
         if (data != null) {
           // Cargar deportes favoritos del usuario
           final usuarioId = int.tryParse(data['id'].toString());
@@ -236,11 +234,10 @@ class PerfilViewModel extends ChangeNotifier {
                   .select('deportes(nombre)')
                   .eq('usuario_id', usuarioId);
 
-              final deportes =
-                  deportesData
-                      .map((e) => e['deportes']?['nombre']?.toString() ?? '')
-                      .where((n) => n.isNotEmpty)
-                      .toList();
+              final deportes = deportesData
+                  .map((e) => e['deportes']?['nombre']?.toString() ?? '')
+                  .where((n) => n.isNotEmpty)
+                  .toList();
 
               data['deportes_favoritos'] = deportes;
             } catch (e) {
@@ -256,6 +253,8 @@ class PerfilViewModel extends ChangeNotifier {
             developer.log('VM _loadProfile: ${estadoPerfil.error}');
             break;
           }
+          // Una respuesta tardía no debe restaurar datos privados tras salir.
+          if (supabase.auth.currentUser?.id != user.id) return;
           _profile = estadoPerfil.perfil;
           developer.log(
             'VM _loadProfile: perfil cargado exitosamente ${_profile!.nombreCompleto}',
@@ -310,10 +309,16 @@ class PerfilViewModel extends ChangeNotifier {
 
   Future<void> signOut() async {
     stopHeartbeat();
-    await supabase.auth.signOut();
-    await _sessionLocalStorage.clearAuthenticatedUserId();
-    _profile = null;
-    notifyListeners();
+    try {
+      await supabase.auth.signOut();
+    } finally {
+      try {
+        await _sessionLocalStorage.clearAuthenticatedUserId();
+      } finally {
+        _profile = null;
+        notifyListeners();
+      }
+    }
   }
 
   @override
@@ -400,12 +405,13 @@ class PerfilViewModel extends ChangeNotifier {
       final user = supabase.auth.currentUser;
       if (user == null) return;
 
-      if (_notificationService == null) {
+      final notificationService = _notificationService;
+      if (notificationService == null) {
         developer.log('VM FCM: NotificationService no disponible');
         return;
       }
 
-      final t = token ?? await _notificationService?.getToken();
+      final t = token ?? await notificationService.getToken();
       if (t == null || t.isEmpty) return;
 
       await supabase
@@ -421,8 +427,9 @@ class PerfilViewModel extends ChangeNotifier {
 
   String _mapAuthError(String message) {
     final m = message.toLowerCase();
-    if (m.contains('invalid login credentials'))
+    if (m.contains('invalid login credentials')) {
       return 'Correo o contraseña incorrectos';
+    }
     if (m.contains('email not confirmed')) return 'Debes confirmar tu correo';
     return message;
   }
