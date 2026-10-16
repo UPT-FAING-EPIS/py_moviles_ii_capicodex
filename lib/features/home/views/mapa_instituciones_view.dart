@@ -20,6 +20,8 @@ class _MapaInstitucionesViewState extends State<MapaInstitucionesView> {
   Position? _currentPosition;
   Set<Marker> _markers = {};
   bool _isLoadingLocation = true;
+  bool _locationAllowed = false;
+  String? _locationMessage;
   InstitucionDeportiva? _selectedInstitucion;
 
   @override
@@ -30,21 +32,43 @@ class _MapaInstitucionesViewState extends State<MapaInstitucionesView> {
   }
 
   Future<void> _getCurrentLocation() async {
+    if (mounted) {
+      setState(() {
+        _isLoadingLocation = true;
+        _locationMessage = null;
+      });
+    }
     try {
       // Verificar permisos
       LocationPermission permission = await Geolocator.checkPermission();
       if (permission == LocationPermission.denied) {
         permission = await Geolocator.requestPermission();
         if (permission == LocationPermission.denied) {
-          if (mounted) setState(() => _isLoadingLocation = false);
+          if (mounted) {
+            setState(() {
+              _isLoadingLocation = false;
+              _locationAllowed = false;
+              _locationMessage =
+                  'Ubicación denegada. Puedes explorar las canchas en el mapa.';
+            });
+          }
           return;
         }
       }
 
       if (permission == LocationPermission.deniedForever) {
-        if (mounted) setState(() => _isLoadingLocation = false);
+        if (mounted) {
+          setState(() {
+            _isLoadingLocation = false;
+            _locationAllowed = false;
+            _locationMessage =
+                'Activa la ubicación en los ajustes si quieres ver canchas cercanas.';
+          });
+        }
         return;
       }
+
+      if (mounted) setState(() => _locationAllowed = true);
 
       Position position = await Geolocator.getCurrentPosition(
         desiredAccuracy: LocationAccuracy.high,
@@ -57,6 +81,7 @@ class _MapaInstitucionesViewState extends State<MapaInstitucionesView> {
         setState(() {
           _currentPosition = position;
           _isLoadingLocation = false;
+          _locationMessage = null;
         });
 
         // Centrar el mapa en la ubicación actual
@@ -65,8 +90,13 @@ class _MapaInstitucionesViewState extends State<MapaInstitucionesView> {
         );
       }
     } catch (e) {
-      print('Error obteniendo ubicación: $e');
-      if (mounted) setState(() => _isLoadingLocation = false);
+      if (mounted) {
+        setState(() {
+          _isLoadingLocation = false;
+          _locationMessage =
+              'No se pudo obtener tu ubicación. Puedes explorar el mapa o reintentar.';
+        });
+      }
 
       // Mostrar las instituciones aunque falle la ubicación
       if (mounted && widget.instituciones.isNotEmpty) {
@@ -162,6 +192,17 @@ class _MapaInstitucionesViewState extends State<MapaInstitucionesView> {
   void _showAllInstitutions() {
     if (widget.instituciones.isEmpty || _controller == null) return;
 
+    if (widget.instituciones.length == 1) {
+      final institucion = widget.instituciones.first;
+      _controller!.animateCamera(
+        CameraUpdate.newLatLngZoom(
+          LatLng(institucion.latitud, institucion.longitud),
+          15,
+        ),
+      );
+      return;
+    }
+
     // Calcular los límites para mostrar todas las instituciones
     double minLat = widget.instituciones.first.latitud;
     double maxLat = widget.instituciones.first.latitud;
@@ -231,7 +272,7 @@ class _MapaInstitucionesViewState extends State<MapaInstitucionesView> {
                           // Botón atrás
                           Container(
                             decoration: BoxDecoration(
-                              color: Colors.white.withOpacity(0.2),
+                              color: Colors.white.withValues(alpha: 0.2),
                               shape: BoxShape.circle,
                             ),
                             child: IconButton(
@@ -251,7 +292,7 @@ class _MapaInstitucionesViewState extends State<MapaInstitucionesView> {
                                 Text(
                                   'Mapa',
                                   style: TextStyle(
-                                    color: Colors.white.withOpacity(0.9),
+                                    color: Colors.white.withValues(alpha: 0.9),
                                     fontSize: 14,
                                     fontWeight: FontWeight.w400,
                                   ),
@@ -271,7 +312,7 @@ class _MapaInstitucionesViewState extends State<MapaInstitucionesView> {
                           // Botón mi ubicación
                           Container(
                             decoration: BoxDecoration(
-                              color: Colors.white.withOpacity(0.2),
+                              color: Colors.white.withValues(alpha: 0.2),
                               shape: BoxShape.circle,
                             ),
                             child: IconButton(
@@ -287,7 +328,7 @@ class _MapaInstitucionesViewState extends State<MapaInstitucionesView> {
                           // Botón ver todas
                           Container(
                             decoration: BoxDecoration(
-                              color: Colors.white.withOpacity(0.2),
+                              color: Colors.white.withValues(alpha: 0.2),
                               shape: BoxShape.circle,
                             ),
                             child: IconButton(
@@ -310,7 +351,7 @@ class _MapaInstitucionesViewState extends State<MapaInstitucionesView> {
                           borderRadius: BorderRadius.circular(16),
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black.withOpacity(0.1),
+                              color: Colors.black.withValues(alpha: 0.1),
                               blurRadius: 10,
                               offset: const Offset(0, 4),
                             ),
@@ -382,7 +423,7 @@ class _MapaInstitucionesViewState extends State<MapaInstitucionesView> {
                       zoom: 15,
                     ),
                     markers: _markers,
-                    myLocationEnabled: true,
+                    myLocationEnabled: _locationAllowed,
                     myLocationButtonEnabled: false,
                     compassEnabled: true,
                     mapToolbarEnabled: false,
@@ -393,6 +434,42 @@ class _MapaInstitucionesViewState extends State<MapaInstitucionesView> {
                       bottom: _selectedInstitucion != null ? 200 : 20,
                     ),
                   ),
+                  if (widget.instituciones.isEmpty)
+                    const Center(
+                      child: Card(
+                        margin: EdgeInsets.all(24),
+                        child: Padding(
+                          padding: EdgeInsets.all(20),
+                          child: Text(
+                            'Aún no hay instalaciones para mostrar en el mapa.',
+                          ),
+                        ),
+                      ),
+                    ),
+                  if (_locationMessage != null)
+                    Positioned(
+                      top: 12,
+                      left: 16,
+                      right: 16,
+                      child: Material(
+                        elevation: 2,
+                        borderRadius: BorderRadius.circular(12),
+                        child: Padding(
+                          padding: const EdgeInsets.all(12),
+                          child: Row(
+                            children: [
+                              const Icon(Icons.location_off_outlined),
+                              const SizedBox(width: 8),
+                              Expanded(child: Text(_locationMessage!)),
+                              TextButton(
+                                onPressed: _getCurrentLocation,
+                                child: const Text('Reintentar'),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
                   // Card de detalle de institución seleccionada
                   if (_selectedInstitucion != null)
                     Positioned(
@@ -405,7 +482,7 @@ class _MapaInstitucionesViewState extends State<MapaInstitucionesView> {
                           borderRadius: BorderRadius.circular(20),
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black.withOpacity(0.15),
+                              color: Colors.black.withValues(alpha: 0.15),
                               blurRadius: 20,
                               offset: const Offset(0, 8),
                             ),
