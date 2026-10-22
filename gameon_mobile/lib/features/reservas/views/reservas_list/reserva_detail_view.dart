@@ -136,7 +136,7 @@ class _ReservaDetailViewState extends State<ReservaDetailView> {
                       // Botón atrás
                       Container(
                         decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.2),
+                          color: Colors.white.withValues(alpha: 0.2),
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: IconButton(
@@ -156,7 +156,7 @@ class _ReservaDetailViewState extends State<ReservaDetailView> {
                             Text(
                               'Reserva',
                               style: TextStyle(
-                                color: Colors.white.withOpacity(0.9),
+                                color: Colors.white.withValues(alpha: 0.9),
                                 fontSize: 14,
                                 fontWeight: FontWeight.w400,
                               ),
@@ -181,10 +181,10 @@ class _ReservaDetailViewState extends State<ReservaDetailView> {
                             vertical: 6,
                           ),
                           decoration: BoxDecoration(
-                            color: _getEstadoColor(r.estado).withOpacity(0.2),
+                            color: _getEstadoColor(r.estado).withValues(alpha: 0.2),
                             borderRadius: BorderRadius.circular(20),
                             border: Border.all(
-                              color: _getEstadoColor(r.estado).withOpacity(0.3),
+                              color: _getEstadoColor(r.estado).withValues(alpha: 0.3),
                               width: 1,
                             ),
                           ),
@@ -308,7 +308,7 @@ class _ReservaDetailViewState extends State<ReservaDetailView> {
                                     borderRadius: BorderRadius.circular(12),
                                     boxShadow: [
                                       BoxShadow(
-                                        color: Colors.black.withOpacity(0.1),
+                                        color: Colors.black.withValues(alpha: 0.1),
                                         blurRadius: 8,
                                         offset: const Offset(0, 2),
                                       ),
@@ -320,8 +320,9 @@ class _ReservaDetailViewState extends State<ReservaDetailView> {
                                       area!.imagenArea!,
                                       fit: BoxFit.cover,
                                       loadingBuilder: (context, child, loadingProgress) {
-                                        if (loadingProgress == null)
+                                        if (loadingProgress == null) {
                                           return child;
+                                        }
                                         return Container(
                                           decoration: BoxDecoration(
                                             color: Colors.grey[200],
@@ -487,7 +488,7 @@ class _ModernCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, 2),
           ),
