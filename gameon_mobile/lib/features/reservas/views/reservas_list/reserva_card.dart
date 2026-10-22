@@ -8,7 +8,7 @@ import 'package:gameon/core/theme/app_theme.dart';
 
 class ReservaCard extends StatefulWidget {
   final dynamic reserva; // Reserva
-  const ReservaCard({required this.reserva});
+  const ReservaCard({super.key, required this.reserva});
 
   @override
   State<ReservaCard> createState() => ReservaCardState();
@@ -104,8 +104,8 @@ class ReservaCardState extends State<ReservaCard> {
                       decoration: BoxDecoration(
                         gradient: LinearGradient(
                           colors: [
-                            colorEstado.withOpacity(.15),
-                            colorEstado.withOpacity(.25),
+                            colorEstado.withValues(alpha: .15),
+                            colorEstado.withValues(alpha: .25),
                           ],
                         ),
                         borderRadius: BorderRadius.circular(14),
@@ -151,7 +151,7 @@ class ReservaCardState extends State<ReservaCard> {
                       child: Image.network(
                         area!.imagenArea!,
                         fit: BoxFit.cover,
-                        errorBuilder: (_, __, ___) => Container(
+                        errorBuilder: (context, error, stackTrace) => Container(
                           color: Colors.grey[200],
                           alignment: Alignment.center,
                           child: Icon(
@@ -221,12 +221,12 @@ class ReservaCardState extends State<ReservaCard> {
   }
 
   int _duracionMin(String inicio, String fin) {
-    int _toMin(String t) {
+    int toMin(String t) {
       final p = t.split(':');
       return int.parse(p[0]) * 60 + int.parse(p[1]);
     }
 
-    return _toMin(fin) - _toMin(inicio);
+    return toMin(fin) - toMin(inicio);
   }
 
   Color _estadoColor(String estado, BuildContext context) {

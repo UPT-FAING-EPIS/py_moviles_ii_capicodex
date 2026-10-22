@@ -9,7 +9,14 @@ import 'package:gameon/core/theme/app_theme.dart';
 import 'package:gameon/core/theme/theme_controller.dart';
 
 class ReservasListView extends StatefulWidget {
-  const ReservasListView({super.key});
+  final ReservasListViewModel? viewModel;
+  final bool autoLoad;
+
+  const ReservasListView({
+    super.key,
+    this.viewModel,
+    this.autoLoad = true,
+  });
 
   @override
   State<ReservasListView> createState() => _ReservasListViewState();
@@ -18,22 +25,33 @@ class ReservasListView extends StatefulWidget {
 class _ReservasListViewState extends State<ReservasListView> {
   late final ReservasListViewModel vm;
   String? _lastLoadedUserId;
+  late final bool _isCustomViewModel;
 
   @override
   void initState() {
     super.initState();
-    vm = ReservasListViewModel();
-    // Registrar esta instancia para actualización automática
-    ReservasListViewModel.setInstance(vm);
+    _isCustomViewModel = widget.viewModel != null;
+    vm = widget.viewModel ?? ReservasListViewModel();
+    // Registrar esta instancia para actualización automática si no es personalizada
+    if (!_isCustomViewModel) {
+      ReservasListViewModel.setInstance(vm);
+    }
   }
 
   @override
   void dispose() {
-    ReservasListViewModel.clearInstance();
+    if (!_isCustomViewModel) {
+      ReservasListViewModel.clearInstance();
+    }
     super.dispose();
   }
 
   Future<void> _ensureData() async {
+    if (!widget.autoLoad) return;
+    if (_isCustomViewModel &&
+        (vm.reservas.isNotEmpty || vm.error != null || vm.cargando)) {
+      return;
+    }
     final perfilVm = context.read<PerfilViewModel>();
     if (perfilVm.profile != null) {
       final userId = perfilVm.profile!.id;
@@ -41,8 +59,8 @@ class _ReservasListViewState extends State<ReservasListView> {
       if (_lastLoadedUserId != userId) {
         final idUsuario = int.tryParse(userId);
         if (idUsuario != null) {
-          await vm.cargarReservasUsuario(idUsuario: idUsuario);
           _lastLoadedUserId = userId;
+          await vm.cargarReservasUsuario(idUsuario: idUsuario);
         }
       }
     }
@@ -105,7 +123,7 @@ class _ReservasListViewState extends State<ReservasListView> {
                               Text(
                                 'Reservas',
                                 style: TextStyle(
-                                  color: Colors.white.withOpacity(0.9),
+                                  color: Colors.white.withValues(alpha: 0.9),
                                   fontSize: 14,
                                   fontWeight: FontWeight.w400,
                                 ),
@@ -126,7 +144,7 @@ class _ReservasListViewState extends State<ReservasListView> {
                         Container(
                           padding: const EdgeInsets.all(12),
                           decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.2),
+                            color: Colors.white.withValues(alpha: 0.2),
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: const Icon(
@@ -258,7 +276,8 @@ class _ReservasListViewState extends State<ReservasListView> {
                                   Text(
                                     'Reservas',
                                     style: TextStyle(
-                                      color: Colors.white.withOpacity(0.9),
+                                      color:
+                                          Colors.white.withValues(alpha: 0.9),
                                       fontSize: 14,
                                       fontWeight: FontWeight.w400,
                                     ),
@@ -285,8 +304,8 @@ class _ReservasListViewState extends State<ReservasListView> {
                                                     vertical: 4,
                                                   ),
                                               decoration: BoxDecoration(
-                                                color: Colors.white.withOpacity(
-                                                  0.2,
+                                                color: Colors.white.withValues(
+                                                  alpha: 0.2,
                                                 ),
                                                 borderRadius:
                                                     BorderRadius.circular(12),
@@ -312,10 +331,11 @@ class _ReservasListViewState extends State<ReservasListView> {
                             Consumer<ReservasListViewModel>(
                               builder: (context, m, _) {
                                 return Container(
-                                  decoration: BoxDecoration(
-                                    color: Colors.white.withOpacity(0.2),
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
+                                    decoration: BoxDecoration(
+                                      color:
+                                          Colors.white.withValues(alpha: 0.2),
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
                                   child: IconButton(
                                     icon: m.cargando
                                         ? SizedBox(
@@ -481,7 +501,6 @@ class _ReservasListViewState extends State<ReservasListView> {
                           child: ListView.builder(
                             padding: const EdgeInsets.symmetric(horizontal: 20),
                             itemCount: m.reservas.length,
-                            cacheExtent: 400,
                             itemBuilder: (context, index) {
                               final reserva = m.reservas[index];
                               return ReservaCard(reserva: reserva);

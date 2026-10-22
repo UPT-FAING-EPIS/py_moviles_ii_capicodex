@@ -30,7 +30,20 @@ class InstitucionLite {
 }
 
 class ReservasListViewModel extends ChangeNotifier {
-  final _client = Supabase.instance.client;
+  final SupabaseClient? _customClient;
+
+  ReservasListViewModel({SupabaseClient? supabaseClient})
+      : _customClient = supabaseClient;
+
+  SupabaseClient? get _client {
+    if (_customClient != null) return _customClient;
+    try {
+      return Supabase.instance.client;
+    } catch (_) {
+      return null;
+    }
+  }
+
   bool cargando = false;
   String? error;
   List<Reserva> reservas = [];
@@ -60,8 +73,15 @@ class ReservasListViewModel extends ChangeNotifier {
     error = null;
     notifyListeners();
     try {
+      final client = _client;
+      if (client == null) {
+        error = 'No se pudo conectar con el servicio';
+        cargando = false;
+        notifyListeners();
+        return;
+      }
       developer.log('[ReservasListVM] Cargando reservas idUsuario=$idUsuario');
-      final data = await _client
+      final data = await client
           .from('reservas')
           .select()
           .eq('id_usuario', idUsuario)
@@ -91,13 +111,15 @@ class ReservasListViewModel extends ChangeNotifier {
 
   Future<void> _preloadAreas() async {
     try {
+      final client = _client;
+      if (client == null) return;
       final ids = reservas
           .map((r) => r.areaDeportivaId)
           .toSet()
           .where((id) => !_areasCache.containsKey(id))
           .toList();
       if (ids.isEmpty) return;
-      final data = await _client
+      final data = await client
           .from('areas_deportivas')
           .select(
             'id,nombre_area,institucion_deportiva_id,tarifa_por_hora,imagen_area',
@@ -124,8 +146,10 @@ class ReservasListViewModel extends ChangeNotifier {
 
   Future<AreaLite?> getArea(int id) async {
     if (_areasCache.containsKey(id)) return _areasCache[id];
+    final client = _client;
+    if (client == null) return null;
     try {
-      final row = await _client
+      final row = await client
           .from('areas_deportivas')
           .select(
             'id,nombre_area,institucion_deportiva_id,tarifa_por_hora,imagen_area',
@@ -155,8 +179,10 @@ class ReservasListViewModel extends ChangeNotifier {
 
   Future<InstitucionLite?> getInstitucion(int id) async {
     if (_instCache.containsKey(id)) return _instCache[id];
+    final client = _client;
+    if (client == null) return null;
     try {
-      final row = await _client
+      final row = await client
           .from('instituciones_deportivas')
           .select('id,nombre,direccion')
           .eq('id', id)
@@ -181,14 +207,16 @@ class ReservasListViewModel extends ChangeNotifier {
   }
 
   Future<Reserva?> getReservaById(int id) async {
+    final client = _client;
+    if (client == null) return null;
     try {
-      final row = await _client
+      final row = await client
           .from('reservas')
           .select()
           .eq('id', id)
           .maybeSingle();
       if (row != null) {
-        return Reserva.fromJson(row as Map<String, dynamic>);
+        return Reserva.fromJson(row);
       }
     } on PostgrestException catch (e, st) {
       developer.log(
@@ -211,8 +239,10 @@ class ReservasListViewModel extends ChangeNotifier {
   /// Retorna un record con (reserva, area, institucion) o null si no se encuentra.
   Future<({Reserva reserva, AreaLite area, InstitucionLite institucion})?>
   getReservaWithDetails(int id) async {
+    final client = _client;
+    if (client == null) return null;
     try {
-      final row = await _client
+      final row = await client
           .from('reservas')
           .select('''
             *,
@@ -279,4 +309,38 @@ class ReservasListViewModel extends ChangeNotifier {
     }
     return null;
   }
+
+  @visibleForTesting
+  void setReservasForTesting(List<Reserva> list) {
+    reservas = list;
+    notifyListeners();
+  }
+
+  @visibleForTesting
+  void setLoadingForTesting(bool value) {
+    cargando = value;
+    notifyListeners();
+  }
+
+  @visibleForTesting
+  void setErrorForTesting(String? value) {
+    error = value;
+    notifyListeners();
+  }
+
+  @visibleForTesting
+  void addAreaCache(AreaLite area) {
+    _areasCache[area.id] = area;
+  }
+
+  @visibleForTesting
+  void addInstitucionCache(InstitucionLite inst) {
+    _instCache[inst.id] = inst;
+  }
+
+  @visibleForTesting
+  bool hasAreaCache(int id) => _areasCache.containsKey(id);
+
+  @visibleForTesting
+  bool hasInstitucionCache(int id) => _instCache.containsKey(id);
 }
