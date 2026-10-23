@@ -1,3 +1,4 @@
+import '../password_recovery_view.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
@@ -257,18 +258,13 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
                 Align(
                   alignment: Alignment.centerRight,
                   child: TextButton(
-                    onPressed: () {
-                      // TODO: Implementar recuperación de contraseña
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: const Text('Función próximamente'),
-                          behavior: SnackBarBehavior.floating,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
+                    onPressed: () => Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => PasswordRecoveryView(
+                          initialEmail: _emailLoginCtrl.text,
                         ),
-                      );
-                    },
+                      ),
+                    ),
                     child: Text(
                       '¿Olvidaste tu contraseña?',
                       style: TextStyle(
@@ -440,7 +436,7 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
 
     final res = await _vm.login(
       email: _emailLoginCtrl.text.trim(),
-      password: _passLoginCtrl.text.trim(),
+      password: _passLoginCtrl.text,
     );
 
     if (!mounted) return;

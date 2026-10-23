@@ -1,3 +1,4 @@
+import 'core/config/backend_config.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -37,9 +38,8 @@ void main() async {
   // INICIALIZACIÓN DE SUPABASE
   // --------------------------------------------------------------------------
   await Supabase.initialize(
-    url: 'https://pqhpvowpirqyodgdguuw.supabase.co',
-    anonKey:
-        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBxaHB2b3dwaXJxeW9kZ2RndXV3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTcxOTQ3MDksImV4cCI6MjA3Mjc3MDcwOX0.d6EyyKnHHP_3BKNqRIIx3CvMShL96Ww21pNgMDmnRHk',
+    url: BackendConfig.supabaseUrl,
+    anonKey: BackendConfig.supabaseAnonKey,
   );
 
   // --------------------------------------------------------------------------

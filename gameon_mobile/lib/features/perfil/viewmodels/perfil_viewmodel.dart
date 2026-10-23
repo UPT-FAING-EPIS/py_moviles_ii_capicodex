@@ -285,7 +285,7 @@ class PerfilViewModel extends ChangeNotifier {
     try {
       final resp = await supabase.auth.signInWithPassword(
         email: email.trim(),
-        password: password.trim(),
+        password: password,
       );
       if (resp.session == null) {
         return LoginResult.error('Credenciales inválidas');
