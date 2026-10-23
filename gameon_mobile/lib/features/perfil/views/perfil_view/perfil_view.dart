@@ -17,7 +17,6 @@ class PerfilView extends StatefulWidget {
 }
 
 class _PerfilViewState extends State<PerfilView> with TickerProviderStateMixin {
-  late final PerfilViewModel _vm;
   // GlobalKeys formularios
   final _loginFormKey = GlobalKey<FormState>();
   final _signupFormKey = GlobalKey<FormState>();
@@ -31,12 +30,6 @@ class _PerfilViewState extends State<PerfilView> with TickerProviderStateMixin {
   final _passSignupCtrl = TextEditingController();
 
   @override
-  void initState() {
-    super.initState();
-    _vm = PerfilViewModel();
-  }
-
-  @override
   void dispose() {
     _emailLoginCtrl.dispose();
     _passLoginCtrl.dispose();
@@ -47,6 +40,7 @@ class _PerfilViewState extends State<PerfilView> with TickerProviderStateMixin {
   }
 
   void _openAuthSheet({int initialTab = 0}) {
+    final perfilViewModel = context.read<PerfilViewModel>();
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -61,7 +55,7 @@ class _PerfilViewState extends State<PerfilView> with TickerProviderStateMixin {
         );
         final theme = Theme.of(ctx);
         return ChangeNotifierProvider<PerfilViewModel>.value(
-          value: _vm,
+          value: perfilViewModel,
           child: Padding(
             padding: EdgeInsets.only(
               bottom: MediaQuery.of(ctx).viewInsets.bottom,
@@ -110,23 +104,20 @@ class _PerfilViewState extends State<PerfilView> with TickerProviderStateMixin {
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
     final paddingTop = MediaQuery.of(context).padding.top;
-    return ChangeNotifierProvider<PerfilViewModel>.value(
-      value: _vm,
-      child: Consumer<PerfilViewModel>(
-        builder: (context, vm, _) {
-          if (vm.profile != null) {
-            return PerfilAuthenticatedView(
-              profile: vm.profile!,
-              onLogout: vm.signOut,
-            );
-          }
-          return PerfilUnauthenticatedView(
-            size: size,
-            paddingTop: paddingTop,
-            onOpenAuth: () => _openAuthSheet(initialTab: 0),
+    return Consumer<PerfilViewModel>(
+      builder: (context, vm, _) {
+        if (vm.profile != null) {
+          return PerfilAuthenticatedView(
+            profile: vm.profile!,
+            onLogout: vm.signOut,
           );
-        },
-      ),
+        }
+        return PerfilUnauthenticatedView(
+          size: size,
+          paddingTop: paddingTop,
+          onOpenAuth: () => _openAuthSheet(initialTab: 0),
+        );
+      },
     );
   }
 
