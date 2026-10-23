@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:gameon/features/reservas/models/reserva.dart';
 import 'package:gameon/features/reservas/viewmodels/reservas_list_viewmodel.dart';
+import '../reprogramar_reserva_view.dart';
 
 class ReservaDetailView extends StatefulWidget {
   final int reservaId;
@@ -181,10 +182,14 @@ class _ReservaDetailViewState extends State<ReservaDetailView> {
                             vertical: 6,
                           ),
                           decoration: BoxDecoration(
-                            color: _getEstadoColor(r.estado).withValues(alpha: 0.2),
+                            color: _getEstadoColor(
+                              r.estado,
+                            ).withValues(alpha: 0.2),
                             borderRadius: BorderRadius.circular(20),
                             border: Border.all(
-                              color: _getEstadoColor(r.estado).withValues(alpha: 0.3),
+                              color: _getEstadoColor(
+                                r.estado,
+                              ).withValues(alpha: 0.3),
                               width: 1,
                             ),
                           ),
@@ -293,6 +298,25 @@ class _ReservaDetailViewState extends State<ReservaDetailView> {
                             ],
                           ),
                           const SizedBox(height: 16),
+                          if ([
+                            'pendiente',
+                            'confirmada',
+                          ].contains(r.estado.toLowerCase()))
+                            OutlinedButton.icon(
+                              icon: const Icon(Icons.edit_calendar),
+                              label: const Text('Reprogramar reserva'),
+                              onPressed: () async {
+                                final actualizada = await Navigator.of(context)
+                                    .push<Reserva>(
+                                      MaterialPageRoute(
+                                        builder: (_) =>
+                                            ReprogramarReservaView(reserva: r),
+                                      ),
+                                    );
+                                if (!mounted || actualizada == null) return;
+                                setState(() => reserva = actualizada);
+                              },
+                            ),
                           // Card de área deportiva (movida aquí para ser la primera después del horario)
                           _ModernCard(
                             icon: Icons.sports_soccer,
@@ -308,7 +332,9 @@ class _ReservaDetailViewState extends State<ReservaDetailView> {
                                     borderRadius: BorderRadius.circular(12),
                                     boxShadow: [
                                       BoxShadow(
-                                        color: Colors.black.withValues(alpha: 0.1),
+                                        color: Colors.black.withValues(
+                                          alpha: 0.1,
+                                        ),
                                         blurRadius: 8,
                                         offset: const Offset(0, 2),
                                       ),
