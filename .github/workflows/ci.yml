@@ -29,6 +29,10 @@ jobs:
           lib/features/home/views/home_view.dart
           lib/features/home/views/mapa_instituciones_view.dart
           lib/features/perfil/services/auth_form_validators.dart
+          lib/features/perfil/services/password_recovery_service.dart
+          lib/features/perfil/views/password_recovery_view.dart
+          lib/features/perfil/views/perfil_view/unauthenticated/forms/login_form.dart
+          lib/core/config/backend_config.dart
           lib/features/perfil/viewmodels/perfil_viewmodel.dart
           lib/features/perfil/views/login_page/login_page.dart
           lib/features/perfil/views/login_page/widgets/custom_password_field.dart
@@ -36,6 +40,8 @@ jobs:
           lib/features/perfil/views/perfil_view/unauthenticated/forms/signup_form.dart
           lib/features/perfil/views/perfil_view/unauthenticated/forms/widgets/password_field.dart
           test/features/perfil/auth_form_validators_test.dart
+          test/features/perfil/password_recovery_service_test.dart
+          test/features/perfil/password_recovery_view_test.dart
 
       - name: Ejecutar pruebas de la aplicación
         run: flutter test --no-pub --coverage --reporter expanded

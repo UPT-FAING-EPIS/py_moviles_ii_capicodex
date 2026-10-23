@@ -3,6 +3,7 @@ import 'package:gameon/features/perfil/viewmodels/perfil_viewmodel.dart';
 import 'package:gameon/features/perfil/views/perfil_view/unauthenticated/forms/widgets/password_field.dart';
 import 'package:gameon/features/perfil/views/perfil_view/unauthenticated/forms/widgets/social_buttons.dart';
 import 'package:provider/provider.dart';
+import '../../../password_recovery_view.dart';
 
 class LoginForm extends StatelessWidget {
   final GlobalKey<FormState> formKey;
@@ -74,7 +75,12 @@ class LoginForm extends StatelessWidget {
             Align(
               alignment: Alignment.centerRight,
               child: TextButton(
-                onPressed: () {},
+                onPressed: () => Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) =>
+                        PasswordRecoveryView(initialEmail: emailCtrl.text),
+                  ),
+                ),
                 style: TextButton.styleFrom(
                   foregroundColor: Colors.green.shade700,
                 ),
