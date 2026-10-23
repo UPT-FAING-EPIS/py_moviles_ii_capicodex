@@ -1,0 +1,30 @@
+name: US-13 contrato SQL de reprogramación
+on:
+  push:
+    paths: ['gameon_mobile/supabase/**', '.github/workflows/reprogramacion-sql.yml']
+  pull_request:
+    paths: ['gameon_mobile/supabase/**', '.github/workflows/reprogramacion-sql.yml']
+jobs:
+  postgres:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: gameon_test
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      PGPASSWORD: postgres
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verificar migración en base aislada
+        run: |
+          psql -h localhost -U postgres -d gameon_test -v ON_ERROR_STOP=1 -f gameon_mobile/supabase/tests/bootstrap.sql
+          psql -h localhost -U postgres -d gameon_test -v ON_ERROR_STOP=1 -f gameon_mobile/supabase/migrations/202610230001_reprogramar_reserva.sql
+          psql -h localhost -U postgres -d gameon_test -v ON_ERROR_STOP=1 -f gameon_mobile/supabase/tests/reprogramar_reserva_test.sql
