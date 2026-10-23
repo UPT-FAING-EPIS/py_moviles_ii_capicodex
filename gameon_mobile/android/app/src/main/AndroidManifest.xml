@@ -1,6 +1,8 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <!-- Permiso para acceso a internet -->
     <uses-permission android:name="android.permission.INTERNET" />
+    <!-- Requerido en Android 13+ para que el usuario decida recibir avisos. -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     
     <!-- Permisos para ubicación y Google Maps (solo en primer plano) -->
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
@@ -46,6 +48,7 @@
             android:value="AIzaSyBya6MU55DbwsG_ZTm_ZnICI5oxqWJcu2U" />
         
         <!-- Firebase Cloud Messaging - Canal de notificaciones por defecto -->
+        <meta-data
             android:name="com.google.firebase.messaging.default_notification_channel_id"
             android:value="gameon_main" />
         

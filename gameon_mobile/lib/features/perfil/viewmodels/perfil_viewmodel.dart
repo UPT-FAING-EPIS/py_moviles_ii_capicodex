@@ -249,6 +249,31 @@ class PerfilViewModel extends ChangeNotifier {
     }
   }
 
+  /// Activa o suspende los avisos remotos para el usuario actual en este
+  /// dispositivo. Al suspenderlos, el backend deja de tener un token al cual
+  /// enviar notificaciones; al activarlos, registra nuevamente el token actual.
+  Future<void> setNotificationsEnabled(bool enabled) async {
+    final user = supabase.auth.currentUser;
+    if (user == null) return;
+
+    try {
+      if (enabled) {
+        await _registerFcmToken();
+      } else {
+        await supabase
+            .from('usuarios_deportistas')
+            .update({'fcm_token': null})
+            .eq('auth_id', user.id);
+      }
+    } on PostgrestException catch (e) {
+      developer.log(
+        'VM preferencias de notificaciones: ${e.message}',
+        error: e,
+      );
+      rethrow;
+    }
+  }
+
   @override
   void dispose() {
     _tokenRefreshSubscription?.cancel();

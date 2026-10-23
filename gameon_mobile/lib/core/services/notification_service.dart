@@ -31,7 +31,7 @@ class NotificationService {
   ///
   /// Debe llamarse en main() antes de runApp()
   Future<void> initialize() async {
-    await _requestPermissions();
+    await requestPermission();
     await updateNotificationPreferences();
     await _configureForegroundNotifications();
     _registerBackgroundHandler();
@@ -43,9 +43,30 @@ class NotificationService {
   // ==========================================================================
 
   /// Solicita permisos de notificaciones al usuario
-  Future<void> _requestPermissions() async {
-    await FirebaseMessaging.instance.requestPermission();
-    debugPrint('[NotificationService] Permisos solicitados');
+  Future<AuthorizationStatus> requestPermission() async {
+    final settings = await FirebaseMessaging.instance.requestPermission();
+    debugPrint(
+      '[NotificationService] Estado del permiso: ${settings.authorizationStatus}',
+    );
+    return settings.authorizationStatus;
+  }
+
+  /// Consulta el estado actual del permiso concedido por el sistema operativo.
+  Future<AuthorizationStatus> getPermissionStatus() async {
+    final settings = await FirebaseMessaging.instance.getNotificationSettings();
+    return settings.authorizationStatus;
+  }
+
+  /// Indica si el usuario desea recibir avisos en este dispositivo.
+  Future<bool> areNotificationsEnabled() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getBool('notifications_enabled') ?? true;
+  }
+
+  /// Guarda la preferencia de entrega de avisos para este dispositivo.
+  Future<void> setNotificationsEnabled(bool enabled) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('notifications_enabled', enabled);
   }
 
   /// Actualiza el canal de notificaciones según las preferencias del usuario
@@ -177,6 +198,7 @@ class NotificationService {
   /// notificaciones push a este dispositivo.
   Future<String?> getToken() async {
     try {
+      if (!await areNotificationsEnabled()) return null;
       final token = await FirebaseMessaging.instance.getToken();
       debugPrint('[NotificationService] Token FCM obtenido');
       return token;
