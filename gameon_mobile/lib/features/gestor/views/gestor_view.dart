@@ -844,6 +844,18 @@ class _GestorViewState extends State<GestorView> {
   );
 
   Future<void> _centroDialog([Map<String, dynamic>? c]) async {
+    if (widget.managerId <= 0) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Solo un administrador autorizado puede registrar instalaciones.',
+            ),
+          ),
+        );
+      }
+      return;
+    }
     final fields = [
       'nombre',
       'ruc',
@@ -913,11 +925,25 @@ class _GestorViewState extends State<GestorView> {
                       validator: (v) {
                         if (f == 'descripcion') return null;
                         if (v == null || v.trim().isEmpty) return 'Requerido';
-                        if (f == 'tarifa' && double.tryParse(v) == null) {
-                          return 'Número inválido';
+                        final trimmed = v.trim();
+                        if (f == 'tarifa') {
+                          final amount = double.tryParse(trimmed);
+                          if (amount == null || amount <= 0) {
+                            return 'Ingrese una tarifa mayor a 0';
+                          }
                         }
-                        if (f == 'ruc' && v.length != 11) {
+                        if (f == 'ruc' &&
+                            !RegExp(r'^\d{11}$').hasMatch(trimmed)) {
                           return 'RUC de 11 dígitos';
+                        }
+                        if (f == 'telefono' && trimmed.length < 6) {
+                          return 'Teléfono inválido';
+                        }
+                        if (f == 'email' &&
+                            !RegExp(
+                              r'^[^@\s]+@[^@\s]+\.[^@\s]+$',
+                            ).hasMatch(trimmed)) {
+                          return 'Correo inválido';
                         }
                         return null;
                       },
@@ -988,7 +1014,10 @@ class _GestorViewState extends State<GestorView> {
             FilledButton(
               onPressed: () {
                 if (!key.currentState!.validate()) return;
-                if (location == null) {
+                if (!GestorService.validarUbicacion(
+                  location?.latitude,
+                  location?.longitude,
+                )) {
                   ScaffoldMessenger.of(ctx).showSnackBar(
                     const SnackBar(
                       content: Text(
