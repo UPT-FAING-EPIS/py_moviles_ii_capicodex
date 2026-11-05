@@ -268,6 +268,23 @@ class PerfilViewModel extends ChangeNotifier {
     await _loadProfile();
   }
 
+  /// Actualiza únicamente la lista de deportes favoritos en memoria sin alterar
+  /// los demás datos personales del perfil.
+  void updateDeportesFavoritosLocal(List<String> deportes) {
+    if (_profile == null) return;
+    final normalizados = <String>[];
+    for (final raw in deportes) {
+      final trimmed = raw.trim();
+      if (trimmed.isNotEmpty && !normalizados.contains(trimmed)) {
+        normalizados.add(trimmed);
+      }
+    }
+    _profile = _profile!.copyWith(
+      deportesFavoritos: List<String>.unmodifiable(normalizados),
+    );
+    notifyListeners();
+  }
+
   Future<void> registerManager({required String businessName, required String ruc}) async {
     await supabase.rpc('registrar_gestor_actual', params: {
       'p_nombre': businessName.trim(), 'p_ruc': ruc.trim(),

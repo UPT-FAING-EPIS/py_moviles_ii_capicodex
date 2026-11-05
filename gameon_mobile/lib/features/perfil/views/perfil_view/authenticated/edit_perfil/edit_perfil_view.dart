@@ -1,4 +1,3 @@
-import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:gameon/features/perfil/models/usuario_deportista.dart';
@@ -17,8 +16,15 @@ import 'widgets/deportes_selector_sheet.dart';
 
 class EditPerfilView extends StatefulWidget {
   final UsuarioDeportista profile;
+  final EditPerfilViewModel? viewModel;
+  final bool autoLoadDeportes;
 
-  const EditPerfilView({super.key, required this.profile});
+  const EditPerfilView({
+    super.key,
+    required this.profile,
+    this.viewModel,
+    this.autoLoadDeportes = true,
+  });
 
   @override
   State<EditPerfilView> createState() => _EditPerfilViewState();
@@ -60,7 +66,10 @@ class _EditPerfilViewState extends State<EditPerfilView> {
     _nivelHabilidad = _normalizeNivelHabilidad(p.nivelHabilidad);
 
     // ✅ Se crea el ViewModel una sola vez (no en cada build)
-    _viewModel = EditPerfilViewModel()..loadDeportes();
+    _viewModel = widget.viewModel ?? EditPerfilViewModel();
+    if (widget.autoLoadDeportes && _viewModel.deportesDisponibles.isEmpty) {
+      _viewModel.loadDeportes();
+    }
     _localImageUrl = widget.profile.imagenPerfil;
   }
 
@@ -134,7 +143,7 @@ class _EditPerfilViewState extends State<EditPerfilView> {
   }
 
   void _showDeportesSelector(BuildContext ctx) {
-    final disponibles = ctx.read<EditPerfilViewModel>().deportesDisponibles;
+    final disponibles = _viewModel.deportesDisponibles;
     showModalBottomSheet(
       context: ctx,
       isScrollControlled: true,
@@ -263,8 +272,26 @@ class _EditPerfilViewState extends State<EditPerfilView> {
     }
   }
 
+  bool get _hasPersonalDataChanges {
+    final p = widget.profile;
+    if (_pendingImageBytes != null) return true;
+    if (_nombreController.text.trim() != p.nombre.trim()) return true;
+    if (_apellidosController.text.trim() != p.apellidos.trim()) return true;
+    if (_usernameController.text.trim() != p.username.trim()) return true;
+    if (_telefonoController.text.trim() != p.telefono.trim()) return true;
+    if (_fechaNacimiento != p.fechaNacimiento) return true;
+    if (_genero != _normalizeGenero(p.genero)) return true;
+    if (_nivelHabilidad != _normalizeNivelHabilidad(p.nivelHabilidad)) {
+      return true;
+    }
+    return false;
+  }
+
   Future<void> _saveProfile() async {
-    if (!_formKey.currentState!.validate()) {
+    final existingId = int.tryParse(widget.profile.id.toString());
+    final onlyDeportesChanged = !_hasPersonalDataChanges && existingId != null;
+
+    if (!onlyDeportesChanged && !_formKey.currentState!.validate()) {
       return;
     }
 
@@ -278,60 +305,67 @@ class _EditPerfilViewState extends State<EditPerfilView> {
     });
 
     try {
-      String? imageUrl;
+      int usuarioId;
 
-      // Si hay una imagen pendiente, subirla primero
-      if (_pendingImageBytes != null && _pendingImageFilename != null) {
-        debugPrint('📤 Subiendo imagen pendiente: $_pendingImageFilename');
-        imageUrl = await _viewModel.uploadProfileImage(
-          _pendingImageBytes!,
-          _pendingImageFilename!,
+      if (onlyDeportesChanged) {
+        usuarioId = existingId;
+      } else {
+        String? imageUrl;
+
+        // Si hay una imagen pendiente, subirla primero
+        if (_pendingImageBytes != null && _pendingImageFilename != null) {
+          debugPrint('📤 Subiendo imagen pendiente: $_pendingImageFilename');
+          imageUrl = await _viewModel.uploadProfileImage(
+            _pendingImageBytes!,
+            _pendingImageFilename!,
+          );
+
+          if (imageUrl == null) {
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('No se pudo subir la imagen'),
+                  backgroundColor: Colors.red,
+                ),
+              );
+            }
+            return;
+          }
+          debugPrint('✅ Imagen subida: $imageUrl');
+        }
+
+        final res = await _viewModel.upsertUsuarioDeportista(
+          id: existingId,
+          username: _usernameController.text,
+          nombre: _nombreController.text,
+          apellidos: _apellidosController.text,
+          telefono: _telefonoController.text,
+          fechaNacimiento: _fechaNacimiento,
+          genero: _genero,
+          nivelHabilidad: _nivelHabilidad,
+          imagenPerfil: imageUrl ?? _localImageUrl,
         );
-
-        if (imageUrl == null) {
+        if (!res.ok) {
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('No se pudo subir la imagen'),
+              SnackBar(
+                content: Text(res.message ?? 'Error al actualizar perfil'),
                 backgroundColor: Colors.red,
+                behavior: SnackBarBehavior.floating,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
               ),
             );
           }
           return;
         }
-        debugPrint('✅ Imagen subida: $imageUrl');
-      }
-
-      final res = await _viewModel.upsertUsuarioDeportista(
-        id: int.tryParse(widget.profile.id.toString()),
-        username: _usernameController.text,
-        nombre: _nombreController.text,
-        apellidos: _apellidosController.text,
-        telefono: _telefonoController.text,
-        fechaNacimiento: _fechaNacimiento,
-        genero: _genero,
-        nivelHabilidad: _nivelHabilidad,
-        imagenPerfil: imageUrl ?? _localImageUrl,
-      );
-      if (!res.ok) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(res.message ?? 'Error al actualizar perfil'),
-              backgroundColor: Colors.red,
-              behavior: SnackBarBehavior.floating,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-            ),
-          );
-        }
-        return;
+        usuarioId = res.usuarioId!;
       }
 
       // Guardar deportes favoritos para ese usuario
-      await _viewModel.saveDeportesFavoritos(
-        res.usuarioId!,
+      final deportesGuardados = await _viewModel.saveDeportesFavoritos(
+        usuarioId,
         _deportesFavoritos,
       );
 
@@ -340,10 +374,13 @@ class _EditPerfilViewState extends State<EditPerfilView> {
         _pendingImageBytes = null;
         _pendingImageFilename = null;
 
-        // Recargar el perfil en el PerfilViewModel para reflejar cambios en la UI
+        // Actualizar inmediatamente los deportes favoritos en memoria sin alterar otros datos
+        // y recargar el perfil en el PerfilViewModel para reflejar cambios en la UI
         final perfilVm = context.read<PerfilViewModel>();
+        perfilVm.updateDeportesFavoritosLocal(deportesGuardados);
         await perfilVm.reloadProfile();
 
+        if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: const Text('Perfil actualizado correctamente'),
@@ -598,49 +635,53 @@ class _EditPerfilViewState extends State<EditPerfilView> {
                           icon: Icons.sports,
                           title: 'Deportes Favoritos',
                         ),
-                        if (context
-                            .watch<EditPerfilViewModel>()
-                            .loadingDeportes)
-                          Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 8),
-                            child: Row(
-                              children: [
-                                SizedBox(
-                                  width: 16,
-                                  height: 16,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                    color: Colors.green.shade700,
-                                  ),
+                        Consumer<EditPerfilViewModel>(
+                          builder: (context, editVm, _) {
+                            if (editVm.loadingDeportes) {
+                              return Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 8,
                                 ),
-                                const SizedBox(width: 8),
-                                const Text('Cargando deportes...'),
-                              ],
-                            ),
-                          )
-                        else if (context
-                                .watch<EditPerfilViewModel>()
-                                .deportesError !=
-                            null)
-                          Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 8),
-                            child: Row(
-                              children: [
-                                const Icon(
-                                  Icons.error_outline,
-                                  color: Colors.red,
-                                  size: 18,
+                                child: Row(
+                                  children: [
+                                    SizedBox(
+                                      width: 16,
+                                      height: 16,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                        color: Colors.green.shade700,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    const Text('Cargando deportes...'),
+                                  ],
                                 ),
-                                const SizedBox(width: 8),
-                                Text(
-                                  context
-                                      .watch<EditPerfilViewModel>()
-                                      .deportesError!,
-                                  style: const TextStyle(color: Colors.red),
+                              );
+                            }
+                            if (editVm.deportesError != null) {
+                              return Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 8,
                                 ),
-                              ],
-                            ),
-                          ),
+                                child: Row(
+                                  children: [
+                                    const Icon(
+                                      Icons.error_outline,
+                                      color: Colors.red,
+                                      size: 18,
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Text(
+                                      editVm.deportesError!,
+                                      style: const TextStyle(color: Colors.red),
+                                    ),
+                                  ],
+                                ),
+                              );
+                            }
+                            return const SizedBox.shrink();
+                          },
+                        ),
                         const SizedBox(height: 16),
                         DeportesSelectorCard(
                           deportesFavoritos: _deportesFavoritos,
