@@ -123,6 +123,7 @@ class _HomeTabScaffoldState extends State<HomeTabScaffold> {
   late Future<List<InstitucionDeportiva>> _institucionesFuture;
   final TextEditingController _searchController = TextEditingController();
   String _query = '';
+  String? _selectedDeporteFiltro;
   NotificacionesViewModel? _notificacionesVm;
   bool _perfilListenerAttached = false;
 
@@ -477,7 +478,9 @@ class _HomeTabScaffoldState extends State<HomeTabScaffold> {
                 ),
               ),
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 12),
+            _buildFavoriteSportsFilterBar(context),
+            const SizedBox(height: 8),
             // Lista de instalaciones
             Expanded(
               child: FutureBuilder<List<InstitucionDeportiva>>(
@@ -524,14 +527,31 @@ class _HomeTabScaffoldState extends State<HomeTabScaffold> {
                   }
 
                   final instituciones = snapshot.data ?? [];
+                  final deportesFavoritos = context
+                          .watch<PerfilViewModel>()
+                          .profile
+                          ?.deportesFavoritos ??
+                      const <String>[];
+                  final filtroDeporteActivo =
+                      (_selectedDeporteFiltro != null &&
+                          deportesFavoritos.contains(_selectedDeporteFiltro))
+                      ? _selectedDeporteFiltro
+                      : null;
+
                   final q = _query.toLowerCase();
-                  final filtradas = q.isEmpty
-                      ? instituciones
-                      : instituciones.where((inst) {
-                          final nombre = inst.nombre.toLowerCase();
-                          final direccion = inst.direccion.toLowerCase();
-                          return nombre.contains(q) || direccion.contains(q);
-                        }).toList();
+                  final filtradas = instituciones.where((inst) {
+                    if (q.isNotEmpty) {
+                      final nombre = inst.nombre.toLowerCase();
+                      final direccion = inst.direccion.toLowerCase();
+                      if (!nombre.contains(q) && !direccion.contains(q)) {
+                        return false;
+                      }
+                    }
+                    if (filtroDeporteActivo != null) {
+                      return _matchesSport(inst, filtroDeporteActivo);
+                    }
+                    return true;
+                  }).toList();
 
                   if (instituciones.isEmpty) {
                     return Center(
@@ -776,5 +796,84 @@ class _HomeTabScaffoldState extends State<HomeTabScaffold> {
         ),
       ),
     );
+  }
+
+  Widget _buildFavoriteSportsFilterBar(BuildContext context) {
+    final deportesFavoritos = context
+            .watch<PerfilViewModel>()
+            .profile
+            ?.deportesFavoritos ??
+        const <String>[];
+    if (deportesFavoritos.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    final colors = Theme.of(context).colorScheme;
+    final filtroActivo = (_selectedDeporteFiltro != null &&
+            deportesFavoritos.contains(_selectedDeporteFiltro))
+        ? _selectedDeporteFiltro
+        : null;
+
+    return SizedBox(
+      height: 40,
+      child: ListView(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 20),
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(right: 8),
+            child: ChoiceChip(
+              label: const Text('Todos'),
+              selected: filtroActivo == null,
+              selectedColor: colors.primary.withValues(alpha: 0.16),
+              onSelected: (_) {
+                setState(() => _selectedDeporteFiltro = null);
+              },
+            ),
+          ),
+          for (final deporte in deportesFavoritos)
+            Padding(
+              padding: const EdgeInsets.only(right: 8),
+              child: ChoiceChip(
+                label: Text(deporte),
+                selected: filtroActivo == deporte,
+                selectedColor: colors.primary.withValues(alpha: 0.16),
+                onSelected: (selected) {
+                  setState(() {
+                    _selectedDeporteFiltro = selected ? deporte : null;
+                  });
+                },
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  bool _matchesSport(InstitucionDeportiva inst, String sport) {
+    final target = _normalizeSportText(sport);
+    final associated = inst.deportes ?? const <String>[];
+    for (final dep in associated) {
+      final normalizedDep = _normalizeSportText(dep);
+      if (normalizedDep == target ||
+          normalizedDep.contains(target) ||
+          target.contains(normalizedDep)) {
+        return true;
+      }
+    }
+    final nombre = _normalizeSportText(inst.nombre);
+    final desc = _normalizeSportText(inst.descripcion ?? '');
+    return nombre.contains(target) || desc.contains(target);
+  }
+
+  String _normalizeSportText(String input) {
+    return input
+        .toLowerCase()
+        .trim()
+        .replaceAll('á', 'a')
+        .replaceAll('é', 'e')
+        .replaceAll('í', 'i')
+        .replaceAll('ó', 'o')
+        .replaceAll('ú', 'u');
   }
 }

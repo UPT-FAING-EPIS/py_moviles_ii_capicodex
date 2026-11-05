@@ -1,11 +1,22 @@
-import 'dart:typed_data';
-
 import 'package:flutter/foundation.dart';
-import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 
 class EditPerfilViewModel extends ChangeNotifier {
+  final SupabaseClient? _customClient;
+
+  EditPerfilViewModel({SupabaseClient? supabaseClient})
+      : _customClient = supabaseClient;
+
+  SupabaseClient? get _client {
+    if (_customClient != null) return _customClient;
+    try {
+      return Supabase.instance.client;
+    } catch (_) {
+      return null;
+    }
+  }
+
   List<String> deportesDisponibles = [];
   bool loadingDeportes = false;
   String? deportesError;
@@ -21,12 +32,24 @@ class EditPerfilViewModel extends ChangeNotifier {
     'Gym',
   ];
 
+  @visibleForTesting
+  void setDeportesDisponiblesForTesting(List<String> deportes) {
+    deportesDisponibles = List<String>.from(deportes);
+    loadingDeportes = false;
+    deportesError = null;
+    notifyListeners();
+  }
+
   Future<void> loadDeportes() async {
     loadingDeportes = true;
     deportesError = null;
     notifyListeners();
     try {
-      final supabase = Supabase.instance.client;
+      final supabase = _client;
+      if (supabase == null) {
+        deportesDisponibles = List<String>.from(_fallbackDeportes);
+        return;
+      }
       final List<dynamic> rows = await supabase
           .from('deportes')
           .select('nombre')
@@ -63,7 +86,10 @@ class EditPerfilViewModel extends ChangeNotifier {
     String? fcmToken,
     String? imagenPerfil,
   }) async {
-    final supabase = Supabase.instance.client;
+    final supabase = _client;
+    if (supabase == null) {
+      return SavePerfilResult.error('Cliente de base de datos no disponible');
+    }
     final authUser = supabase.auth.currentUser;
 
     final payload = {
@@ -81,17 +107,19 @@ class EditPerfilViewModel extends ChangeNotifier {
     };
 
     try {
-      final exists = await supabase
-          .from('usuarios_deportistas')
-          .select('id')
-          .eq('username', username.trim())
-          .maybeSingle();
-      if (exists != null) {
-        final existingId = exists['id'] as int?;
-        if (existingId != null && existingId != id) {
-          return SavePerfilResult.error(
-            'El nombre de usuario ya existe. Elige otro.',
-          );
+      if (username.trim().isNotEmpty) {
+        final exists = await supabase
+            .from('usuarios_deportistas')
+            .select('id')
+            .eq('username', username.trim())
+            .maybeSingle();
+        if (exists != null) {
+          final existingId = exists['id'] as int?;
+          if (existingId != null && existingId != id) {
+            return SavePerfilResult.error(
+              'El nombre de usuario ya existe. Elige otro.',
+            );
+          }
         }
       }
       if (id != null && id > 0) {
@@ -153,47 +181,64 @@ class EditPerfilViewModel extends ChangeNotifier {
     }
   }
 
-  Future<void> saveDeportesFavoritos(
+  /// Guarda únicamente los deportes preferidos del usuario en `usuarios_deportes`
+  /// sin modificar ningún otro dato personal de `usuarios_deportistas`.
+  Future<List<String>> saveDeportesFavoritos(
     int usuarioId,
     List<String> deportesSeleccionados,
   ) async {
-    try {
-      final supabase = Supabase.instance.client;
+    if (usuarioId <= 0) {
+      throw ArgumentError('El identificador de usuario no es válido');
+    }
 
-      // Eliminar deportes existentes
+    final supabase = _client;
+    if (supabase == null) {
+      throw Exception('Cliente de base de datos no disponible');
+    }
+
+    try {
+      // Normalizar y eliminar duplicados preservando el orden
+      final seleccion = <String>[];
+      for (final raw in deportesSeleccionados) {
+        final trimmed = raw.trim();
+        if (trimmed.isNotEmpty && !seleccion.contains(trimmed)) {
+          seleccion.add(trimmed);
+        }
+      }
+
+      List<Map<String, dynamic>> inserts = [];
+      if (seleccion.isNotEmpty) {
+        // Resolver primero los IDs de los deportes antes de eliminar los actuales
+        // para evitar pérdida de datos si falla la consulta de catálogo.
+        final inValues = '(${seleccion.map((e) => '"$e"').join(',')})';
+
+        final List<dynamic> deportesIds = await supabase
+            .from('deportes')
+            .select('id, nombre')
+            .filter('nombre', 'in', inValues);
+
+        inserts = deportesIds
+            .map(
+              (deporte) => {
+                'usuario_id': usuarioId,
+                'deporte_id': deporte['id'],
+              },
+            )
+            .toList();
+      }
+
+      // Eliminar únicamente las preferencias previas de este usuario
       await supabase
           .from('usuarios_deportes')
           .delete()
           .eq('usuario_id', usuarioId);
 
-      // Obtener IDs de los deportes seleccionados
-      final seleccion = deportesSeleccionados
-          .map((e) => e.trim())
-          .where((e) => e.isNotEmpty)
-          .toList();
-
-      if (seleccion.isEmpty) {
-        return;
-      }
-
-      // Construir filtro IN correcto con valores entre comillas
-      final inValues = '(${seleccion.map((e) => '"$e"').join(',')})';
-
-      final deportesIds = await supabase
-          .from('deportes')
-          .select('id, nombre')
-          .filter('nombre', 'in', inValues);
-
-      final inserts = deportesIds
-          .map(
-            (deporte) => {'usuario_id': usuarioId, 'deporte_id': deporte['id']},
-          )
-          .toList();
-
-      // Insertar nuevos deportes
+      // Insertar nuevos deportes seleccionados
       if (inserts.isNotEmpty) {
         await supabase.from('usuarios_deportes').insert(inserts);
       }
+
+      return seleccion;
     } catch (e) {
       throw Exception('Error al guardar deportes favoritos: $e');
     }

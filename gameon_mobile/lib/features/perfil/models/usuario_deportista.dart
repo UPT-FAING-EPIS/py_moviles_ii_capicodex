@@ -31,7 +31,7 @@ class UsuarioDeportista {
   });
 
   factory UsuarioDeportista.fromJson(Map<String, dynamic> json) {
-    DateTime? _parseDate(dynamic v) {
+    DateTime? parseDate(dynamic v) {
       if (v == null) return null;
       if (v is DateTime) return v;
       return DateTime.tryParse(v.toString());
@@ -44,7 +44,7 @@ class UsuarioDeportista {
       nombre: json['nombre']?.toString() ?? '',
       apellidos: json['apellidos']?.toString() ?? '',
       telefono: json['telefono']?.toString() ?? '',
-      fechaNacimiento: _parseDate(json['fecha_nacimiento']),
+      fechaNacimiento: parseDate(json['fecha_nacimiento']),
       genero: json['genero']?.toString() ?? 'otro',
       nivelHabilidad:
           json['nivel_habilidad']?.toString() ??
@@ -54,13 +54,45 @@ class UsuarioDeportista {
           ? json['estado'] as int
           : int.tryParse(json['estado']?.toString() ?? ''),
       imagenPerfil: json['imagen_perfil']?.toString(),
-      createdAt: _parseDate(json['creado_en'] ?? json['created_at']),
+      createdAt: parseDate(json['creado_en'] ?? json['created_at']),
       deportesFavoritos: json['deportes_favoritos'] != null
           ? (json['deportes_favoritos'] as List?)
                     ?.map((e) => e.toString())
                     .toList() ??
                 []
           : [],
+    );
+  }
+
+  UsuarioDeportista copyWith({
+    String? id,
+    String? authId,
+    String? username,
+    String? nombre,
+    String? apellidos,
+    String? telefono,
+    DateTime? fechaNacimiento,
+    String? genero,
+    String? nivelHabilidad,
+    int? estado,
+    String? imagenPerfil,
+    DateTime? createdAt,
+    List<String>? deportesFavoritos,
+  }) {
+    return UsuarioDeportista(
+      id: id ?? this.id,
+      authId: authId ?? this.authId,
+      username: username ?? this.username,
+      nombre: nombre ?? this.nombre,
+      apellidos: apellidos ?? this.apellidos,
+      telefono: telefono ?? this.telefono,
+      fechaNacimiento: fechaNacimiento ?? this.fechaNacimiento,
+      genero: genero ?? this.genero,
+      nivelHabilidad: nivelHabilidad ?? this.nivelHabilidad,
+      estado: estado ?? this.estado,
+      imagenPerfil: imagenPerfil ?? this.imagenPerfil,
+      createdAt: createdAt ?? this.createdAt,
+      deportesFavoritos: deportesFavoritos ?? List<String>.from(this.deportesFavoritos),
     );
   }
 

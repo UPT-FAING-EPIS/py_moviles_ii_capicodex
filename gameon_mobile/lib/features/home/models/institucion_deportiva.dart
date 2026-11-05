@@ -33,6 +33,8 @@ class InstitucionDeportiva {
   final List<String>? servicios;
   // Fotografías de la instalación (opcional)
   final List<String>? fotografias;
+  // Deportes asociados a la instalación (opcional)
+  final List<String>? deportes;
 
   // Constructor del modelo
   InstitucionDeportiva({
@@ -52,6 +54,7 @@ class InstitucionDeportiva {
     required this.estado,
     this.servicios,
     this.fotografias,
+    this.deportes,
   });
 
   // Método para crear una instancia del modelo a partir de un JSON
@@ -77,6 +80,9 @@ class InstitucionDeportiva {
       fotografias: json['fotografias'] != null
           ? List<String>.from(json['fotografias'])
           : null,
+      deportes: json['deportes'] != null
+          ? List<String>.from(json['deportes'])
+          : null,
     );
   }
 
@@ -99,6 +105,7 @@ class InstitucionDeportiva {
       'estado': estado,
       if (servicios != null) 'servicios': servicios,
       if (fotografias != null) 'fotografias': fotografias,
+      if (deportes != null) 'deportes': deportes,
     };
   }
 
@@ -120,6 +127,7 @@ class InstitucionDeportiva {
     int? estado,
     List<String>? servicios,
     List<String>? fotografias,
+    List<String>? deportes,
   }) {
     return InstitucionDeportiva(
       id: id ?? this.id,
@@ -138,6 +146,7 @@ class InstitucionDeportiva {
       estado: estado ?? this.estado,
       servicios: servicios ?? this.servicios,
       fotografias: fotografias ?? this.fotografias,
+      deportes: deportes ?? this.deportes,
     );
   }
 }

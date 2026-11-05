@@ -39,9 +39,17 @@ jobs:
           lib/features/perfil/views/perfil_view/authenticated/perfil_authenticated_view.dart
           lib/features/perfil/views/perfil_view/unauthenticated/forms/signup_form.dart
           lib/features/perfil/views/perfil_view/unauthenticated/forms/widgets/password_field.dart
+          lib/features/perfil/models/usuario_deportista.dart
+          lib/features/perfil/viewmodels/edit_perfil_viewmodel.dart
+          lib/features/perfil/views/perfil_view/authenticated/edit_perfil/edit_perfil_view.dart
+          lib/features/perfil/views/perfil_view/authenticated/edit_perfil/widgets/deportes_selector_card.dart
+          lib/features/perfil/views/perfil_view/authenticated/edit_perfil/widgets/deportes_selector_sheet.dart
+          lib/features/home/models/institucion_deportiva.dart
+          lib/features/home/viewmodels/home_viewmodel.dart
           test/features/perfil/auth_form_validators_test.dart
           test/features/perfil/password_recovery_service_test.dart
           test/features/perfil/password_recovery_view_test.dart
+          test/features/perfil/deportes_preferidos_test.dart
 
       - name: Ejecutar pruebas de la aplicación
         run: flutter test --no-pub --coverage --reporter expanded

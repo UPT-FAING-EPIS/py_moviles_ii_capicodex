@@ -36,9 +36,49 @@ class HomeViewModel {
       );
 
       // Convierte la respuesta en una lista de objetos InstitucionDeportiva
-      final lista = (data as List)
+      var lista = (data as List)
           .map((json) => InstitucionDeportiva.fromJson(json))
           .toList();
+
+      // Enriquecer con los deportes asociados de cada instalación para personalizar la búsqueda
+      if (lista.isNotEmpty) {
+        try {
+          final instIds = '(${lista.map((i) => i.id).join(',')})';
+          final relRows = await client
+              .from('instituciones_deportes')
+              .select('institucion_deportiva_id, deportes(nombre)')
+              .filter('institucion_deportiva_id', 'in', instIds);
+
+          final deportesMap = <int, List<String>>{};
+          for (final row in (relRows as List)) {
+            final map = row as Map<String, dynamic>;
+            final instId = map['institucion_deportiva_id'] as int?;
+            final depObj = map['deportes'] as Map<String, dynamic>?;
+            final nombreDep = depObj?['nombre']?.toString().trim();
+            if (instId != null && nombreDep != null && nombreDep.isNotEmpty) {
+              final list = deportesMap.putIfAbsent(instId, () => <String>[]);
+              if (!list.contains(nombreDep)) {
+                list.add(nombreDep);
+              }
+            }
+          }
+
+          if (deportesMap.isNotEmpty) {
+            lista = lista
+                .map(
+                  (inst) => deportesMap.containsKey(inst.id)
+                      ? inst.copyWith(deportes: deportesMap[inst.id])
+                      : inst,
+                )
+                .toList();
+          }
+        } catch (e) {
+          developer.log(
+            'fetchInstituciones: no se pudieron cargar deportes asociados: $e',
+            name: 'HomeViewModel',
+          );
+        }
+      }
 
       developer.log(
         'fetchInstituciones: mapeo completado. Registros=${lista.length}',

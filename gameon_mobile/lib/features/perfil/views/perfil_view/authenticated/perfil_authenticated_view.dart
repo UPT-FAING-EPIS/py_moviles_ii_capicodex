@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:gameon/features/perfil/models/usuario_deportista.dart';
 import 'package:gameon/features/perfil/views/perfil_view/authenticated/edit_perfil/edit_perfil_view.dart';
+import 'package:gameon/features/perfil/views/perfil_view/authenticated/edit_perfil/widgets/deportes_selector_sheet.dart';
 import 'package:gameon/features/perfil/viewmodels/edit_perfil_viewmodel.dart';
 import 'package:gameon/features/perfil/viewmodels/perfil_viewmodel.dart';
 import 'package:gameon/features/perfil/views/perfil_view/authenticated/help_support_view.dart';
@@ -19,10 +20,12 @@ String _formatDate(DateTime? dt) {
 class PerfilAuthenticatedView extends StatelessWidget {
   final UsuarioDeportista profile;
   final Future<void> Function() onLogout;
+  final EditPerfilViewModel? editPerfilViewModel;
   const PerfilAuthenticatedView({
     super.key,
     required this.profile,
     required this.onLogout,
+    this.editPerfilViewModel,
   });
 
   @override
@@ -140,11 +143,9 @@ class PerfilAuthenticatedView extends StatelessWidget {
                     // Estadísticas en cards horizontales
                     _buildStatsRow(context, p),
                     const SizedBox(height: 16),
-                    // Sección de deportes favoritos (siempre si hay deportes)
-                    if (p.deportesFavoritos.isNotEmpty)
-                      _buildDeportesSection(context, p),
-                    if (p.deportesFavoritos.isNotEmpty)
-                      const SizedBox(height: 16),
+                    // Sección de deportes favoritos
+                    _buildDeportesSection(context, p),
+                    const SizedBox(height: 16),
                     // Información personal
                     _buildInfoSection(context, p),
                     const SizedBox(height: 16),
@@ -415,11 +416,12 @@ class PerfilAuthenticatedView extends StatelessWidget {
 
   // Sección de deportes favoritos
   Widget _buildDeportesSection(BuildContext context, UsuarioDeportista p) {
+    final theme = Theme.of(context);
     return Container(
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surface,
+        color: theme.colorScheme.surface,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Theme.of(context).dividerColor),
+        border: Border.all(color: theme.dividerColor),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.04),
@@ -432,21 +434,33 @@ class PerfilAuthenticatedView extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Padding(
-            padding: const EdgeInsets.fromLTRB(20, 16, 20, 12),
+            padding: const EdgeInsets.fromLTRB(20, 12, 12, 8),
             child: Row(
               children: [
                 Icon(
                   Icons.sports,
-                  color: Theme.of(context).hintColor,
+                  color: theme.hintColor,
                   size: 18,
                 ),
                 const SizedBox(width: 8),
-                Text(
-                  'Mis Deportes',
-                  style: TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.bold,
-                    color: Theme.of(context).colorScheme.onSurface,
+                Expanded(
+                  child: Text(
+                    'Mis Deportes',
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.bold,
+                      color: theme.colorScheme.onSurface,
+                    ),
+                  ),
+                ),
+                TextButton.icon(
+                  onPressed: () => _openQuickDeportesSelector(context, p),
+                  icon: Icon(
+                    p.deportesFavoritos.isEmpty ? Icons.add : Icons.tune,
+                    size: 16,
+                  ),
+                  label: Text(
+                    p.deportesFavoritos.isEmpty ? 'Registrar' : 'Gestionar',
                   ),
                 ),
               ],
@@ -454,16 +468,86 @@ class PerfilAuthenticatedView extends StatelessWidget {
           ),
           Padding(
             padding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
-            child: Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: p.deportesFavoritos
-                  .map((deporte) => _buildDeporteCard(context, deporte))
-                  .toList(),
-            ),
+            child: p.deportesFavoritos.isEmpty
+                ? Text(
+                    'Aún no has registrado deportes preferidos para personalizar tu búsqueda.',
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: theme.hintColor,
+                    ),
+                  )
+                : Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: p.deportesFavoritos
+                        .map((deporte) => _buildDeporteCard(context, deporte))
+                        .toList(),
+                  ),
           ),
         ],
       ),
+    );
+  }
+
+  Future<void> _openQuickDeportesSelector(
+    BuildContext context,
+    UsuarioDeportista p,
+  ) async {
+    final editVm = editPerfilViewModel ?? EditPerfilViewModel();
+    if (editVm.deportesDisponibles.isEmpty) {
+      await editVm.loadDeportes();
+    }
+    if (!context.mounted) return;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (sheetCtx) {
+        return Container(
+          constraints: BoxConstraints(
+            maxHeight: MediaQuery.of(sheetCtx).size.height * 0.8,
+          ),
+          child: DeportesSelectorSheet(
+            disponibles: editVm.deportesDisponibles,
+            seleccionados: p.deportesFavoritos.toSet(),
+            getDeporteIcon: (dep) => _getDeporteData(dep)['icon'] as IconData,
+            onConfirm: (seleccion) async {
+              final usuarioId = int.tryParse(p.id.toString());
+              if (usuarioId == null) return;
+              try {
+                final guardados = await editVm.saveDeportesFavoritos(
+                  usuarioId,
+                  seleccion.toList(),
+                );
+                if (!context.mounted) return;
+                final perfilVm = context.read<PerfilViewModel>();
+                perfilVm.updateDeportesFavoritosLocal(guardados);
+                await perfilVm.reloadProfile();
+                if (!context.mounted) return;
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: const Text(
+                      'Deportes preferidos actualizados correctamente',
+                    ),
+                    backgroundColor: Colors.green.shade700,
+                    behavior: SnackBarBehavior.floating,
+                  ),
+                );
+              } catch (e) {
+                if (!context.mounted) return;
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('Error al guardar deportes: $e'),
+                    backgroundColor: Colors.red,
+                    behavior: SnackBarBehavior.floating,
+                  ),
+                );
+              }
+            },
+          ),
+        );
+      },
     );
   }
 
