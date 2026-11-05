@@ -10,6 +10,7 @@ import 'package:provider/provider.dart';
 import 'package:gameon/core/theme/app_theme.dart';
 import 'package:gameon/core/theme/theme_controller.dart';
 import 'package:gameon/features/gestor/views/registro_gestor_view.dart';
+import 'package:gameon/features/home/views/favoritos_view.dart';
 
 String _formatDate(DateTime? dt) {
   if (dt == null) return '—';
@@ -648,20 +649,37 @@ class PerfilAuthenticatedView extends StatelessWidget {
           Divider(height: 1, color: theme.dividerColor),
           _buildOptionItem(
             context: context,
+            icon: Icons.favorite_outline,
+            title: 'Mis favoritos',
+            subtitle: 'Encuentra tus instalaciones guardadas',
+            color: Colors.red,
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const FavoritosView()),
+              );
+            },
+          ),
+          Divider(height: 1, color: theme.dividerColor),
+          _buildOptionItem(
+            context: context,
             icon: Icons.business_outlined,
             title: context.watch<PerfilViewModel>().hasManagerProfile
-                ? 'Cambiar a gestor' : 'Registrar mi centro',
+                ? 'Cambiar a gestor'
+                : 'Registrar mi centro',
             subtitle: context.watch<PerfilViewModel>().hasManagerProfile
-                ? 'Gestiona tus canchas con esta cuenta' : 'Habilita el perfil gestor en esta cuenta',
+                ? 'Gestiona tus canchas con esta cuenta'
+                : 'Habilita el perfil gestor en esta cuenta',
             color: Colors.green,
             onTap: () {
               final vm = context.read<PerfilViewModel>();
               if (vm.hasManagerProfile) {
                 vm.selectMode(AppUserMode.gestor);
               } else {
-                Navigator.push(context, MaterialPageRoute(
-                  builder: (_) => const RegistroGestorView(),
-                ));
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const RegistroGestorView()),
+                );
               }
             },
           ),

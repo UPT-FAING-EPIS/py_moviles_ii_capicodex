@@ -268,6 +268,11 @@ class _EditPerfilViewState extends State<EditPerfilView> {
       return;
     }
 
+    if (_hasSensitiveChanges()) {
+      final confirmed = await _confirmSensitiveChanges();
+      if (!confirmed) return;
+    }
+
     setState(() {
       _isSaving = true;
     });
@@ -371,6 +376,36 @@ class _EditPerfilViewState extends State<EditPerfilView> {
         });
       }
     }
+  }
+
+  bool _hasSensitiveChanges() {
+    final original = widget.profile;
+    return _usernameController.text.trim() != original.username.trim() ||
+        _telefonoController.text.trim() != original.telefono.trim() ||
+        _fechaNacimiento != original.fechaNacimiento;
+  }
+
+  Future<bool> _confirmSensitiveChanges() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Confirmar datos personales'),
+        content: const Text(
+          'Estás modificando datos sensibles de tu perfil. ¿Deseas guardar estos cambios?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancelar'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Confirmar'),
+          ),
+        ],
+      ),
+    );
+    return confirmed ?? false;
   }
 
   @override

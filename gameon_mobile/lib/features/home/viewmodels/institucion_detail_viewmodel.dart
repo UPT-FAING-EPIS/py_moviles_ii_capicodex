@@ -15,8 +15,8 @@ class InstitucionDetailViewModel extends ChangeNotifier {
     this.institucionId, {
     SupabaseClient? supabaseClient,
     SharedPreferences? prefs,
-  })  : _customClient = supabaseClient,
-        _customPrefs = prefs;
+  }) : _customClient = supabaseClient,
+       _customPrefs = prefs;
 
   bool _isLoading = false;
   bool get isLoading => _isLoading;
@@ -41,6 +41,12 @@ class InstitucionDetailViewModel extends ChangeNotifier {
 
   DateTime? _cachedAt;
   DateTime? get cachedAt => _cachedAt;
+
+  bool _isFavorite = false;
+  bool get isFavorite => _isFavorite;
+
+  bool _isUpdatingFavorite = false;
+  bool get isUpdatingFavorite => _isUpdatingFavorite;
 
   SupabaseClient? get _client {
     if (_customClient != null) return _customClient;
@@ -86,6 +92,8 @@ class InstitucionDetailViewModel extends ChangeNotifier {
       _fotografias = results[2] as List<String>;
       _servicios = results[3] as List<String>;
 
+      await loadFavorite();
+
       _isFromCache = false;
       _errorMessage = null;
 
@@ -105,6 +113,71 @@ class InstitucionDetailViewModel extends ChangeNotifier {
       }
     } finally {
       _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  /// Carga el estado de favorito de la instalación para la cuenta actual.
+  /// Una sesión anónima simplemente no tiene favoritos.
+  Future<void> loadFavorite() async {
+    final client = _client;
+    final authId = client?.auth.currentUser?.id;
+    if (client == null || authId == null) {
+      _isFavorite = false;
+      return;
+    }
+    final profile = await client
+        .from('usuarios_deportistas')
+        .select('id')
+        .eq('auth_id', authId)
+        .maybeSingle();
+    if (profile == null) {
+      _isFavorite = false;
+      return;
+    }
+    final favorite = await client
+        .from('instituciones_favoritas')
+        .select('institucion_deportiva_id')
+        .eq('usuario_deportista_id', profile['id'])
+        .eq('institucion_deportiva_id', institucionId)
+        .maybeSingle();
+    _isFavorite = favorite != null;
+  }
+
+  /// Agrega o elimina la instalación de los favoritos de la cuenta autenticada.
+  /// Retorna `false` cuando no hay una sesión de deportista activa.
+  Future<bool> toggleFavorite() async {
+    final client = _client;
+    final authId = client?.auth.currentUser?.id;
+    if (client == null || authId == null || _isUpdatingFavorite) return false;
+
+    _isUpdatingFavorite = true;
+    notifyListeners();
+    try {
+      final profile = await client
+          .from('usuarios_deportistas')
+          .select('id')
+          .eq('auth_id', authId)
+          .maybeSingle();
+      if (profile == null) return false;
+
+      final userId = profile['id'];
+      if (_isFavorite) {
+        await client
+            .from('instituciones_favoritas')
+            .delete()
+            .eq('usuario_deportista_id', userId)
+            .eq('institucion_deportiva_id', institucionId);
+      } else {
+        await client.from('instituciones_favoritas').insert({
+          'usuario_deportista_id': userId,
+          'institucion_deportiva_id': institucionId,
+        });
+      }
+      _isFavorite = !_isFavorite;
+      return true;
+    } finally {
+      _isUpdatingFavorite = false;
       notifyListeners();
     }
   }
@@ -222,7 +295,9 @@ class InstitucionDetailViewModel extends ChangeNotifier {
     if (desc.contains('estacionamiento') || desc.contains('parking')) {
       detectados.add('Estacionamiento');
     }
-    if (desc.contains('cafeter') || desc.contains('snack') || desc.contains('kiosko')) {
+    if (desc.contains('cafeter') ||
+        desc.contains('snack') ||
+        desc.contains('kiosko')) {
       detectados.add('Cafetería / Snack bar');
     }
     if (desc.contains('vestuario') || desc.contains('ducha')) {
