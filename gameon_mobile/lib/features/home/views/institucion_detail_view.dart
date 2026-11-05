@@ -29,7 +29,8 @@ class _InstitucionDetailViewState extends State<InstitucionDetailView> {
   void initState() {
     super.initState();
     _isCustomViewModel = widget.viewModel != null;
-    viewModel = widget.viewModel ?? InstitucionDetailViewModel(widget.institucion.id);
+    viewModel =
+        widget.viewModel ?? InstitucionDetailViewModel(widget.institucion.id);
     viewModel.addListener(_onViewModelUpdate);
 
     // Si no tiene datos ya cargados previamente en el viewModel personalizado, cargar
@@ -54,6 +55,30 @@ class _InstitucionDetailViewState extends State<InstitucionDetailView> {
   void _onViewModelUpdate() {
     if (mounted) {
       setState(() {});
+    }
+  }
+
+  Future<void> _toggleFavorite() async {
+    try {
+      final changed = await viewModel.toggleFavorite();
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            changed
+                ? (viewModel.isFavorite
+                      ? 'Instalación agregada a favoritos'
+                      : 'Instalación eliminada de favoritos')
+                : 'Inicia sesión para guardar favoritos',
+          ),
+        ),
+      );
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('No se pudo actualizar tus favoritos')),
+        );
+      }
     }
   }
 
@@ -88,11 +113,34 @@ class _InstitucionDetailViewState extends State<InstitucionDetailView> {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     // Aviso de modo sin conexión con datos en caché
-                    if (viewModel.isFromCache) _buildOfflineWarningBanner(context),
+                    if (viewModel.isFromCache)
+                      _buildOfflineWarningBanner(context),
 
                     // Mensaje de error general si falló y no hay caché
-                    if (viewModel.errorMessage != null && !viewModel.isFromCache)
+                    if (viewModel.errorMessage != null &&
+                        !viewModel.isFromCache)
                       _buildGeneralErrorBanner(context),
+
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: OutlinedButton.icon(
+                        key: const Key('institucion_favorite_button'),
+                        onPressed: viewModel.isUpdatingFavorite
+                            ? null
+                            : _toggleFavorite,
+                        icon: Icon(
+                          viewModel.isFavorite
+                              ? Icons.favorite
+                              : Icons.favorite_border,
+                        ),
+                        label: Text(
+                          viewModel.isFavorite
+                              ? 'En favoritos'
+                              : 'Guardar favorito',
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
 
                     // Botón principal para ver áreas deportivas
                     _buildMainActionButton(context, institucion),
@@ -143,7 +191,8 @@ class _InstitucionDetailViewState extends State<InstitucionDetailView> {
     InstitucionDeportiva institucion,
     double safeTop,
   ) {
-    final hasImage = institucion.imagen != null && institucion.imagen!.isNotEmpty;
+    final hasImage =
+        institucion.imagen != null && institucion.imagen!.isNotEmpty;
 
     return Container(
       height: 300,
@@ -320,7 +369,11 @@ class _InstitucionDetailViewState extends State<InstitucionDetailView> {
         children: [
           Row(
             children: [
-              Icon(Icons.wifi_off_rounded, color: Colors.amber.shade900, size: 24),
+              Icon(
+                Icons.wifi_off_rounded,
+                color: Colors.amber.shade900,
+                size: 24,
+              ),
               const SizedBox(width: 10),
               Expanded(
                 child: Text(
@@ -355,13 +408,19 @@ class _InstitucionDetailViewState extends State<InstitucionDetailView> {
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.amber.shade800,
                 foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 8,
+                ),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(10),
                 ),
               ),
               icon: const Icon(Icons.refresh, size: 16),
-              label: const Text('Reintentar', style: TextStyle(fontWeight: FontWeight.bold)),
+              label: const Text(
+                'Reintentar',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
             ),
           ),
         ],
@@ -381,7 +440,11 @@ class _InstitucionDetailViewState extends State<InstitucionDetailView> {
       ),
       child: Column(
         children: [
-          Icon(Icons.error_outline_rounded, color: Colors.red.shade700, size: 40),
+          Icon(
+            Icons.error_outline_rounded,
+            color: Colors.red.shade700,
+            size: 40,
+          ),
           const SizedBox(height: 10),
           Text(
             viewModel.errorMessage ??
@@ -409,7 +472,10 @@ class _InstitucionDetailViewState extends State<InstitucionDetailView> {
               ),
             ),
             icon: const Icon(Icons.refresh, size: 18),
-            label: const Text('Reintentar', style: TextStyle(fontWeight: FontWeight.bold)),
+            label: const Text(
+              'Reintentar',
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
           ),
         ],
       ),
@@ -486,7 +552,10 @@ class _InstitucionDetailViewState extends State<InstitucionDetailView> {
     );
   }
 
-  Widget _buildContactCard(BuildContext context, InstitucionDeportiva institucion) {
+  Widget _buildContactCard(
+    BuildContext context,
+    InstitucionDeportiva institucion,
+  ) {
     final theme = Theme.of(context);
     return Container(
       decoration: BoxDecoration(
@@ -621,7 +690,10 @@ class _InstitucionDetailViewState extends State<InstitucionDetailView> {
     );
   }
 
-  Widget _buildPriceCard(BuildContext context, InstitucionDeportiva institucion) {
+  Widget _buildPriceCard(
+    BuildContext context,
+    InstitucionDeportiva institucion,
+  ) {
     final theme = Theme.of(context);
     return Container(
       decoration: BoxDecoration(
@@ -781,9 +853,10 @@ class _InstitucionDetailViewState extends State<InstitucionDetailView> {
     final theme = Theme.of(context);
     final fotos = viewModel.fotografias.isNotEmpty
         ? viewModel.fotografias
-        : (widget.institucion.imagen != null && widget.institucion.imagen!.isNotEmpty
-            ? [widget.institucion.imagen!]
-            : <String>[]);
+        : (widget.institucion.imagen != null &&
+                  widget.institucion.imagen!.isNotEmpty
+              ? [widget.institucion.imagen!]
+              : <String>[]);
 
     return Container(
       decoration: BoxDecoration(
@@ -851,25 +924,29 @@ class _InstitucionDetailViewState extends State<InstitucionDetailView> {
                 child: ListView.separated(
                   scrollDirection: Axis.horizontal,
                   itemCount: fotos.length,
-                  separatorBuilder: (context, index) => const SizedBox(width: 12),
+                  separatorBuilder: (context, index) =>
+                      const SizedBox(width: 12),
                   itemBuilder: (context, index) {
                     final url = fotos[index];
                     return ClipRRect(
                       borderRadius: BorderRadius.circular(14),
                       child: Container(
                         width: 220,
-                        decoration: BoxDecoration(
-                          color: Colors.grey.shade200,
-                        ),
+                        decoration: BoxDecoration(color: Colors.grey.shade200),
                         child: Image.network(
                           url,
                           fit: BoxFit.cover,
-                          errorBuilder: (context, error, stackTrace) => Container(
-                            color: Colors.grey.shade300,
-                            child: const Center(
-                              child: Icon(Icons.broken_image, size: 40, color: Colors.grey),
-                            ),
-                          ),
+                          errorBuilder: (context, error, stackTrace) =>
+                              Container(
+                                color: Colors.grey.shade300,
+                                child: const Center(
+                                  child: Icon(
+                                    Icons.broken_image,
+                                    size: 40,
+                                    color: Colors.grey,
+                                  ),
+                                ),
+                              ),
                         ),
                       ),
                     );
@@ -951,7 +1028,9 @@ class _InstitucionDetailViewState extends State<InstitucionDetailView> {
               Wrap(
                 spacing: 10,
                 runSpacing: 10,
-                children: servicios.map((s) => _buildServiceChip(context, s)).toList(),
+                children: servicios
+                    .map((s) => _buildServiceChip(context, s))
+                    .toList(),
               ),
           ],
         ),
@@ -1230,11 +1309,7 @@ class _InstitucionDetailViewState extends State<InstitucionDetailView> {
     );
   }
 
-  Widget _buildEmptyState(
-    IconData icon,
-    String title, {
-    String? subtitle,
-  }) {
+  Widget _buildEmptyState(IconData icon, String title, {String? subtitle}) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
       child: Row(
@@ -1264,10 +1339,7 @@ class _InstitucionDetailViewState extends State<InstitucionDetailView> {
                   const SizedBox(height: 2),
                   Text(
                     subtitle,
-                    style: TextStyle(
-                      color: Colors.grey.shade600,
-                      fontSize: 12,
-                    ),
+                    style: TextStyle(color: Colors.grey.shade600, fontSize: 12),
                   ),
                 ],
               ],
