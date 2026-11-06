@@ -17,6 +17,7 @@ class ProfileAvatar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
     return GestureDetector(
       onTap: onTap,
       child: Stack(
@@ -25,9 +26,12 @@ class ProfileAvatar extends StatelessWidget {
             width: 120,
             height: 120,
             decoration: BoxDecoration(
-              color: Colors.green.shade50,
+              color: colors.primary.withValues(alpha: .12),
               shape: BoxShape.circle,
-              border: Border.all(color: Colors.green.shade200, width: 3),
+              border: Border.all(
+                color: colors.primary.withValues(alpha: .4),
+                width: 3,
+              ),
               boxShadow: [
                 BoxShadow(
                   color: Colors.black.withOpacity(0.1),
@@ -58,7 +62,7 @@ class ProfileAvatar extends StatelessWidget {
                           style: TextStyle(
                             fontSize: 48,
                             fontWeight: FontWeight.bold,
-                            color: Colors.green.shade700,
+                            color: colors.primary,
                           ),
                         ),
                       ),
@@ -69,7 +73,7 @@ class ProfileAvatar extends StatelessWidget {
                         style: TextStyle(
                           fontSize: 48,
                           fontWeight: FontWeight.bold,
-                          color: Colors.green.shade700,
+                          color: colors.primary,
                         ),
                       ),
                     ),
@@ -81,15 +85,11 @@ class ProfileAvatar extends StatelessWidget {
             child: Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: Colors.green.shade700,
+                color: colors.primary,
                 shape: BoxShape.circle,
-                border: Border.all(color: Colors.white, width: 3),
+                border: Border.all(color: colors.surface, width: 3),
               ),
-              child: const Icon(
-                Icons.camera_alt,
-                color: Colors.white,
-                size: 20,
-              ),
+              child: Icon(Icons.camera_alt, color: colors.onPrimary, size: 20),
             ),
           ),
         ],

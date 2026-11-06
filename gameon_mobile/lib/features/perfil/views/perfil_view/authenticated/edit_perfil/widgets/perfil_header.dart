@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:gameon/core/theme/app_theme.dart';
+import 'package:gameon/core/theme/theme_controller.dart';
+import 'package:provider/provider.dart';
 
 class PerfilHeader extends StatelessWidget {
   final bool isSaving;
@@ -14,13 +17,24 @@ class PerfilHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    final background = AppTheme.headerBackgroundFor(
+      context.watch<ThemeController>().selection,
+    );
     return Container(
       decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [Colors.green.shade600, Colors.green.shade800],
+          colors: [colors.primary, colors.primaryContainer],
         ),
+        image: background == null
+            ? null
+            : DecorationImage(
+                image: AssetImage(background),
+                fit: BoxFit.cover,
+                opacity: .32,
+              ),
         borderRadius: const BorderRadius.only(
           bottomLeft: Radius.circular(30),
           bottomRight: Radius.circular(30),
@@ -38,10 +52,7 @@ class PerfilHeader extends StatelessWidget {
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: IconButton(
-                  icon: const Icon(
-                    Icons.arrow_back,
-                    color: Colors.white,
-                  ),
+                  icon: const Icon(Icons.arrow_back, color: Colors.white),
                   onPressed: onBack,
                 ),
               ),
@@ -76,7 +87,7 @@ class PerfilHeader extends StatelessWidget {
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: IconButton(
-                  icon: Icon(Icons.check, color: Colors.green.shade700),
+                  icon: Icon(Icons.check, color: colors.primary),
                   onPressed: isSaving ? null : onSave,
                 ),
               ),

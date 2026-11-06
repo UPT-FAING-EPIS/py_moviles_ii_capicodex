@@ -19,40 +19,19 @@ class DropdownField extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.grey.shade200),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.03),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
+  Widget build(BuildContext context) => DropdownButtonFormField<String>(
+    initialValue: value,
+    isExpanded: true,
+    decoration: InputDecoration(
+      labelText: label,
+      prefixIcon: Icon(icon, size: 20),
+      contentPadding: EdgeInsets.symmetric(
+        horizontal: horizontalPadding,
+        vertical: 17,
       ),
-      padding: EdgeInsets.symmetric(horizontal: horizontalPadding, vertical: 8),
-      child: Row(
-        children: [
-          Icon(icon, color: Colors.grey.shade600),
-          const SizedBox(width: 12),
-          Expanded(
-            child: DropdownButtonFormField<String>(
-              value: value,
-              decoration: const InputDecoration(
-                labelText: '',
-                border: InputBorder.none,
-                contentPadding: EdgeInsets.zero,
-              ),
-              hint: Text(label),
-              items: items,
-              onChanged: onChanged,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+      border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
+    ),
+    items: items,
+    onChanged: onChanged,
+  );
 }

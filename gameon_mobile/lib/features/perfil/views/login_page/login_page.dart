@@ -282,6 +282,7 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
                   segments: const [
                     ButtonSegment(value: AppUserMode.deportista, icon: Icon(Icons.directions_run), label: Text('Deportista')),
                     ButtonSegment(value: AppUserMode.gestor, icon: Icon(Icons.business), label: Text('Gestor')),
+                    ButtonSegment(value: AppUserMode.admin, icon: Icon(Icons.admin_panel_settings), label: Text('Admin')),
                   ],
                   selected: {_selectedMode},
                   onSelectionChanged: (value) => setState(() => _selectedMode = value.first),

@@ -9,7 +9,10 @@ import 'package:gameon/features/perfil/views/perfil_view/authenticated/notificat
 import 'package:provider/provider.dart';
 import 'package:gameon/core/theme/app_theme.dart';
 import 'package:gameon/core/theme/theme_controller.dart';
+import 'package:gameon/core/theme/visual_theme_picker.dart';
+import 'package:gameon/core/widgets/role_switcher.dart';
 import 'package:gameon/features/gestor/views/registro_gestor_view.dart';
+import 'package:gameon/features/notificaciones/views/avisos_reserva_view.dart';
 
 String _formatDate(DateTime? dt) {
   if (dt == null) return '—';
@@ -104,7 +107,7 @@ class PerfilAuthenticatedView extends StatelessWidget {
                           ),
                           Row(
                             children: [
-                              _buildThemeMenu(context),
+                              const VisualThemePicker(),
                               const SizedBox(width: 8),
                               Container(
                                 padding: const EdgeInsets.all(10),
@@ -112,11 +115,7 @@ class PerfilAuthenticatedView extends StatelessWidget {
                                   color: Colors.white.withValues(alpha: 0.2),
                                   borderRadius: BorderRadius.circular(12),
                                 ),
-                                child: const Icon(
-                                  Icons.person,
-                                  color: Colors.white,
-                                  size: 24,
-                                ),
+                                child: const RoleSwitcher(),
                               ),
                             ],
                           ),
@@ -649,22 +648,37 @@ class PerfilAuthenticatedView extends StatelessWidget {
           _buildOptionItem(
             context: context,
             icon: Icons.business_outlined,
-            title: context.watch<PerfilViewModel>().hasManagerProfile
-                ? 'Cambiar a gestor' : 'Registrar mi centro',
-            subtitle: context.watch<PerfilViewModel>().hasManagerProfile
-                ? 'Gestiona tus canchas con esta cuenta' : 'Habilita el perfil gestor en esta cuenta',
+            title: context.watch<PerfilViewModel>().managerStatus != null
+                ? 'Ver perfil gestor'
+                : 'Registrar mi centro',
+            subtitle: context.watch<PerfilViewModel>().managerStatus != null
+                ? 'Gestiona tus canchas o consulta tu solicitud'
+                : 'Solicita habilitar el perfil gestor',
             color: Colors.green,
             onTap: () {
               final vm = context.read<PerfilViewModel>();
-              if (vm.hasManagerProfile) {
+              if (vm.managerStatus != null) {
                 vm.selectMode(AppUserMode.gestor);
               } else {
-                Navigator.push(context, MaterialPageRoute(
-                  builder: (_) => const RegistroGestorView(),
-                ));
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const RegistroGestorView()),
+                );
               }
             },
           ),
+          if (context.watch<PerfilViewModel>().isAdmin) ...[
+            Divider(height: 1, color: theme.dividerColor),
+            _buildOptionItem(
+              context: context,
+              icon: Icons.admin_panel_settings,
+              title: 'Administración',
+              subtitle: 'Revisar solicitudes de gestores',
+              color: Colors.indigo,
+              onTap: () =>
+                  context.read<PerfilViewModel>().selectMode(AppUserMode.admin),
+            ),
+          ],
           Divider(height: 1, color: theme.dividerColor),
           _buildOptionItem(
             context: context,
@@ -680,6 +694,18 @@ class PerfilAuthenticatedView extends StatelessWidget {
                 ),
               );
             },
+          ),
+          Divider(height: 1, color: theme.dividerColor),
+          _buildOptionItem(
+            context: context,
+            icon: Icons.event_note,
+            title: 'Avisos de reservas',
+            subtitle: 'Revisa tus pagos Yape y confirmaciones',
+            color: Colors.teal,
+            onTap: () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const AvisosReservaView()),
+            ),
           ),
           Divider(height: 1, color: theme.dividerColor),
           _buildOptionItem(
@@ -786,68 +812,6 @@ class PerfilAuthenticatedView extends StatelessWidget {
       ),
     );
   }
-
-  Widget _buildThemeMenu(BuildContext context) {
-    return Consumer<ThemeController>(
-      builder: (context, themeController, _) {
-        final colors = Theme.of(context).colorScheme;
-        return Container(
-          decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: .2),
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: PopupMenuButton<AppVisualTheme>(
-            tooltip: 'Cambiar tema visual',
-            icon: Icon(
-              _themeIcon(themeController.selection),
-              color: Colors.white,
-            ),
-            color: colors.surface,
-            onSelected: (selection) => themeController.select(selection),
-            itemBuilder: (_) => [
-              for (final selection in AppVisualTheme.values)
-                PopupMenuItem(
-                  value: selection,
-                  child: Row(
-                    children: [
-                      Icon(
-                        _themeIcon(selection),
-                        color: colors.primary,
-                        size: 20,
-                      ),
-                      const SizedBox(width: 12),
-                      Text(_themeName(selection)),
-                    ],
-                  ),
-                ),
-            ],
-          ),
-        );
-      },
-    );
-  }
-
-  String _themeName(AppVisualTheme selection) => switch (selection) {
-    AppVisualTheme.light => 'Claro',
-    AppVisualTheme.dark => 'Oscuro',
-    AppVisualTheme.football => 'Fútbol',
-    AppVisualTheme.wimbledon => 'Tenis Wimbledon',
-    AppVisualTheme.rolandGarros => 'Tenis Roland Garros',
-    AppVisualTheme.usOpen => 'Tenis US Open',
-    AppVisualTheme.volleyball => 'Vóley',
-    AppVisualTheme.basketball => 'Básquet',
-  };
-
-  IconData _themeIcon(AppVisualTheme selection) => switch (selection) {
-    AppVisualTheme.light => Icons.light_mode_outlined,
-    AppVisualTheme.dark => Icons.dark_mode_outlined,
-    AppVisualTheme.football => Icons.sports_soccer_outlined,
-    AppVisualTheme.wimbledon => Icons.sports_tennis_outlined,
-    AppVisualTheme.rolandGarros => Icons.sports_tennis_outlined,
-    AppVisualTheme.usOpen => Icons.sports_tennis_outlined,
-    AppVisualTheme.volleyball => Icons.sports_volleyball_outlined,
-    AppVisualTheme.basketball => Icons.sports_basketball_outlined,
-  };
 
   void _navigateToEditPerfil(BuildContext context) {
     // Obtener el PerfilViewModel del contexto actual

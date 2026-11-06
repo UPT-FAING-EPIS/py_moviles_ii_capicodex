@@ -3,6 +3,9 @@ import 'package:flutter/services.dart';
 import 'package:gameon/features/home/models/area_deportiva.dart';
 import 'package:gameon/features/home/viewmodels/areas_deportivas_viewmodel.dart';
 import 'package:gameon/features/reservas/views/reserva_calendario/reserva_calendario_view.dart';
+import 'package:gameon/core/theme/app_theme.dart';
+import 'package:gameon/core/theme/theme_controller.dart';
+import 'package:provider/provider.dart';
 
 class AreasDeportivasView extends StatefulWidget {
   final int institucionId;
@@ -25,6 +28,9 @@ class _AreasDeportivasViewState extends State<AreasDeportivasView> {
 
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    final background = AppTheme.headerBackgroundFor(
+      context.watch<ThemeController>().selection);
     // Barra de estado transparente con iconos claros
     final overlay = SystemUiOverlayStyle(
       statusBarColor: Colors.transparent,
@@ -35,7 +41,7 @@ class _AreasDeportivasViewState extends State<AreasDeportivasView> {
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: overlay,
       child: Scaffold(
-        backgroundColor: Colors.grey[50],
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         body: Column(
           children: [
             // Header moderno con gradiente verde
@@ -44,8 +50,10 @@ class _AreasDeportivasViewState extends State<AreasDeportivasView> {
                 gradient: LinearGradient(
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
-                  colors: [Colors.green.shade600, Colors.green.shade800],
+                  colors: [colors.primary, colors.primaryContainer],
                 ),
+                image: background == null ? null : DecorationImage(
+                  image: AssetImage(background), fit: BoxFit.cover, opacity: .32),
                 borderRadius: const BorderRadius.only(
                   bottomLeft: Radius.circular(30),
                   bottomRight: Radius.circular(30),
@@ -124,7 +132,7 @@ class _AreasDeportivasViewState extends State<AreasDeportivasView> {
                   if (snapshot.connectionState == ConnectionState.waiting) {
                     return Center(
                       child: CircularProgressIndicator(
-                        color: Colors.green[600],
+                      color: colors.secondary,
                       ),
                     );
                   }
@@ -136,7 +144,7 @@ class _AreasDeportivasViewState extends State<AreasDeportivasView> {
                           Icon(
                             Icons.error_outline,
                             size: 64,
-                            color: Colors.grey[400],
+                            color: colors.onSurfaceVariant,
                           ),
                           const SizedBox(height: 16),
                           Text(
@@ -144,7 +152,7 @@ class _AreasDeportivasViewState extends State<AreasDeportivasView> {
                             style: TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.w600,
-                              color: Colors.black87,
+                              color: colors.onSurface,
                             ),
                           ),
                           const SizedBox(height: 8),
@@ -152,7 +160,7 @@ class _AreasDeportivasViewState extends State<AreasDeportivasView> {
                             '${snapshot.error}',
                             style: TextStyle(
                               fontSize: 14,
-                              color: Colors.grey[500],
+                              color: colors.onSurfaceVariant,
                             ),
                             textAlign: TextAlign.center,
                           ),
@@ -166,14 +174,14 @@ class _AreasDeportivasViewState extends State<AreasDeportivasView> {
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Icon(Icons.sports, size: 80, color: Colors.grey[300]),
+                          Icon(Icons.sports, size: 80, color: colors.secondary),
                           const SizedBox(height: 16),
                           Text(
                             'No hay áreas disponibles',
                             style: TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.w600,
-                              color: Colors.black87,
+                              color: colors.onSurface,
                             ),
                           ),
                         ],
@@ -207,10 +215,11 @@ class _AreaDeportivaCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: colors.surface,
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
@@ -244,8 +253,8 @@ class _AreaDeportivaCard extends StatelessWidget {
                             begin: Alignment.topLeft,
                             end: Alignment.bottomRight,
                             colors: [
-                              Colors.green.shade200,
-                              Colors.green.shade400,
+                              colors.primary.withValues(alpha: .45),
+                              colors.primary,
                             ],
                           ),
                         ),
@@ -268,8 +277,8 @@ class _AreaDeportivaCard extends StatelessWidget {
                             begin: Alignment.topLeft,
                             end: Alignment.bottomRight,
                             colors: [
-                              Colors.green.shade400,
-                              Colors.green.shade700,
+                              colors.primaryContainer,
+                              colors.primary,
                             ],
                           ),
                         ),
@@ -287,7 +296,7 @@ class _AreaDeportivaCard extends StatelessWidget {
                       gradient: LinearGradient(
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
-                        colors: [Colors.green.shade400, Colors.green.shade700],
+                        colors: [colors.primaryContainer, colors.primary],
                       ),
                     ),
                     child: const Icon(
@@ -304,10 +313,10 @@ class _AreaDeportivaCard extends StatelessWidget {
               children: [
                 Text(
                   area.nombreArea,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 22,
                     fontWeight: FontWeight.bold,
-                    color: Colors.black87,
+                    color: colors.onSurface,
                   ),
                 ),
                 const SizedBox(height: 8),
@@ -316,7 +325,7 @@ class _AreaDeportivaCard extends StatelessWidget {
                     area.descripcion!,
                     style: TextStyle(
                       fontSize: 14,
-                      color: Colors.grey[600],
+                      color: colors.onSurfaceVariant,
                       height: 1.4,
                     ),
                     maxLines: 2,
@@ -330,7 +339,7 @@ class _AreaDeportivaCard extends StatelessWidget {
                       child: _InfoChip(
                         icon: Icons.people,
                         label: '${area.capacidadJugadores ?? '-'} jugadores',
-                        color: Colors.blue,
+                        color: colors.secondary,
                       ),
                     ),
                     const SizedBox(width: 8),
@@ -338,9 +347,8 @@ class _AreaDeportivaCard extends StatelessWidget {
                       child: _InfoChip(
                         icon: Icons.info_outline,
                         label: area.estado,
-                        color: area.estado.toLowerCase() == 'disponible'
-                            ? Colors.green
-                            : Colors.orange,
+                        color: area.estado.toLowerCase() == 'activa'
+                            ? colors.primary : colors.tertiary,
                       ),
                     ),
                   ],
@@ -353,7 +361,7 @@ class _AreaDeportivaCard extends StatelessWidget {
                     vertical: 12,
                   ),
                   decoration: BoxDecoration(
-                    color: Colors.green[50],
+                    color: colors.primary.withValues(alpha: .12),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Row(
@@ -364,14 +372,14 @@ class _AreaDeportivaCard extends StatelessWidget {
                           Icon(
                             Icons.payments_outlined,
                             size: 20,
-                            color: Colors.green[700],
+                            color: colors.secondary,
                           ),
                           const SizedBox(width: 8),
-                          const Text(
+                          Text(
                             'Tarifa por hora',
                             style: TextStyle(
                               fontSize: 14,
-                              color: Colors.black87,
+                              color: colors.onSurface,
                             ),
                           ),
                         ],
@@ -381,7 +389,7 @@ class _AreaDeportivaCard extends StatelessWidget {
                         style: TextStyle(
                           fontWeight: FontWeight.bold,
                           fontSize: 20,
-                          color: Colors.green[700],
+                          color: colors.secondary,
                         ),
                       ),
                     ],
@@ -401,8 +409,8 @@ class _AreaDeportivaCard extends StatelessWidget {
                       );
                     },
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.green[700],
-                      foregroundColor: Colors.white,
+                      backgroundColor: colors.primary,
+                      foregroundColor: colors.onPrimary,
                       padding: const EdgeInsets.symmetric(vertical: 16),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),

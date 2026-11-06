@@ -4,7 +4,12 @@ import 'package:gameon/features/home/models/area_deportiva.dart';
 import 'package:gameon/features/reservas/viewmodels/reserva_calendario_viewmodel.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
+import 'package:gameon/core/theme/app_theme.dart';
+import 'package:gameon/core/theme/theme_controller.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../viewmodels/reserva_resumen_viewmodel.dart';
+import '../services/yape_service.dart';
+import '../viewmodels/reservas_list_viewmodel.dart';
 
 class ReservaResumenView extends StatefulWidget {
   final AreaDeportiva area;
@@ -23,10 +28,150 @@ class ReservaResumenView extends StatefulWidget {
 }
 
 class _ReservaResumenViewState extends State<ReservaResumenView> {
+  late final Future<Map<String, dynamic>?> _cobroYape;
+  bool _yapeBusy = false;
+  bool _yapeSubmitted = false;
+  String? _yapeError;
+
+  @override
+  void initState() {
+    super.initState();
+    _cobroYape = YapeService(
+      Supabase.instance.client,
+    ).cobroDelCentro(widget.area.institucionDeportivaId);
+  }
+
+  Future<void> _pagarYape() async {
+    if (_yapeBusy || _yapeSubmitted) return;
+    final vm = widget.viewModel;
+    final day = vm.selectedDay;
+    final start = vm.startTime;
+    if (day == null || start == null || !vm.tieneRangoValido) return;
+    final navigator = Navigator.of(context);
+    final messenger = ScaffoldMessenger.of(context);
+    setState(() {
+      _yapeBusy = true;
+      _yapeError = null;
+    });
+    String format(TimeOfDay time) =>
+        '${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}:00';
+    int? id;
+    try {
+      id = await YapeService(Supabase.instance.client).subirEvidenciaYReservar(
+        areaId: widget.area.id,
+        fecha: day,
+        inicio: format(start),
+        fin: format(vm.horaFinReal),
+      );
+    } catch (e) {
+      if (mounted) setState(() => _yapeError = 'No se pudo enviar: $e');
+    } finally {
+      if (mounted) setState(() => _yapeBusy = false);
+    }
+    if (id == null || !mounted) return;
+    // La RPC ya creó la reserva. Un fallo al actualizar la lista o navegar
+    // nunca debe presentarse como fallo del pago ni permitir otro envío.
+    setState(() => _yapeSubmitted = true);
+    try {
+      await ReservasListViewModel.refreshIfActive(int.parse(widget.userId));
+    } catch (_) {
+      // La lista se recargará al abrir la pestaña Reservas.
+    }
+    if (messenger.mounted) {
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text(
+            'Reserva #$id pendiente. El gestor verificará el pago en Yape.',
+          ),
+        ),
+      );
+    }
+    if (navigator.mounted) navigator.popUntil((route) => route.isFirst);
+  }
+
+  Widget _buildYapeOption() => FutureBuilder<Map<String, dynamic>?>(
+    future: _cobroYape,
+    builder: (context, snapshot) {
+      if (snapshot.connectionState != ConnectionState.done) {
+        return const Center(child: CircularProgressIndicator());
+      }
+      if (snapshot.hasError) {
+        return const ListTile(
+          title: Text('Yape no disponible'),
+          subtitle: Text(
+            'No se pudo consultar la configuración de cobros del centro.',
+          ),
+        );
+      }
+      final cobro = snapshot.data;
+      if (cobro == null)
+        return const ListTile(
+          title: Text('Yape no configurado'),
+          subtitle: Text('Este centro todavía no ha publicado su QR de cobro.'),
+        );
+      return Card(
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Pagar directamente al centro con Yape',
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 17),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Titular: ${cobro['yape_titular']} · Celular: ${cobro['yape_celular']}',
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Importe exacto: S/ ${widget.viewModel.costoTotal(widget.area.tarifaPorHora).toStringAsFixed(2)}',
+              ),
+              const SizedBox(height: 10),
+              Center(
+                child: Image.network(
+                  '${cobro['yape_qr_url']}',
+                  height: 190,
+                  fit: BoxFit.contain,
+                  errorBuilder: (_, _, _) =>
+                      const Text('No se pudo mostrar el QR'),
+                ),
+              ),
+              const SizedBox(height: 10),
+              const Text(
+                'Paga desde Yape y adjunta la captura. El horario quedará pendiente y ocupado hasta que el gestor verifique el ingreso y apruebe o rechace la reserva.',
+              ),
+              if (_yapeError != null)
+                Text(_yapeError!, style: const TextStyle(color: Colors.red)),
+              const SizedBox(height: 8),
+              SizedBox(
+                width: double.infinity,
+                child: FilledButton.icon(
+                  onPressed: _yapeBusy || _yapeSubmitted ? null : _pagarYape,
+                  icon: const Icon(Icons.upload_file),
+                  label: Text(
+                    _yapeBusy
+                        ? 'Enviando...'
+                        : _yapeSubmitted
+                        ? 'Reserva enviada'
+                        : 'Enviar captura de Yape',
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    },
+  );
   @override
   Widget build(BuildContext context) {
     final vm = widget.viewModel;
     final area = widget.area;
+    final colors = Theme.of(context).colorScheme;
+    final background = AppTheme.headerBackgroundFor(
+      context.watch<ThemeController>().selection,
+    );
 
     // Status bar transparente con iconos claros
     final overlay = SystemUiOverlayStyle(
@@ -39,7 +184,7 @@ class _ReservaResumenViewState extends State<ReservaResumenView> {
       return AnnotatedRegion<SystemUiOverlayStyle>(
         value: overlay,
         child: Scaffold(
-          backgroundColor: Colors.grey[50],
+          backgroundColor: Theme.of(context).scaffoldBackgroundColor,
           body: Column(
             children: [
               // Header moderno
@@ -48,8 +193,15 @@ class _ReservaResumenViewState extends State<ReservaResumenView> {
                   gradient: LinearGradient(
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
-                    colors: [Colors.green.shade600, Colors.green.shade800],
+                    colors: [colors.primary, colors.primaryContainer],
                   ),
+                  image: background == null
+                      ? null
+                      : DecorationImage(
+                          image: AssetImage(background),
+                          fit: BoxFit.cover,
+                          opacity: .32,
+                        ),
                   borderRadius: const BorderRadius.only(
                     bottomLeft: Radius.circular(30),
                     bottomRight: Radius.circular(30),
@@ -133,7 +285,7 @@ class _ReservaResumenViewState extends State<ReservaResumenView> {
           child: Stack(
             children: [
               Scaffold(
-                backgroundColor: Colors.grey[50],
+                backgroundColor: Theme.of(context).scaffoldBackgroundColor,
                 body: Column(
                   children: [
                     // Header moderno con gradiente verde
@@ -142,11 +294,15 @@ class _ReservaResumenViewState extends State<ReservaResumenView> {
                         gradient: LinearGradient(
                           begin: Alignment.topLeft,
                           end: Alignment.bottomRight,
-                          colors: [
-                            Colors.green.shade600,
-                            Colors.green.shade800,
-                          ],
+                          colors: [colors.primary, colors.primaryContainer],
                         ),
+                        image: background == null
+                            ? null
+                            : DecorationImage(
+                                image: AssetImage(background),
+                                fit: BoxFit.cover,
+                                opacity: .32,
+                              ),
                         borderRadius: const BorderRadius.only(
                           bottomLeft: Radius.circular(30),
                           bottomRight: Radius.circular(30),
@@ -245,16 +401,17 @@ class _ReservaResumenViewState extends State<ReservaResumenView> {
                             ),
                             const SizedBox(height: 20),
                             _buildSeccionPago(context, resumenVM),
+                            const SizedBox(height: 16),
+                            _buildYapeOption(),
                             const SizedBox(height: 20),
-                            _buildMensajeSeguridad(),
                             if (resumenVM.error != null) ...[
                               const SizedBox(height: 20),
-                              _buildErrorMessage(resumenVM.error!),
+                              _buildErrorMessage(context, resumenVM.error!),
                             ],
                             if (resumenVM.orderId != null &&
                                 !resumenVM.reservaCreada) ...[
                               const SizedBox(height: 20),
-                              _buildOrderInfo(resumenVM.orderId!),
+                              _buildOrderInfo(context, resumenVM.orderId!),
                             ],
                             const SizedBox(height: 100),
                           ],
@@ -275,7 +432,7 @@ class _ReservaResumenViewState extends State<ReservaResumenView> {
                           margin: const EdgeInsets.symmetric(horizontal: 48),
                           padding: const EdgeInsets.all(24),
                           decoration: BoxDecoration(
-                            color: Colors.white,
+                            color: colors.surface,
                             borderRadius: BorderRadius.circular(16),
                             boxShadow: [
                               BoxShadow(
@@ -294,7 +451,7 @@ class _ReservaResumenViewState extends State<ReservaResumenView> {
                                 child: CircularProgressIndicator(
                                   strokeWidth: 3.5,
                                   valueColor: AlwaysStoppedAnimation<Color>(
-                                    Colors.green[600]!,
+                                    colors.secondary,
                                   ),
                                 ),
                               ),
@@ -302,7 +459,7 @@ class _ReservaResumenViewState extends State<ReservaResumenView> {
                               Text(
                                 'Procesando pago...',
                                 style: TextStyle(
-                                  color: Colors.grey[800],
+                                  color: colors.onSurface,
                                   fontSize: 17,
                                   fontWeight: FontWeight.w600,
                                 ),
@@ -312,7 +469,7 @@ class _ReservaResumenViewState extends State<ReservaResumenView> {
                               Text(
                                 'No cierres la app',
                                 style: TextStyle(
-                                  color: Colors.grey[500],
+                                  color: colors.onSurfaceVariant,
                                   fontSize: 13,
                                 ),
                                 textAlign: TextAlign.center,
@@ -341,10 +498,11 @@ Widget _buildResumenCard(
   String horaFin,
   double costoTotal,
 ) {
+  final colors = Theme.of(context).colorScheme;
   return Container(
     padding: const EdgeInsets.all(20),
     decoration: BoxDecoration(
-      color: Colors.white,
+      color: colors.surface,
       borderRadius: BorderRadius.circular(20),
       boxShadow: [
         BoxShadow(
@@ -359,14 +517,14 @@ Widget _buildResumenCard(
       children: [
         Row(
           children: [
-            Icon(Icons.receipt_long, color: Colors.green[700], size: 22),
+            Icon(Icons.receipt_long, color: colors.secondary, size: 22),
             const SizedBox(width: 10),
             Text(
               'Resumen de Reserva',
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
-                color: Colors.green[700],
+                color: colors.onSurface,
               ),
             ),
           ],
@@ -376,7 +534,7 @@ Widget _buildResumenCard(
           icon: Icons.sports_soccer,
           label: 'Cancha',
           value: nombreArea,
-          iconColor: Colors.blue[600]!,
+          iconColor: colors.secondary,
         ),
         const SizedBox(height: 12),
         _ModernInfoRow(
@@ -397,10 +555,13 @@ Widget _buildResumenCard(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
           decoration: BoxDecoration(
             gradient: LinearGradient(
-              colors: [Colors.green[50]!, Colors.green[100]!],
+              colors: [
+                colors.primary.withValues(alpha: .12),
+                colors.primary.withValues(alpha: .2),
+              ],
             ),
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: Colors.green[300]!, width: 1.5),
+            border: Border.all(color: colors.primary.withValues(alpha: .5)),
           ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -409,7 +570,7 @@ Widget _buildResumenCard(
                 'Total',
                 style: TextStyle(
                   fontSize: 15,
-                  color: Colors.grey[700],
+                  color: colors.onSurface,
                   fontWeight: FontWeight.w600,
                 ),
               ),
@@ -418,7 +579,7 @@ Widget _buildResumenCard(
                 style: TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
-                  color: Colors.green[800],
+                  color: colors.secondary,
                 ),
               ),
             ],
@@ -433,10 +594,11 @@ Widget _buildSeccionPago(
   BuildContext context,
   ReservaResumenViewModel resumenVM,
 ) {
+  final colors = Theme.of(context).colorScheme;
   return Container(
     padding: const EdgeInsets.all(20),
     decoration: BoxDecoration(
-      color: Colors.white,
+      color: colors.surface,
       borderRadius: BorderRadius.circular(20),
       boxShadow: [
         BoxShadow(
@@ -451,14 +613,14 @@ Widget _buildSeccionPago(
       children: [
         Row(
           children: [
-            Icon(Icons.payment, color: Colors.green[700], size: 22),
+            Icon(Icons.payment, color: colors.secondary, size: 22),
             const SizedBox(width: 10),
             Text(
               'Método de Pago',
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
-                color: Colors.green[700],
+                color: colors.onSurface,
               ),
             ),
           ],
@@ -580,48 +742,23 @@ Widget _buildSeccionPago(
   );
 }
 
-Widget _buildMensajeSeguridad() {
-  return Container(
-    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-    decoration: BoxDecoration(
-      color: Colors.green[50],
-      borderRadius: BorderRadius.circular(10),
-      border: Border.all(color: Colors.green[200]!),
-    ),
-    child: Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Icon(Icons.verified_user, color: Colors.green[700], size: 16),
-        const SizedBox(width: 10),
-        Text(
-          'Pago seguro protegido por PayPal',
-          style: TextStyle(
-            color: Colors.green[800],
-            fontSize: 12,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-      ],
-    ),
-  );
-}
-
-Widget _buildErrorMessage(String error) {
+Widget _buildErrorMessage(BuildContext context, String error) {
+  final colors = Theme.of(context).colorScheme;
   return Container(
     padding: const EdgeInsets.all(20),
     decoration: BoxDecoration(
-      color: Colors.red[50],
+      color: colors.errorContainer,
       borderRadius: BorderRadius.circular(16),
-      border: Border.all(color: Colors.red[200]!),
+      border: Border.all(color: colors.error.withValues(alpha: .4)),
     ),
     child: Row(
       children: [
-        Icon(Icons.error_outline, color: Colors.red[700], size: 28),
+        Icon(Icons.error_outline, color: colors.onErrorContainer, size: 28),
         const SizedBox(width: 12),
         Expanded(
           child: Text(
             error,
-            style: TextStyle(color: Colors.red[700], fontSize: 14),
+            style: TextStyle(color: colors.onErrorContainer, fontSize: 14),
           ),
         ),
       ],
@@ -629,22 +766,23 @@ Widget _buildErrorMessage(String error) {
   );
 }
 
-Widget _buildOrderInfo(String orderId) {
+Widget _buildOrderInfo(BuildContext context, String orderId) {
+  final colors = Theme.of(context).colorScheme;
   return Container(
     padding: const EdgeInsets.all(16),
     decoration: BoxDecoration(
-      color: Colors.blue[50],
+      color: colors.primary.withValues(alpha: .12),
       borderRadius: BorderRadius.circular(12),
-      border: Border.all(color: Colors.blue[200]!),
+      border: Border.all(color: colors.primary.withValues(alpha: .4)),
     ),
     child: Row(
       children: [
-        Icon(Icons.info_outline, color: Colors.blue[700], size: 20),
+        Icon(Icons.info_outline, color: colors.secondary, size: 20),
         const SizedBox(width: 12),
         Expanded(
           child: Text(
             'Orden creada: $orderId',
-            style: TextStyle(color: Colors.blue[700], fontSize: 13),
+            style: TextStyle(color: colors.onSurface, fontSize: 13),
           ),
         ),
       ],
@@ -670,9 +808,9 @@ class _ModernInfoRow extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.grey[50],
+        color: Theme.of(context).colorScheme.surfaceContainerHighest,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey[200]!),
+        border: Border.all(color: Theme.of(context).dividerColor),
       ),
       child: Row(
         children: [
@@ -693,17 +831,17 @@ class _ModernInfoRow extends StatelessWidget {
                   label,
                   style: TextStyle(
                     fontSize: 12,
-                    color: Colors.grey[600],
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
                     fontWeight: FontWeight.w500,
                   ),
                 ),
                 const SizedBox(height: 2),
                 Text(
                   value,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 15,
                     fontWeight: FontWeight.w600,
-                    color: Colors.black87,
+                    color: Theme.of(context).colorScheme.onSurface,
                   ),
                 ),
               ],

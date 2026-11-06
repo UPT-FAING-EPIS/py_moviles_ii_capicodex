@@ -130,9 +130,7 @@ abstract final class AppTheme {
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(
           backgroundColor: primary,
-          foregroundColor: brightness == Brightness.dark
-              ? Colors.black
-              : Colors.white,
+          foregroundColor: scheme.onPrimary,
           side: BorderSide(color: border),
         ),
       ),

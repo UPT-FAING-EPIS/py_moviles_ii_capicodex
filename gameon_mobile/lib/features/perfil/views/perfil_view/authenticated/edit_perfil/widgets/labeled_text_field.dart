@@ -17,34 +17,15 @@ class LabeledTextField extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.grey.shade200),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.03),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: TextFormField(
-        controller: controller,
-        keyboardType: keyboardType,
-        validator: validator,
-        decoration: InputDecoration(
-          labelText: label,
-          prefixIcon: Icon(icon, color: Colors.grey.shade600),
-          border: InputBorder.none,
-          contentPadding: const EdgeInsets.symmetric(
-            horizontal: 20,
-            vertical: 16,
-          ),
-        ),
-      ),
-    );
-  }
+  Widget build(BuildContext context) => TextFormField(
+    controller: controller,
+    keyboardType: keyboardType,
+    validator: validator,
+    decoration: InputDecoration(
+      labelText: label,
+      prefixIcon: Icon(icon),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 18),
+      border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
+    ),
+  );
 }

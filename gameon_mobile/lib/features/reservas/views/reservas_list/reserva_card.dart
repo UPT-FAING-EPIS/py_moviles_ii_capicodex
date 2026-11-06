@@ -4,6 +4,7 @@ import 'package:gameon/features/reservas/views/reservas_list/widgets/info_chip.d
 import 'package:provider/provider.dart';
 import '../../viewmodels/reservas_list_viewmodel.dart';
 import 'reserva_detail_view.dart';
+import '../historial_pagos_view.dart';
 import 'package:gameon/core/theme/app_theme.dart';
 
 class ReservaCard extends StatefulWidget {
@@ -212,6 +213,12 @@ class ReservaCardState extends State<ReservaCard> {
                       ),
                   ],
                 ),
+                Align(alignment: Alignment.centerRight, child: TextButton.icon(
+                  onPressed: () => Navigator.push(context, MaterialPageRoute(
+                    builder: (_) => HistorialPagosView(reservaId: r.id as int))),
+                  icon: const Icon(Icons.history),
+                  label: const Text('Historial de transacciones'),
+                )),
               ],
             ),
           ),

@@ -2,10 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:gameon/core/theme/app_theme.dart';
 import 'package:gameon/core/theme/theme_controller.dart';
+import 'package:gameon/core/theme/visual_theme_picker.dart';
+import 'package:gameon/core/widgets/role_switcher.dart';
 import 'package:gameon/features/perfil/viewmodels/perfil_viewmodel.dart';
 import '../services/gestor_service.dart';
+import '../../notificaciones/views/avisos_reserva_view.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'centro_ubicacion_picker.dart';
+import 'cancha_form_view.dart';
+import 'configurar_yape_view.dart';
 
 class GestorView extends StatefulWidget {
   final int managerId;
@@ -24,6 +29,7 @@ class _GestorViewState extends State<GestorView> {
   List<Map<String, dynamic>> centros = [],
       areas = [],
       reservas = [],
+      pendientesYape = [],
       deportes = [];
   DateTime fecha = DateTime.now();
   String search = '';
@@ -73,12 +79,16 @@ class _GestorViewState extends State<GestorView> {
         a.map((e) => asInt(e['id'])).toList(),
         fecha: fechaSql,
       );
+      final pendientes = await service.reservasYapePendientes(
+        a.map((e) => asInt(e['id'])).toList(),
+      );
       final d = await service.deportes();
       if (!mounted) return;
       setState(() {
         centros = c;
         areas = a;
         reservas = r;
+        pendientesYape = pendientes;
         deportes = d;
         loading = false;
       });
@@ -195,6 +205,8 @@ class _GestorViewState extends State<GestorView> {
           ),
         ),
         actions: [
+          const VisualThemePicker(),
+          const RoleSwitcher(),
           Padding(
             padding: const EdgeInsets.only(right: 16),
             child: IconButton.filledTonal(
@@ -238,7 +250,18 @@ class _GestorViewState extends State<GestorView> {
             ),
       bottomNavigationBar: NavigationBar(
         selectedIndex: tab,
-        onDestinationSelected: (i) => setState(() => tab = i),
+        onDestinationSelected: (i) {
+          setState(() => tab = i);
+          if (i == 0 || i == 3) refresh();
+        },
+        backgroundColor:
+            context.watch<ThemeController>().selection ==
+                AppVisualTheme.football
+            ? const Color(0xFF07110B)
+            : colors.surface,
+        indicatorColor: colors.secondary.withValues(alpha: .26),
+        elevation: 8,
+        labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
         destinations: const [
           NavigationDestination(
             icon: Icon(Icons.dashboard_outlined),
@@ -278,6 +301,32 @@ class _GestorViewState extends State<GestorView> {
             child: _stat('Reservas', reservas.length, Icons.calendar_today),
           ),
         ],
+      ),
+      const SizedBox(height: 16),
+      Card(
+        child: ListTile(
+          leading: Icon(
+            Icons.pending_actions,
+            color: Theme.of(context).colorScheme.secondary,
+          ),
+          title: Text('Pagos Yape por revisar: ${pendientesYape.length}'),
+          subtitle: const Text('Solicitudes pendientes de cualquier fecha'),
+          trailing: const Icon(Icons.chevron_right),
+          onTap: () => setState(() => tab = 3),
+        ),
+      ),
+      const SizedBox(height: 12),
+      Card(
+        child: ListTile(
+          leading: Icon(
+            Icons.qr_code_2,
+            color: Theme.of(context).colorScheme.secondary,
+          ),
+          title: const Text('Mi código Yape'),
+          subtitle: const Text('Subir o cambiar el QR para todas mis canchas'),
+          trailing: const Icon(Icons.chevron_right),
+          onTap: _configurarYape,
+        ),
       ),
       const SizedBox(height: 24),
       FilledButton.icon(
@@ -393,7 +442,7 @@ class _GestorViewState extends State<GestorView> {
         ),
         const SizedBox(height: 20),
         FilledButton.icon(
-          onPressed: centros.isEmpty ? null : () => _areaDialog(),
+          onPressed: centros.isEmpty ? null : () => _openAreaForm(),
           icon: const Icon(Icons.add),
           label: const Text('Nueva cancha'),
         ),
@@ -572,73 +621,90 @@ class _GestorViewState extends State<GestorView> {
     final colors = Theme.of(context).colorScheme;
     return Card(
       margin: const EdgeInsets.only(bottom: 14),
-      child: Padding(
-        padding: const EdgeInsets.all(14),
-        child: Column(
-          children: [
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _thumbnail(a['imagen_area'], Icons.sports_soccer_outlined),
-                const SizedBox(width: 14),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        '${a['nombre_area']}',
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w800,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(18),
+        onTap: () => _openAreaForm(a),
+        child: Padding(
+          padding: const EdgeInsets.all(14),
+          child: Column(
+            children: [
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _thumbnail(a['imagen_area'], Icons.sports_soccer_outlined),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          '${a['nombre_area']}',
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w800,
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: 6),
-                      Text(
-                        centroNombre(asInt(a['institucion_deportiva_id'])),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          color: colors.onSurface.withValues(alpha: .72),
+                        const SizedBox(height: 6),
+                        Text(
+                          centroNombre(asInt(a['institucion_deportiva_id'])),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            color: colors.onSurface.withValues(alpha: .72),
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: 6),
-                      Text(
-                        '${a['deportes']?['nombre'] ?? ''} · ${a['estado']}',
-                        style: const TextStyle(fontSize: 12),
-                      ),
-                      const SizedBox(height: 10),
-                      _priceTag(a['tarifa_por_hora']),
-                    ],
+                        const SizedBox(height: 6),
+                        Text(
+                          '${a['deportes']?['nombre'] ?? ''} · ${a['estado']}',
+                          style: const TextStyle(fontSize: 12),
+                        ),
+                        const SizedBox(height: 10),
+                        _priceTag(a['tarifa_por_hora']),
+                      ],
+                    ),
                   ),
-                ),
-                IconButton(
-                  tooltip: 'Editar cancha',
-                  icon: Icon(Icons.edit_outlined, color: colors.secondary),
-                  onPressed: () => _areaDialog(a),
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            Align(
-              alignment: Alignment.centerRight,
-              child: TextButton.icon(
-                onPressed: () => _horariosDialog(a),
-                icon: const Icon(Icons.schedule),
-                label: const Text('Gestionar horarios'),
+                  IconButton(
+                    tooltip: 'Editar cancha',
+                    icon: Icon(Icons.edit_outlined, color: colors.secondary),
+                    onPressed: () => _openAreaForm(a),
+                  ),
+                ],
               ),
-            ),
-          ],
+              const SizedBox(height: 8),
+              Align(
+                alignment: Alignment.centerRight,
+                child: TextButton.icon(
+                  onPressed: () => _horariosDialog(a),
+                  icon: const Icon(Icons.schedule),
+                  label: const Text('Gestionar horarios'),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
 
   Widget _reservas() {
+    final pendientesFiltradas = pendientesYape.where((r) {
+      final area = areas
+          .where((a) => a['id'] == r['area_deportiva_id'])
+          .firstOrNull;
+      return area != null &&
+          (reservaCentroFiltro == null ||
+              area['institucion_deportiva_id'] == reservaCentroFiltro) &&
+          (reservaDeporteFiltro == null ||
+              area['deporte_id'] == reservaDeporteFiltro) &&
+          (reservaEstadoFiltro == null || reservaEstadoFiltro == 'pendiente');
+    }).toList();
     final filtered = reservas.where((r) {
       final area = areas
           .where((a) => a['id'] == r['area_deportiva_id'])
           .firstOrNull;
-      if (area == null) return false;
+      if (area == null || pendientesYape.any((p) => p['id'] == r['id'])) {
+        return false;
+      }
       return (reservaCentroFiltro == null ||
               area['institucion_deportiva_id'] == reservaCentroFiltro) &&
           (reservaDeporteFiltro == null ||
@@ -649,8 +715,17 @@ class _GestorViewState extends State<GestorView> {
       padding: const EdgeInsets.all(18),
       children: [
         _sectionTitle(
+          'Pagos Yape por revisar',
+          'Reservas pendientes de todas las fechas',
+        ),
+        const SizedBox(height: 12),
+        if (pendientesFiltradas.isEmpty)
+          _empty('No hay pagos Yape pendientes', Icons.pending_actions),
+        ...pendientesFiltradas.map(_reservaCard),
+        const SizedBox(height: 24),
+        _sectionTitle(
           'Agenda de reservas',
-          'Consulta los turnos de tus canchas',
+          'Consulta los turnos del día seleccionado',
         ),
         const SizedBox(height: 14),
         Card(
@@ -734,6 +809,9 @@ class _GestorViewState extends State<GestorView> {
 
   Widget _reservaCard(Map<String, dynamic> r) {
     final colors = Theme.of(context).colorScheme;
+    final pendienteYape =
+        '${r['metodo_pago']}'.toLowerCase() == 'yape' &&
+        '${r['estado']}'.toLowerCase() == 'pendiente';
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
       child: Padding(
@@ -766,12 +844,20 @@ class _GestorViewState extends State<GestorView> {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    '${r['estado']} · S/ ${r['monto_pagado'] ?? '—'}',
+                    '${r['estado']} · S/ ${r['monto_pagado'] ?? r['yape_monto_esperado'] ?? '—'}',
                     style: TextStyle(
                       color: colors.secondary,
                       fontWeight: FontWeight.w700,
                     ),
                   ),
+                  if (pendienteYape) ...[
+                    const SizedBox(height: 8),
+                    TextButton.icon(
+                      onPressed: () => _revisarYape(r),
+                      icon: const Icon(Icons.verified_outlined),
+                      label: const Text('Verificar pago Yape'),
+                    ),
+                  ],
                 ],
               ),
             ),
@@ -779,6 +865,72 @@ class _GestorViewState extends State<GestorView> {
         ),
       ),
     );
+  }
+
+  Future<void> _revisarYape(Map<String, dynamic> r) async {
+    try {
+      final path = '${r['yape_evidencia_ruta'] ?? ''}';
+      if (path.isEmpty) throw StateError('No hay evidencia para revisar');
+      final url = await service.evidenciaYape(path);
+      if (!mounted) return;
+      final decision = await showDialog<bool>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: Text('Verificar reserva #${r['id']}'),
+          content: SizedBox(
+            width: 380,
+            height: 440,
+            child: Column(
+              children: [
+                Text(
+                  'Comprueba en tu cuenta Yape que recibiste S/ ${r['yape_monto_esperado']}. Una captura sola no acredita el pago.',
+                ),
+                const SizedBox(height: 12),
+                Expanded(child: Image.network(url, fit: BoxFit.contain)),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('Volver'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: const Text('Rechazar'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.pop(ctx, true),
+              child: const Text('Aprobar'),
+            ),
+          ],
+        ),
+      );
+      if (decision != null) {
+        await action(() => service.resolverYape(asInt(r['id']), decision));
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('No se pudo revisar: $e')));
+      }
+    }
+  }
+
+  Future<void> _configurarYape() async {
+    final saved = await Navigator.push<bool>(
+      context,
+      MaterialPageRoute(
+        builder: (_) =>
+            ConfigurarYapeView(gestorId: widget.managerId, service: service),
+      ),
+    );
+    if (saved == true && mounted) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Código Yape guardado')));
+    }
   }
 
   Widget _cuenta() => ListView(
@@ -801,6 +953,35 @@ class _GestorViewState extends State<GestorView> {
           subtitle: const Text('Cuenta gestora'),
         ),
       ),
+      Card(
+        child: ListTile(
+          leading: const Icon(Icons.qr_code_2),
+          title: const Text('Mi código Yape'),
+          subtitle: const Text('Subir o cambiar el QR para todas mis canchas'),
+          trailing: const Icon(Icons.chevron_right),
+          onTap: _configurarYape,
+        ),
+      ),
+      Card(
+        child: ListTile(
+          leading: const Icon(Icons.notifications_active_outlined),
+          title: const Text('Avisos de reservas'),
+          subtitle: const Text('Pagos Yape pendientes y decisiones'),
+          onTap: () => Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const AvisosReservaView()),
+          ),
+        ),
+      ),
+      if (context.watch<PerfilViewModel>().isAdmin)
+        Card(
+          child: ListTile(
+            leading: const Icon(Icons.admin_panel_settings),
+            title: const Text('Administración'),
+            onTap: () =>
+                context.read<PerfilViewModel>().selectMode(AppUserMode.admin),
+          ),
+        ),
       if (context.watch<PerfilViewModel>().hasAthleteProfile)
         Card(
           child: ListTile(
@@ -812,26 +993,17 @@ class _GestorViewState extends State<GestorView> {
             ),
           ),
         ),
-      const SizedBox(height: 22),
-      _sectionTitle('Tema de la aplicación', 'Elige el fondo que más te guste'),
-      const SizedBox(height: 12),
-      ...AppVisualTheme.values.map(
-        (v) => ListTile(
-          title: Text(switch (v) {
-            AppVisualTheme.light => 'Claro',
-            AppVisualTheme.dark => 'Oscuro',
-            AppVisualTheme.football => 'Fútbol',
-            AppVisualTheme.wimbledon => 'Tenis Wimbledon',
-            AppVisualTheme.rolandGarros => 'Tenis Roland Garros',
-            AppVisualTheme.usOpen => 'Tenis US Open',
-            AppVisualTheme.volleyball => 'Vóley',
-            AppVisualTheme.basketball => 'Básquet',
-          }),
-          selected: context.watch<ThemeController>().selection == v,
-          trailing: context.watch<ThemeController>().selection == v
-              ? const Icon(Icons.check)
-              : null,
-          onTap: () => context.read<ThemeController>().select(v),
+      const SizedBox(height: 14),
+      Card(
+        child: ListTile(
+          leading: const Icon(Icons.palette_outlined),
+          title: const Text('Tema de la aplicación'),
+          subtitle: Text(
+            VisualThemePicker.name(context.watch<ThemeController>().selection),
+          ),
+          trailing: VisualThemePicker(
+            iconColor: Theme.of(context).colorScheme.primary,
+          ),
         ),
       ),
       const SizedBox(height: 20),
@@ -1029,175 +1201,19 @@ class _GestorViewState extends State<GestorView> {
     }
   }
 
-  Future<void> _areaDialog([Map<String, dynamic>? a]) async {
-    final key = GlobalKey<FormState>();
-    final name = TextEditingController(text: '${a?['nombre_area'] ?? ''}');
-    final price = TextEditingController(text: '${a?['tarifa_por_hora'] ?? ''}');
-    final capacity = TextEditingController(
-      text: '${a?['capacidad_jugadores'] ?? ''}',
-    );
-    final description = TextEditingController(
-      text: '${a?['descripcion'] ?? ''}',
-    );
-    final image = TextEditingController(text: '${a?['imagen_area'] ?? ''}');
-    int? center = a == null
-        ? asInt(centros.first['id'])
-        : asInt(a['institucion_deportiva_id']);
-    int? sport = a == null
-        ? (deportes.isEmpty ? null : asInt(deportes.first['id']))
-        : asInt(a['deporte_id']);
-    var state = '${a?['estado'] ?? 'activa'}';
-    final saved = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => StatefulBuilder(
-        builder: (ctx, setLocal) => AlertDialog(
-          title: Text(a == null ? 'Nueva cancha' : 'Editar cancha'),
-          content: SizedBox(
-            width: 440,
-            child: Form(
-              key: key,
-              child: ListView(
-                shrinkWrap: true,
-                children: [
-                  DropdownButtonFormField<int>(
-                    initialValue: center,
-                    decoration: const InputDecoration(labelText: 'Centro'),
-                    items: centros
-                        .map(
-                          (c) => DropdownMenuItem(
-                            value: asInt(c['id']),
-                            child: Text('${c['nombre']}'),
-                          ),
-                        )
-                        .toList(),
-                    onChanged: (v) => setLocal(() => center = v),
-                  ),
-                  DropdownButtonFormField<int>(
-                    initialValue: sport,
-                    decoration: const InputDecoration(labelText: 'Deporte'),
-                    items: deportes
-                        .map(
-                          (d) => DropdownMenuItem(
-                            value: asInt(d['id']),
-                            child: Text('${d['nombre']}'),
-                          ),
-                        )
-                        .toList(),
-                    onChanged: (v) => setLocal(() => sport = v),
-                  ),
-                  TextFormField(
-                    controller: name,
-                    decoration: const InputDecoration(labelText: 'Nombre'),
-                    validator: (v) =>
-                        v == null || v.trim().isEmpty ? 'Requerido' : null,
-                  ),
-                  TextFormField(
-                    controller: price,
-                    decoration: const InputDecoration(
-                      labelText: 'Tarifa por hora',
-                    ),
-                    keyboardType: TextInputType.number,
-                    validator: (v) => double.tryParse(v ?? '') == null
-                        ? 'Número inválido'
-                        : null,
-                  ),
-                  TextFormField(
-                    controller: capacity,
-                    decoration: const InputDecoration(labelText: 'Capacidad'),
-                    keyboardType: TextInputType.number,
-                    validator: (v) => v!.isNotEmpty && int.tryParse(v) == null
-                        ? 'Número inválido'
-                        : null,
-                  ),
-                  TextFormField(
-                    controller: description,
-                    decoration: const InputDecoration(labelText: 'Descripción'),
-                  ),
-                  TextFormField(
-                    controller: image,
-                    decoration: const InputDecoration(
-                      labelText: 'URL de imagen (opcional)',
-                    ),
-                  ),
-                  TextButton.icon(
-                    onPressed: () async {
-                      try {
-                        final url = await service.subirImagen();
-                        if (url != null) image.text = url;
-                      } catch (e) {
-                        if (ctx.mounted) {
-                          ScaffoldMessenger.of(ctx).showSnackBar(
-                            SnackBar(
-                              content: Text('Error al subir imagen: $e'),
-                            ),
-                          );
-                        }
-                      }
-                    },
-                    icon: const Icon(Icons.add_photo_alternate_outlined),
-                    label: const Text('Subir foto de la cancha'),
-                  ),
-                  DropdownButtonFormField<String>(
-                    initialValue: state,
-                    decoration: const InputDecoration(labelText: 'Estado'),
-                    items:
-                        [
-                              'activa',
-                              'inactiva',
-                              'mantenimiento',
-                              if (![
-                                'activa',
-                                'inactiva',
-                                'mantenimiento',
-                              ].contains(state))
-                                state,
-                            ]
-                            .map(
-                              (s) => DropdownMenuItem(value: s, child: Text(s)),
-                            )
-                            .toList(),
-                    onChanged: (v) => setLocal(() => state = v!),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(ctx, false),
-              child: const Text('Cancelar'),
-            ),
-            FilledButton(
-              onPressed: () {
-                if (key.currentState!.validate() && sport != null) {
-                  Navigator.pop(ctx, true);
-                }
-              },
-              child: const Text('Guardar'),
-            ),
-          ],
+  Future<void> _openAreaForm([Map<String, dynamic>? area]) async {
+    final saved = await Navigator.push<bool>(
+      context,
+      MaterialPageRoute(
+        builder: (_) => CanchaFormView(
+          area: area,
+          centros: centros,
+          deportes: deportes,
+          service: service,
         ),
       ),
     );
-    if (saved == true && center != null && sport != null) {
-      await action(
-        () => service.guardarArea({
-          'institucion_deportiva_id': center,
-          'deporte_id': sport,
-          'nombre_area': name.text.trim(),
-          'tarifa_por_hora': double.parse(price.text),
-          'capacidad_jugadores': capacity.text.isEmpty
-              ? null
-              : int.parse(capacity.text),
-          'descripcion': description.text.trim(),
-          'imagen_area': image.text.isEmpty ? null : image.text.trim(),
-          'estado': state,
-        }, id: a == null ? null : asInt(a['id'])),
-      );
-    }
-    for (final ctrl in [name, price, capacity, description, image]) {
-      ctrl.dispose();
-    }
+    if (saved == true) await refresh();
   }
 
   Future<void> _horariosDialog(Map<String, dynamic> area) async {

@@ -10,6 +10,8 @@ import 'widgets/calendario_selector.dart';
 import 'widgets/slots_grid.dart';
 import 'widgets/confirm_button_bar.dart';
 import '../reserva_resumen_view.dart';
+import 'package:gameon/core/theme/app_theme.dart';
+import 'package:gameon/core/theme/theme_controller.dart';
 
 class ReservaCalendarioView extends StatefulWidget {
   final AreaDeportiva area;
@@ -36,6 +38,9 @@ class _ReservaCalendarioViewState extends State<ReservaCalendarioView> {
 
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    final background = AppTheme.headerBackgroundFor(
+      context.watch<ThemeController>().selection);
     // Status bar transparente con iconos claros
     final overlay = SystemUiOverlayStyle(
       statusBarColor: Colors.transparent,
@@ -46,7 +51,7 @@ class _ReservaCalendarioViewState extends State<ReservaCalendarioView> {
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: overlay,
       child: Scaffold(
-        backgroundColor: Colors.grey[50],
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         body: viewModel.cargando
             ? const Center(child: CircularProgressIndicator())
             : viewModel.error != null
@@ -57,12 +62,12 @@ class _ReservaCalendarioViewState extends State<ReservaCalendarioView> {
                     Icon(
                       Icons.error_outline,
                       size: 64,
-                      color: Colors.grey[400],
+                      color: colors.onSurfaceVariant,
                     ),
                     const SizedBox(height: 16),
                     Text(
                       viewModel.error!,
-                      style: TextStyle(color: Colors.grey[600]),
+                      style: TextStyle(color: colors.onSurface),
                       textAlign: TextAlign.center,
                     ),
                   ],
@@ -76,8 +81,10 @@ class _ReservaCalendarioViewState extends State<ReservaCalendarioView> {
                       gradient: LinearGradient(
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
-                        colors: [Colors.green.shade600, Colors.green.shade800],
+                        colors: [colors.primary, colors.primaryContainer],
                       ),
+                      image: background == null ? null : DecorationImage(
+                        image: AssetImage(background), fit: BoxFit.cover, opacity: .32),
                       borderRadius: const BorderRadius.only(
                         bottomLeft: Radius.circular(30),
                         bottomRight: Radius.circular(30),

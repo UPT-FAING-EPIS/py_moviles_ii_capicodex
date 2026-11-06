@@ -43,12 +43,12 @@ class _RegistroGestorViewState extends State<RegistroGestorView> {
         },
       );
       if (response.user == null) throw Exception('No se creó la cuenta');
-      // La aprobación administrativa está simulada en esta etapa.
+      // El trigger crea una solicitud pendiente de aprobación.
       if (response.session != null) await auth.signOut();
       if (!mounted) return;
       await showDialog<void>(context: context, builder: (ctx) => AlertDialog(
         title: const Text('Registro recibido'),
-        content: const Text('La aprobación está simulada por ahora. Confirma tu correo si Supabase te lo solicita y luego inicia sesión como gestor para crear tu centro.'),
+        content: const Text('Confirma tu correo si se solicita. Luego inicia sesión como gestor, sube hasta tres evidencias del negocio y espera la aprobación del administrador.'),
         actions: [TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Entendido'))],
       ));
       if (mounted) Navigator.pop(context);

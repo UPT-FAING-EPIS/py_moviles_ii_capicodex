@@ -7,10 +7,11 @@ class AreaResume extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: colors.surface,
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
@@ -27,7 +28,7 @@ class AreaResume extends StatelessWidget {
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
               gradient: LinearGradient(
-                colors: [Colors.green[400]!, Colors.green[600]!],
+                colors: [colors.primary, colors.primaryContainer],
               ),
               borderRadius: BorderRadius.circular(16),
             ),
@@ -48,7 +49,7 @@ class AreaResume extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
-                    color: Colors.green[800],
+                    color: colors.onSurface,
                   ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
@@ -56,13 +57,13 @@ class AreaResume extends StatelessWidget {
                 const SizedBox(height: 8),
                 Row(
                   children: [
-                    Icon(Icons.attach_money, size: 18, color: Colors.grey[600]),
+                    Icon(Icons.attach_money, size: 18, color: colors.secondary),
                     const SizedBox(width: 4),
                     Text(
                       'S/. ${area.tarifaPorHora.toStringAsFixed(2)} / hora',
                       style: TextStyle(
                         fontSize: 15,
-                        color: Colors.grey[700],
+                        color: colors.onSurfaceVariant,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -75,9 +76,9 @@ class AreaResume extends StatelessWidget {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             decoration: BoxDecoration(
-              color: Colors.green[50],
+              color: colors.primary.withValues(alpha: .12),
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: Colors.green[200]!),
+              border: Border.all(color: colors.primary.withValues(alpha: .4)),
             ),
             child: Column(
               children: [
@@ -85,7 +86,7 @@ class AreaResume extends StatelessWidget {
                   'Tarifa',
                   style: TextStyle(
                     fontSize: 10,
-                    color: Colors.green[700],
+                    color: colors.onSurfaceVariant,
                     fontWeight: FontWeight.w500,
                   ),
                 ),
@@ -94,7 +95,7 @@ class AreaResume extends StatelessWidget {
                   'S/. ${area.tarifaPorHora.toStringAsFixed(0)}',
                   style: TextStyle(
                     fontSize: 16,
-                    color: Colors.green[800],
+                    color: colors.secondary,
                     fontWeight: FontWeight.bold,
                   ),
                 ),

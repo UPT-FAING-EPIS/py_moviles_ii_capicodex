@@ -8,11 +8,12 @@ class DateField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: colors.surface,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.grey.shade200),
+        border: Border.all(color: Theme.of(context).dividerColor),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.03),
@@ -30,7 +31,7 @@ class DateField extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
             child: Row(
               children: [
-                Icon(Icons.cake_outlined, color: Colors.grey.shade600),
+                Icon(Icons.cake_outlined, color: colors.onSurfaceVariant),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Column(
@@ -40,7 +41,7 @@ class DateField extends StatelessWidget {
                         'Fecha de Nacimiento',
                         style: TextStyle(
                           fontSize: 12,
-                          color: Colors.grey.shade600,
+                          color: colors.onSurfaceVariant,
                         ),
                       ),
                       const SizedBox(height: 4),
@@ -49,19 +50,15 @@ class DateField extends StatelessWidget {
                         style: TextStyle(
                           fontSize: 16,
                           color: dateText == 'Seleccionar fecha'
-                              ? Colors.grey.shade400
-                              : Colors.black87,
+                              ? colors.onSurfaceVariant
+                              : colors.onSurface,
                           fontWeight: FontWeight.w500,
                         ),
                       ),
                     ],
                   ),
                 ),
-                Icon(
-                  Icons.calendar_today,
-                  color: Colors.green.shade700,
-                  size: 20,
-                ),
+                Icon(Icons.calendar_today, color: colors.secondary, size: 20),
               ],
             ),
           ),

@@ -21,10 +21,11 @@ class _CalendarioSelectorState extends State<CalendarioSelector> {
   @override
   Widget build(BuildContext context) {
     final vm = widget.viewModel;
+    final colors = Theme.of(context).colorScheme;
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: colors.surface,
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
@@ -42,12 +43,12 @@ class _CalendarioSelectorState extends State<CalendarioSelector> {
               Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: Colors.green[50],
+                  color: colors.primary.withValues(alpha: .12),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Icon(
                   Icons.calendar_month,
-                  color: Colors.green[700],
+                  color: colors.secondary,
                   size: 24,
                 ),
               ),
@@ -57,7 +58,7 @@ class _CalendarioSelectorState extends State<CalendarioSelector> {
                 style: TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
-                  color: Colors.green[700],
+                  color: colors.onSurface,
                 ),
               ),
             ],
@@ -88,32 +89,32 @@ class _CalendarioSelectorState extends State<CalendarioSelector> {
                 titleTextStyle: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
-                  color: Colors.green[800],
+                  color: colors.onSurface,
                 ),
                 leftChevronIcon: Icon(
                   Icons.chevron_left,
-                  color: Colors.green[700],
+                  color: colors.secondary,
                   size: 28,
                 ),
                 rightChevronIcon: Icon(
                   Icons.chevron_right,
-                  color: Colors.green[700],
+                  color: colors.secondary,
                   size: 28,
                 ),
               ),
               daysOfWeekStyle: DaysOfWeekStyle(
                 weekdayStyle: TextStyle(
-                  color: Colors.grey[700],
+                  color: colors.onSurface,
                   fontWeight: FontWeight.w600,
                 ),
                 weekendStyle: TextStyle(
-                  color: Colors.green[600],
+                  color: colors.secondary,
                   fontWeight: FontWeight.w600,
                 ),
               ),
               calendarStyle: CalendarStyle(
                 todayDecoration: BoxDecoration(
-                  color: Colors.green[300],
+                  color: colors.primary.withValues(alpha: .65),
                   shape: BoxShape.circle,
                 ),
                 todayTextStyle: const TextStyle(
@@ -122,7 +123,7 @@ class _CalendarioSelectorState extends State<CalendarioSelector> {
                 ),
                 selectedDecoration: BoxDecoration(
                   gradient: LinearGradient(
-                    colors: [Colors.green[600]!, Colors.green[800]!],
+                    colors: [colors.primary, colors.primaryContainer],
                   ),
                   shape: BoxShape.circle,
                 ),
@@ -132,14 +133,18 @@ class _CalendarioSelectorState extends State<CalendarioSelector> {
                 ),
                 defaultDecoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  border: Border.all(color: Colors.grey[200]!),
+                  border: Border.all(color: Theme.of(context).dividerColor),
                 ),
                 weekendDecoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  border: Border.all(color: Colors.green[100]!),
+                  border: Border.all(
+                    color: colors.primary.withValues(alpha: .28),
+                  ),
                 ),
                 disabledDecoration: BoxDecoration(shape: BoxShape.circle),
-                disabledTextStyle: TextStyle(color: Colors.grey[300]),
+                disabledTextStyle: TextStyle(
+                  color: colors.onSurface.withValues(alpha: .35),
+                ),
                 outsideDaysVisible: false,
                 cellMargin: const EdgeInsets.all(4),
               ),

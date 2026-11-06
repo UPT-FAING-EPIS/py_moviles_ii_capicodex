@@ -21,10 +21,11 @@ class ConfirmButtonBar extends StatelessWidget {
     final total = viewModel.costoTotal(area.tarifaPorHora);
     final duracionMin = viewModel.duracionMinutos;
     final duracion = duracionMin / 60.0;
+    final colors = Theme.of(context).colorScheme;
 
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: colors.surface,
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.1),
@@ -43,9 +44,11 @@ class ConfirmButtonBar extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: Colors.green[50],
+                  color: colors.primary.withValues(alpha: .12),
                   borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: Colors.green[200]!),
+                  border: Border.all(
+                    color: colors.primary.withValues(alpha: .4),
+                  ),
                 ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -57,7 +60,7 @@ class ConfirmButtonBar extends StatelessWidget {
                           'Duración',
                           style: TextStyle(
                             fontSize: 12,
-                            color: Colors.grey[600],
+                            color: colors.onSurfaceVariant,
                             fontWeight: FontWeight.w500,
                           ),
                         ),
@@ -66,13 +69,17 @@ class ConfirmButtonBar extends StatelessWidget {
                           '${duracion.toStringAsFixed(1)} horas',
                           style: TextStyle(
                             fontSize: 16,
-                            color: Colors.green[800],
+                            color: colors.onSurface,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
                       ],
                     ),
-                    Container(height: 40, width: 1, color: Colors.green[200]),
+                    Container(
+                      height: 40,
+                      width: 1,
+                      color: colors.primary.withValues(alpha: .4),
+                    ),
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
@@ -80,7 +87,7 @@ class ConfirmButtonBar extends StatelessWidget {
                           'Total a pagar',
                           style: TextStyle(
                             fontSize: 12,
-                            color: Colors.grey[600],
+                            color: colors.onSurfaceVariant,
                             fontWeight: FontWeight.w500,
                           ),
                         ),
@@ -89,7 +96,7 @@ class ConfirmButtonBar extends StatelessWidget {
                           'S/. ${total.toStringAsFixed(2)}',
                           style: TextStyle(
                             fontSize: 20,
-                            color: Colors.green[800],
+                            color: colors.secondary,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
@@ -107,12 +114,12 @@ class ConfirmButtonBar extends StatelessWidget {
                     gradient: LinearGradient(
                       begin: Alignment.centerLeft,
                       end: Alignment.centerRight,
-                      colors: [Colors.green[600]!, Colors.green[800]!],
+                      colors: [colors.primary, colors.primaryContainer],
                     ),
                     borderRadius: BorderRadius.circular(16),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.green.withOpacity(0.4),
+                        color: colors.primary.withValues(alpha: .4),
                         blurRadius: 15,
                         offset: const Offset(0, 8),
                       ),

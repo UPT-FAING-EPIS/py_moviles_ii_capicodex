@@ -12,11 +12,7 @@ class ReservasListView extends StatefulWidget {
   final ReservasListViewModel? viewModel;
   final bool autoLoad;
 
-  const ReservasListView({
-    super.key,
-    this.viewModel,
-    this.autoLoad = true,
-  });
+  const ReservasListView({super.key, this.viewModel, this.autoLoad = true});
 
   @override
   State<ReservasListView> createState() => _ReservasListViewState();
@@ -24,6 +20,7 @@ class ReservasListView extends StatefulWidget {
 
 class _ReservasListViewState extends State<ReservasListView> {
   late final ReservasListViewModel vm;
+  String? _estadoFiltro;
   String? _lastLoadedUserId;
   late final bool _isCustomViewModel;
 
@@ -276,8 +273,9 @@ class _ReservasListViewState extends State<ReservasListView> {
                                   Text(
                                     'Reservas',
                                     style: TextStyle(
-                                      color:
-                                          Colors.white.withValues(alpha: 0.9),
+                                      color: Colors.white.withValues(
+                                        alpha: 0.9,
+                                      ),
                                       fontSize: 14,
                                       fontWeight: FontWeight.w400,
                                     ),
@@ -331,11 +329,10 @@ class _ReservasListViewState extends State<ReservasListView> {
                             Consumer<ReservasListViewModel>(
                               builder: (context, m, _) {
                                 return Container(
-                                    decoration: BoxDecoration(
-                                      color:
-                                          Colors.white.withValues(alpha: 0.2),
-                                      borderRadius: BorderRadius.circular(12),
-                                    ),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white.withValues(alpha: 0.2),
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
                                   child: IconButton(
                                     icon: m.cargando
                                         ? SizedBox(
@@ -372,6 +369,41 @@ class _ReservasListViewState extends State<ReservasListView> {
                     ),
                   ),
                   const SizedBox(height: 20),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    child: Align(
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                        'Filtrar por estado',
+                        style: theme.textTheme.titleSmall,
+                      ),
+                    ),
+                  ),
+                  SizedBox(
+                    height: 55,
+                    child: ListView(
+                      scrollDirection: Axis.horizontal,
+                      padding: const EdgeInsets.symmetric(horizontal: 20),
+                      children: [
+                        for (final entry in <String?, String>{
+                          null: 'Todas',
+                          'pendiente': 'Pendientes',
+                          'confirmada': 'Confirmadas',
+                          'cancelada': 'Canceladas',
+                          'completada': 'Completadas',
+                        }.entries)
+                          Padding(
+                            padding: const EdgeInsets.only(right: 8),
+                            child: ChoiceChip(
+                              label: Text(entry.value),
+                              selected: _estadoFiltro == entry.key,
+                              onSelected: (_) =>
+                                  setState(() => _estadoFiltro = entry.key),
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
                   // Lista de reservas
                   Expanded(
                     child: Consumer<ReservasListViewModel>(
@@ -487,6 +519,21 @@ class _ReservasListViewState extends State<ReservasListView> {
                           );
                         }
 
+                        final visibles = m.reservas
+                            .where(
+                              (reserva) =>
+                                  _estadoFiltro == null ||
+                                  reserva.estado.toLowerCase() == _estadoFiltro,
+                            )
+                            .toList();
+                        if (visibles.isEmpty) {
+                          return Center(
+                            child: Text(
+                              'No hay reservas con este estado',
+                              style: TextStyle(color: colors.onSurface),
+                            ),
+                          );
+                        }
                         return RefreshIndicator(
                           onRefresh: () async {
                             final idUsuario = int.tryParse(
@@ -500,9 +547,9 @@ class _ReservasListViewState extends State<ReservasListView> {
                           },
                           child: ListView.builder(
                             padding: const EdgeInsets.symmetric(horizontal: 20),
-                            itemCount: m.reservas.length,
+                            itemCount: visibles.length,
                             itemBuilder: (context, index) {
-                              final reserva = m.reservas[index];
+                              final reserva = visibles[index];
                               return ReservaCard(reserva: reserva);
                             },
                           ),

@@ -106,19 +106,6 @@ class _EditPerfilViewState extends State<EditPerfilView> {
       firstDate: DateTime(1900),
       lastDate: DateTime.now(),
       locale: const Locale('es'),
-      builder: (context, child) {
-        return Theme(
-          data: Theme.of(context).copyWith(
-            colorScheme: ColorScheme.light(
-              primary: Colors.green.shade700,
-              onPrimary: Colors.white,
-              surface: Colors.white,
-              onSurface: Colors.black87,
-            ),
-          ),
-          child: child!,
-        );
-      },
     );
 
     if (picked != null && picked != _fechaNacimiento) {
@@ -386,7 +373,7 @@ class _EditPerfilViewState extends State<EditPerfilView> {
       child: AnnotatedRegion<SystemUiOverlayStyle>(
         value: overlay,
         child: Scaffold(
-          backgroundColor: Colors.grey[50],
+          backgroundColor: Theme.of(context).scaffoldBackgroundColor,
           body: Column(
             children: [
               PerfilHeader(
@@ -419,7 +406,7 @@ class _EditPerfilViewState extends State<EditPerfilView> {
                             icon: const Icon(Icons.edit),
                             label: const Text('Cambiar foto de perfil'),
                             style: TextButton.styleFrom(
-                              foregroundColor: Colors.green.shade700,
+                              foregroundColor: Theme.of(context).colorScheme.secondary,
                             ),
                           ),
                         ),
@@ -447,11 +434,9 @@ class _EditPerfilViewState extends State<EditPerfilView> {
                           icon: Icons.badge_outlined,
                         ),
                         const SizedBox(height: 16),
-                        Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+                        Column(
                           children: [
-                            Expanded(
-                              child: LabeledTextField(
+                            LabeledTextField(
                                 controller: _usernameController,
                                 label: 'Usuario',
                                 icon: Icons.alternate_email,
@@ -466,11 +451,9 @@ class _EditPerfilViewState extends State<EditPerfilView> {
                                   }
                                   return null;
                                 },
-                              ),
                             ),
-                            const SizedBox(width: 16),
-                            Expanded(
-                              child: LabeledTextField(
+                            const SizedBox(height: 16),
+                            LabeledTextField(
                                 controller: _telefonoController,
                                 label: 'Teléfono',
                                 icon: Icons.phone_outlined,
@@ -483,7 +466,6 @@ class _EditPerfilViewState extends State<EditPerfilView> {
                                   }
                                   return null;
                                 },
-                              ),
                             ),
                           ],
                         ),
@@ -498,11 +480,9 @@ class _EditPerfilViewState extends State<EditPerfilView> {
                           title: 'Información Adicional',
                         ),
                         const SizedBox(height: 16),
-                        Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+                        Column(
                           children: [
-                            Expanded(
-                              child: DropdownField(
+                            DropdownField(
                                 label: 'Género',
                                 icon: Icons.wc_outlined,
                                 value: _genero,
@@ -526,11 +506,9 @@ class _EditPerfilViewState extends State<EditPerfilView> {
                                     _genero = value!;
                                   });
                                 },
-                              ),
                             ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: DropdownField(
+                            const SizedBox(height: 16),
+                            DropdownField(
                                 label: 'Nivel',
                                 icon: Icons.sports_soccer,
                                 value: _nivelHabilidad,
@@ -554,7 +532,6 @@ class _EditPerfilViewState extends State<EditPerfilView> {
                                     _nivelHabilidad = value!;
                                   });
                                 },
-                              ),
                             ),
                           ],
                         ),
@@ -624,18 +601,19 @@ class _EditPerfilViewState extends State<EditPerfilView> {
                           child: ElevatedButton(
                             onPressed: (_isSaving) ? null : _saveProfile,
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.green.shade700,
+                              backgroundColor: Theme.of(context).colorScheme.primary,
+                              foregroundColor: Theme.of(context).colorScheme.onPrimary,
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(16),
                               ),
                               elevation: 2,
                             ),
                             child: _isSaving
-                                ? const SizedBox(
+                                ? SizedBox(
                                     width: 24,
                                     height: 24,
                                     child: CircularProgressIndicator(
-                                      color: Colors.white,
+                                      color: Theme.of(context).colorScheme.onPrimary,
                                       strokeWidth: 2,
                                     ),
                                   )
@@ -644,7 +622,6 @@ class _EditPerfilViewState extends State<EditPerfilView> {
                                     style: TextStyle(
                                       fontSize: 16,
                                       fontWeight: FontWeight.w600,
-                                      color: Colors.white,
                                     ),
                                   ),
                           ),

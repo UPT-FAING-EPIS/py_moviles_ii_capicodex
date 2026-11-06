@@ -18,12 +18,13 @@ class _SlotsGridState extends State<SlotsGrid> {
   @override
   Widget build(BuildContext context) {
     final vm = widget.viewModel;
+    final colors = Theme.of(context).colorScheme;
     if (vm.selectedDay == null) return const SizedBox.shrink();
 
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: colors.surface,
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
@@ -41,10 +42,10 @@ class _SlotsGridState extends State<SlotsGrid> {
               Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: Colors.green[50],
+                  color: colors.primary.withValues(alpha: .12),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: Icon(Icons.schedule, color: Colors.green[700], size: 24),
+                child: Icon(Icons.schedule, color: colors.secondary, size: 24),
               ),
               const SizedBox(width: 12),
               Text(
@@ -52,7 +53,7 @@ class _SlotsGridState extends State<SlotsGrid> {
                 style: TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
-                  color: Colors.green[700],
+                  color: colors.onSurface,
                 ),
               ),
             ],
@@ -64,11 +65,18 @@ class _SlotsGridState extends State<SlotsGrid> {
               child: Center(
                 child: Column(
                   children: [
-                    Icon(Icons.event_busy, size: 48, color: Colors.grey[400]),
+                    Icon(
+                      Icons.event_busy,
+                      size: 48,
+                      color: colors.onSurfaceVariant,
+                    ),
                     const SizedBox(height: 12),
                     Text(
                       'No hay horarios disponibles para este día',
-                      style: TextStyle(color: Colors.grey[600], fontSize: 14),
+                      style: TextStyle(
+                        color: colors.onSurfaceVariant,
+                        fontSize: 14,
+                      ),
                       textAlign: TextAlign.center,
                     ),
                   ],
@@ -122,8 +130,8 @@ class _SlotsGridState extends State<SlotsGrid> {
                                 begin: Alignment.topLeft,
                                 end: Alignment.bottomRight,
                                 colors: [
-                                  Colors.green[600]!,
-                                  Colors.green[800]!,
+                                  colors.primary,
+                                  colors.primaryContainer,
                                 ],
                               )
                             : null,
@@ -131,21 +139,21 @@ class _SlotsGridState extends State<SlotsGrid> {
                             ? Colors.red[100]
                             : selected &&
                                   (vm.endTime == null || vm.startTime == null)
-                            ? Colors.green[700]
-                            : Colors.grey[50],
+                            ? colors.primary
+                            : colors.surfaceContainerHighest,
                         border: Border.all(
                           color: isOcupado
                               ? Colors.red[300]!
                               : selected
-                              ? Colors.green[700]!
-                              : Colors.grey[200]!,
+                              ? colors.primary
+                              : Theme.of(context).dividerColor,
                           width: 2,
                         ),
                         borderRadius: BorderRadius.circular(12),
                         boxShadow: selected
                             ? [
                                 BoxShadow(
-                                  color: Colors.green.withOpacity(0.3),
+                                  color: colors.primary.withValues(alpha: .3),
                                   blurRadius: 8,
                                   offset: const Offset(0, 4),
                                 ),
@@ -162,8 +170,8 @@ class _SlotsGridState extends State<SlotsGrid> {
                                 color: isOcupado
                                     ? Colors.red[700]
                                     : selected
-                                    ? Colors.white
-                                    : Colors.black87,
+                                    ? colors.onPrimary
+                                    : colors.onSurface,
                                 fontWeight: selected || isOcupado
                                     ? FontWeight.bold
                                     : FontWeight.w600,

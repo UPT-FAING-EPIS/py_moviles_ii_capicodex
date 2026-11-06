@@ -6,7 +6,7 @@ import '../models/usuario_deportista.dart';
 import 'package:gameon/features/chat/services/user_sync_service.dart';
 import 'package:gameon/core/services/notification_service.dart';
 
-enum AppUserMode { deportista, gestor }
+enum AppUserMode { deportista, gestor, admin }
 
 class PerfilViewModel extends ChangeNotifier {
   // Form keys could be kept in the view, but we manage simple flags here.
@@ -20,13 +20,18 @@ class PerfilViewModel extends ChangeNotifier {
   UsuarioDeportista? get profile => _profile;
   int? _managerId;
   int? get managerId => _managerId;
+  int? _managerStatus;
+  int? get managerStatus => _managerStatus;
+  bool _isAdmin = false;
+  bool get isAdmin => _isAdmin;
   AppUserMode _mode = AppUserMode.deportista;
   AppUserMode get mode => _mode;
   bool get hasAthleteProfile => _profile != null;
   bool get hasManagerProfile => _managerId != null;
   bool selectMode(AppUserMode mode) {
     if (mode == AppUserMode.deportista && _profile == null) return false;
-    if (mode == AppUserMode.gestor && _managerId == null) return false;
+    if (mode == AppUserMode.gestor && _managerStatus == null) return false;
+    if (mode == AppUserMode.admin && !_isAdmin) return false;
     _mode = mode;
     notifyListeners();
     return true;
@@ -58,6 +63,8 @@ class PerfilViewModel extends ChangeNotifier {
           stopHeartbeat();
           _profile = null;
           _managerId = null;
+          _managerStatus = null;
+          _isAdmin = false;
           _mode = AppUserMode.deportista;
           notifyListeners();
           break;
@@ -66,6 +73,8 @@ class PerfilViewModel extends ChangeNotifier {
             stopHeartbeat();
             _profile = null;
             _managerId = null;
+            _managerStatus = null;
+            _isAdmin = false;
             _mode = AppUserMode.deportista;
             notifyListeners();
           }
@@ -175,6 +184,16 @@ class PerfilViewModel extends ChangeNotifier {
     if (user == null) return;
     _profile = null;
     _managerId = null;
+    _managerStatus = null;
+    _isAdmin = false;
+
+    try {
+      final status = await supabase.rpc('estado_gestor_actual');
+      _managerStatus = status is num ? status.toInt() : int.tryParse('$status');
+      _isAdmin = await supabase.rpc('es_admin') == true;
+    } on PostgrestException catch (e) {
+      developer.log('Roles pendientes de migración: ${e.message}');
+    }
 
     try {
       final manager = await supabase.rpc('gestor_actual');
@@ -257,8 +276,9 @@ class PerfilViewModel extends ChangeNotifier {
       }
       break;
     }
-    if (_managerId != null) {
+    if (_managerStatus != null || _managerId != null || _isAdmin) {
       if (!_isLoggingIn) _mode = AppUserMode.gestor;
+      if (_isAdmin && _profile == null && _managerStatus == null) _mode = AppUserMode.admin;
       notifyListeners();
     }
   }
@@ -269,11 +289,11 @@ class PerfilViewModel extends ChangeNotifier {
   }
 
   Future<void> registerManager({required String businessName, required String ruc}) async {
-    await supabase.rpc('registrar_gestor_actual', params: {
+    await supabase.rpc('solicitar_gestor_actual', params: {
       'p_nombre': businessName.trim(), 'p_ruc': ruc.trim(),
     });
     await _loadProfile();
-    if (_managerId == null) throw StateError('No se creó el perfil gestor');
+    if (_managerStatus == null) throw StateError('No se creó la solicitud gestora');
     selectMode(AppUserMode.gestor);
   }
 
@@ -286,6 +306,8 @@ class PerfilViewModel extends ChangeNotifier {
       // la revocación remota. Limpiamos también el perfil visible en memoria.
       _profile = null;
       _managerId = null;
+      _managerStatus = null;
+      _isAdmin = false;
       _mode = AppUserMode.deportista;
       notifyListeners();
     }
@@ -362,9 +384,11 @@ class PerfilViewModel extends ChangeNotifier {
       await _loadProfile();
       if (!selectMode(mode)) {
         await supabase.auth.signOut();
-        return LoginResult.error(mode == AppUserMode.gestor
-            ? 'Esta cuenta aún no tiene perfil gestor. Regístralo desde tu perfil deportista.'
-            : 'Esta cuenta aún no tiene perfil deportista.');
+        return LoginResult.error(switch (mode) {
+          AppUserMode.gestor => 'Esta cuenta aún no tiene solicitud gestora.',
+          AppUserMode.admin => 'Esta cuenta no tiene rol ADM.',
+          AppUserMode.deportista => 'Esta cuenta aún no tiene perfil deportista.',
+        });
       }
       // Actualizar FCM token tras iniciar sesión
       if (_profile != null) {

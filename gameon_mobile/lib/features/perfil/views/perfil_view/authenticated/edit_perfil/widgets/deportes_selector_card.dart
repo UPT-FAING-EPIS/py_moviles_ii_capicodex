@@ -16,11 +16,12 @@ class DeportesSelectorCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: colors.surface,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.grey.shade200),
+        border: Border.all(color: Theme.of(context).dividerColor),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.03),
@@ -40,7 +41,7 @@ class DeportesSelectorCard extends StatelessWidget {
                 padding: const EdgeInsets.all(20),
                 child: Row(
                   children: [
-                    Icon(Icons.sports, color: Colors.grey.shade600),
+                    Icon(Icons.sports, color: colors.onSurfaceVariant),
                     const SizedBox(width: 12),
                     Expanded(
                       child: Column(
@@ -50,7 +51,7 @@ class DeportesSelectorCard extends StatelessWidget {
                             'Mis deportes',
                             style: TextStyle(
                               fontSize: 12,
-                              color: Colors.grey.shade600,
+                              color: colors.onSurfaceVariant,
                             ),
                           ),
                           const SizedBox(height: 4),
@@ -61,8 +62,8 @@ class DeportesSelectorCard extends StatelessWidget {
                             style: TextStyle(
                               fontSize: 16,
                               color: deportesFavoritos.isEmpty
-                                  ? Colors.grey.shade400
-                                  : Colors.black87,
+                                  ? colors.onSurfaceVariant
+                                  : colors.onSurface,
                               fontWeight: FontWeight.w500,
                             ),
                           ),
@@ -71,7 +72,7 @@ class DeportesSelectorCard extends StatelessWidget {
                     ),
                     Icon(
                       Icons.arrow_forward_ios,
-                      color: Colors.grey.shade400,
+                      color: colors.onSurfaceVariant,
                       size: 16,
                     ),
                   ],
@@ -80,18 +81,20 @@ class DeportesSelectorCard extends StatelessWidget {
             ),
           ),
           if (deportesFavoritos.isNotEmpty) ...[
-            Divider(height: 1, color: Colors.grey.shade200),
+            Divider(height: 1, color: Theme.of(context).dividerColor),
             Padding(
               padding: const EdgeInsets.all(16),
               child: Wrap(
                 spacing: 8,
                 runSpacing: 8,
                 children: deportesFavoritos
-                    .map((deporte) => _DeporteChip(
-                          deporte: deporte,
-                          icon: getDeporteIcon(deporte),
-                          onRemove: () => onRemoveDeporte(deporte),
-                        ))
+                    .map(
+                      (deporte) => _DeporteChip(
+                        deporte: deporte,
+                        icon: getDeporteIcon(deporte),
+                        onRemove: () => onRemoveDeporte(deporte),
+                      ),
+                    )
                     .toList(),
               ),
             ),
@@ -115,34 +118,34 @@ class _DeporteChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
-        color: Colors.green.shade50,
+        color: colors.primary.withValues(alpha: .12),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.green.shade200, width: 1.5),
+        border: Border.all(
+          color: colors.primary.withValues(alpha: .45),
+          width: 1.5,
+        ),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 16, color: Colors.green.shade700),
+          Icon(icon, size: 16, color: colors.secondary),
           const SizedBox(width: 6),
           Text(
             deporte,
             style: TextStyle(
               fontSize: 13,
               fontWeight: FontWeight.w600,
-              color: Colors.green.shade700,
+              color: colors.onSurface,
             ),
           ),
           const SizedBox(width: 4),
           GestureDetector(
             onTap: onRemove,
-            child: Icon(
-              Icons.close,
-              size: 16,
-              color: Colors.green.shade700,
-            ),
+            child: Icon(Icons.close, size: 16, color: colors.secondary),
           ),
         ],
       ),

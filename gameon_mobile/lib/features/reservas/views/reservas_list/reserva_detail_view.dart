@@ -5,6 +5,9 @@ import 'package:intl/date_symbol_data_local.dart';
 import 'package:gameon/features/reservas/models/reserva.dart';
 import 'package:gameon/features/reservas/viewmodels/reservas_list_viewmodel.dart';
 import '../reprogramar_reserva_view.dart';
+import 'package:provider/provider.dart';
+import 'package:gameon/core/theme/app_theme.dart';
+import 'package:gameon/core/theme/theme_controller.dart';
 
 class ReservaDetailView extends StatefulWidget {
   final int reservaId;
@@ -101,6 +104,11 @@ class _ReservaDetailViewState extends State<ReservaDetailView> {
   @override
   Widget build(BuildContext context) {
     final r = reserva;
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
+    final background = AppTheme.headerBackgroundFor(
+      context.watch<ThemeController>().selection,
+    );
 
     // Barra de estado transparente con iconos claros
     final overlay = SystemUiOverlayStyle(
@@ -112,7 +120,7 @@ class _ReservaDetailViewState extends State<ReservaDetailView> {
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: overlay,
       child: Scaffold(
-        backgroundColor: Colors.grey[50],
+        backgroundColor: theme.scaffoldBackgroundColor,
         body: Column(
           children: [
             // Header moderno con gradiente verde
@@ -121,8 +129,15 @@ class _ReservaDetailViewState extends State<ReservaDetailView> {
                 gradient: LinearGradient(
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
-                  colors: [Colors.green.shade600, Colors.green.shade800],
+                  colors: [colors.primary, colors.primaryContainer],
                 ),
+                image: background == null
+                    ? null
+                    : DecorationImage(
+                        image: AssetImage(background),
+                        fit: BoxFit.cover,
+                        opacity: .38,
+                      ),
                 borderRadius: const BorderRadius.only(
                   bottomLeft: Radius.circular(30),
                   bottomRight: Radius.circular(30),
@@ -236,9 +251,9 @@ class _ReservaDetailViewState extends State<ReservaDetailView> {
                             const SizedBox(height: 16),
                             Text(
                               errorMessage!,
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 16,
-                                color: Colors.black87,
+                                color: colors.onSurface,
                               ),
                               textAlign: TextAlign.center,
                             ),
@@ -246,8 +261,8 @@ class _ReservaDetailViewState extends State<ReservaDetailView> {
                             ElevatedButton(
                               onPressed: () => Navigator.pop(context),
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.green[600],
-                                foregroundColor: Colors.white,
+                                backgroundColor: colors.primary,
+                                foregroundColor: colors.onPrimary,
                               ),
                               child: const Text('Volver'),
                             ),
@@ -257,9 +272,7 @@ class _ReservaDetailViewState extends State<ReservaDetailView> {
                     )
                   : loading
                   ? Center(
-                      child: CircularProgressIndicator(
-                        color: Colors.green[600],
-                      ),
+                      child: CircularProgressIndicator(color: colors.secondary),
                     )
                   : r == null
                   ? const Center(child: Text('No hay datos'))
@@ -351,14 +364,15 @@ class _ReservaDetailViewState extends State<ReservaDetailView> {
                                         }
                                         return Container(
                                           decoration: BoxDecoration(
-                                            color: Colors.grey[200],
+                                            color:
+                                                colors.surfaceContainerHighest,
                                             borderRadius: BorderRadius.circular(
                                               12,
                                             ),
                                           ),
                                           child: Center(
                                             child: CircularProgressIndicator(
-                                              color: Colors.green[600],
+                                              color: colors.secondary,
                                               value:
                                                   loadingProgress
                                                           .expectedTotalBytes !=
@@ -376,7 +390,8 @@ class _ReservaDetailViewState extends State<ReservaDetailView> {
                                           (context, error, stackTrace) {
                                             return Container(
                                               decoration: BoxDecoration(
-                                                color: Colors.grey[200],
+                                                color: colors
+                                                    .surfaceContainerHighest,
                                                 borderRadius:
                                                     BorderRadius.circular(12),
                                               ),
@@ -507,10 +522,11 @@ class _ModernCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: colors.surface,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
@@ -531,18 +547,18 @@ class _ModernCard extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: Colors.green.shade50,
+                    color: colors.primaryContainer,
                     borderRadius: BorderRadius.circular(8),
                   ),
-                  child: Icon(icon, color: Colors.green.shade600, size: 20),
+                  child: Icon(icon, color: colors.onPrimaryContainer, size: 20),
                 ),
                 const SizedBox(width: 12),
                 Text(
                   title,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
-                    color: Colors.black87,
+                    color: colors.onSurface,
                   ),
                 ),
               ],
@@ -570,12 +586,13 @@ class _InfoRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, size: 18, color: Colors.grey[600]),
+          Icon(icon, size: 18, color: colors.onSurfaceVariant),
           const SizedBox(width: 12),
           Expanded(
             flex: 2,
@@ -584,7 +601,7 @@ class _InfoRow extends StatelessWidget {
               style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w600,
-                color: Colors.grey[700],
+                color: colors.onSurfaceVariant,
               ),
             ),
           ),
@@ -592,10 +609,10 @@ class _InfoRow extends StatelessWidget {
             flex: 3,
             child: Text(
               value,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w500,
-                color: Colors.black87,
+                color: colors.onSurface,
               ),
             ),
           ),

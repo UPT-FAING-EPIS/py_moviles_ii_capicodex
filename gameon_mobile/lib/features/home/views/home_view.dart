@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:gameon/features/home/models/institucion_deportiva.dart';
 import 'package:gameon/features/reservas/views/reservas_list/reservas_list_view.dart';
 import 'package:gameon/features/perfil/views/perfil_view/perfil_view.dart';
@@ -15,6 +16,8 @@ import 'package:gameon/features/perfil/views/login_page/login_page.dart';
 import 'package:gameon/core/theme/app_theme.dart';
 import 'package:gameon/core/theme/theme_controller.dart';
 import 'package:gameon/features/gestor/views/gestor_view.dart';
+import 'package:gameon/features/gestor/views/gestor_pendiente_view.dart';
+import 'package:gameon/features/gestor/views/admin_view.dart';
 
 // HomeView: controla tabs y bottom navigation
 class HomeView extends StatefulWidget {
@@ -36,6 +39,14 @@ class _HomeViewState extends State<HomeView> with WidgetsBindingObserver {
   @override
   Widget build(BuildContext context) {
     final managerId = context.watch<PerfilViewModel>().managerId;
+    if (context.watch<PerfilViewModel>().mode == AppUserMode.admin &&
+        context.watch<PerfilViewModel>().isAdmin) {
+      return const AdminView();
+    }
+    if (context.watch<PerfilViewModel>().mode == AppUserMode.gestor &&
+        context.watch<PerfilViewModel>().managerStatus != null && managerId == null) {
+      return const GestorPendienteView();
+    }
     if (managerId != null && context.watch<PerfilViewModel>().mode == AppUserMode.gestor) {
       return GestorView(managerId: managerId);
     }
@@ -123,6 +134,8 @@ class _HomeTabScaffoldState extends State<HomeTabScaffold> {
   late Future<List<InstitucionDeportiva>> _institucionesFuture;
   final TextEditingController _searchController = TextEditingController();
   String _query = '';
+  String? _deporteFiltro;
+  Map<int, Set<String>> _deportesPorCentro = {};
   NotificacionesViewModel? _notificacionesVm;
   bool _perfilListenerAttached = false;
 
@@ -131,6 +144,7 @@ class _HomeTabScaffoldState extends State<HomeTabScaffold> {
     super.initState();
     _vm = HomeViewModel();
     _institucionesFuture = _vm.fetchInstituciones();
+    _cargarDeportesPorCentro();
     _searchController.addListener(() {
       setState(() => _query = _searchController.text.trim());
     });
@@ -144,6 +158,28 @@ class _HomeTabScaffoldState extends State<HomeTabScaffold> {
       }
       _initNotificationsViewModel();
     });
+  }
+
+  Future<void> _cargarDeportesPorCentro() async {
+    try {
+      final centros = await _institucionesFuture;
+      final ids = centros.map((c) => c.id).toList();
+      if (ids.isEmpty) return;
+      final rows = await Supabase.instance.client.from('areas_deportivas')
+          .select('institucion_deportiva_id, deportes(nombre)')
+          .inFilter('institucion_deportiva_id', ids).eq('estado', 'activa');
+      final result = <int, Set<String>>{};
+      for (final row in rows) {
+        final id = row['institucion_deportiva_id'] as int;
+        final sport = row['deportes']?['nombre']?.toString();
+        if (sport != null && sport.isNotEmpty) {
+          result.putIfAbsent(id, () => <String>{}).add(sport);
+        }
+      }
+      if (mounted) setState(() => _deportesPorCentro = result);
+    } catch (_) {
+      // El catálogo sigue disponible si los filtros no se pueden cargar.
+    }
   }
 
   void _onPerfilVmChange() {
@@ -477,7 +513,28 @@ class _HomeTabScaffoldState extends State<HomeTabScaffold> {
                 ),
               ),
             ),
-            const SizedBox(height: 20),
+            SizedBox(
+              height: 64,
+              child: ListView(
+                scrollDirection: Axis.horizontal,
+                padding: const EdgeInsets.fromLTRB(20, 10, 20, 10),
+                children: [
+                  for (final sport in <String?>[null,
+                    ...(_deportesPorCentro.values.expand((v) => v).toSet().toList()..sort())])
+                    Padding(
+                      padding: const EdgeInsets.only(right: 8),
+                      child: ChoiceChip(
+                        label: Text(sport ?? 'Todos'),
+                        selected: _deporteFiltro == sport,
+                        labelPadding: const EdgeInsets.symmetric(horizontal: 5),
+                        materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        onSelected: (_) => setState(() => _deporteFiltro = sport),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 8),
             // Lista de instalaciones
             Expanded(
               child: FutureBuilder<List<InstitucionDeportiva>>(
@@ -525,12 +582,14 @@ class _HomeTabScaffoldState extends State<HomeTabScaffold> {
 
                   final instituciones = snapshot.data ?? [];
                   final q = _query.toLowerCase();
-                  final filtradas = q.isEmpty
-                      ? instituciones
-                      : instituciones.where((inst) {
+                  final filtradas = instituciones.where((inst) {
                           final nombre = inst.nombre.toLowerCase();
                           final direccion = inst.direccion.toLowerCase();
-                          return nombre.contains(q) || direccion.contains(q);
+                          final sports = _deportesPorCentro[inst.id] ?? {};
+                          final matchesSport = _deporteFiltro == null ||
+                              sports.contains(_deporteFiltro);
+                          return matchesSport && (q.isEmpty || nombre.contains(q) ||
+                              direccion.contains(q) || sports.any((s) => s.toLowerCase().contains(q)));
                         }).toList();
 
                   if (instituciones.isEmpty) {
