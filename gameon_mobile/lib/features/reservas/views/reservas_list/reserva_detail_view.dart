@@ -5,6 +5,7 @@ import 'package:intl/date_symbol_data_local.dart';
 import 'package:gameon/features/reservas/models/reserva.dart';
 import 'package:gameon/features/reservas/viewmodels/reservas_list_viewmodel.dart';
 import '../reprogramar_reserva_view.dart';
+import '../calificar_instalacion_sheet.dart';
 
 class ReservaDetailView extends StatefulWidget {
   final int reservaId;
@@ -316,6 +317,29 @@ class _ReservaDetailViewState extends State<ReservaDetailView> {
                                 if (!mounted || actualizada == null) return;
                                 setState(() => reserva = actualizada);
                               },
+                            ),
+                          if (r.estado.toLowerCase() == 'completada')
+                            Padding(
+                              padding: const EdgeInsets.only(top: 10),
+                              child: FilledButton.icon(
+                                icon: const Icon(Icons.star_rate_rounded),
+                                label: const Text('Calificar instalación'),
+                                onPressed: () async {
+                                  final guardada =
+                                      await mostrarCalificarInstalacionSheet(
+                                        context,
+                                        reservaId: r.id,
+                                        institucionNombre:
+                                            inst?.nombre ?? 'Instalación',
+                                      );
+                                  if (!mounted || guardada != true) return;
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text('Calificación guardada'),
+                                    ),
+                                  );
+                                },
+                              ),
                             ),
                           // Card de área deportiva (movida aquí para ser la primera después del horario)
                           _ModernCard(
