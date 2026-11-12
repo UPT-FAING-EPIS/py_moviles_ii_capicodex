@@ -1,0 +1,30 @@
+name: US-24 autorización de reservas del gestor
+on:
+  push:
+    paths: ['bd/migraciones/202611120001*', 'gameon_mobile/supabase/tests/consultar_reservas*', '.github/workflows/reservas-gestor-sql.yml']
+  pull_request:
+    paths: ['bd/migraciones/202611120001*', 'gameon_mobile/supabase/tests/consultar_reservas*', '.github/workflows/reservas-gestor-sql.yml']
+jobs:
+  postgres:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: gameon_test
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      PGPASSWORD: postgres
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verificar aislamiento y minimización en base aislada
+        run: |
+          psql -h localhost -U postgres -d gameon_test -v ON_ERROR_STOP=1 -f gameon_mobile/supabase/tests/consultar_reservas_bootstrap.sql
+          psql -h localhost -U postgres -d gameon_test -v ON_ERROR_STOP=1 -f bd/migraciones/202611120001_consultar_reservas_gestor.sql
+          psql -h localhost -U postgres -d gameon_test -v ON_ERROR_STOP=1 -f gameon_mobile/supabase/tests/consultar_reservas_test.sql

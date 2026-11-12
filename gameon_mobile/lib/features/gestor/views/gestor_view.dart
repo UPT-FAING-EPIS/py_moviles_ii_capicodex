@@ -643,14 +643,15 @@ class _GestorViewState extends State<GestorView> {
               area['institucion_deportiva_id'] == reservaCentroFiltro) &&
           (reservaDeporteFiltro == null ||
               area['deporte_id'] == reservaDeporteFiltro) &&
-          (reservaEstadoFiltro == null || r['estado'] == reservaEstadoFiltro);
+          (reservaEstadoFiltro == null ||
+              '${r['estado']}'.toLowerCase() == reservaEstadoFiltro);
     }).toList();
     return ListView(
       padding: const EdgeInsets.all(18),
       children: [
         _sectionTitle(
           'Agenda de reservas',
-          'Consulta los turnos de tus canchas',
+          'Consulta los turnos de tus canchas por código de reserva',
         ),
         const SizedBox(height: 14),
         Card(
@@ -757,6 +758,10 @@ class _GestorViewState extends State<GestorView> {
                     ),
                   ),
                   const SizedBox(height: 5),
+                  Text(
+                    'Reserva #${r['id']}',
+                    style: const TextStyle(fontSize: 12),
+                  ),
                   Text(
                     '${r['fecha']} · ${r['hora_inicio']}–${r['hora_fin']}',
                     style: TextStyle(

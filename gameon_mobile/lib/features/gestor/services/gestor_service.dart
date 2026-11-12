@@ -180,14 +180,27 @@ class GestorService {
     await db.from('areas_horarios').delete().eq('id', id);
   }
 
-  Future<List<Map<String, dynamic>>> reservas(List<int> areaIds,
-      {String? fecha}) async {
+  Future<List<Map<String, dynamic>>> reservas(
+    List<int> areaIds, {
+    String? fecha,
+  }) async {
     if (areaIds.isEmpty) return [];
-    var query = db.from('reservas').select(
-      'id,area_deportiva_id,fecha,hora_inicio,hora_fin,estado,monto_pagado,metodo_pago',
-    ).inFilter('area_deportiva_id', areaIds);
-    if (fecha != null) query = query.eq('fecha', fecha);
-    final rows = await query.order('fecha', ascending: false).limit(200);
-    return List<Map<String, dynamic>>.from(rows);
+    // La RPC autoriza cada área usando la sesión; los IDs solo son filtros.
+    final result = <Map<String, dynamic>>[];
+    const pageSize = 200;
+    while (true) {
+      final rows = await db.rpc(
+        'consultar_reservas_gestor',
+        params: {
+          'p_area_ids': areaIds,
+          'p_fecha': fecha,
+          'p_offset': result.length,
+          'p_limite': pageSize,
+        },
+      );
+      final page = List<Map<String, dynamic>>.from(rows as List);
+      result.addAll(page);
+      if (page.length < pageSize) return result;
+    }
   }
 }
