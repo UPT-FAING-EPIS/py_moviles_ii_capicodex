@@ -1,6 +1,6 @@
 import 'dart:convert';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:gameon_mobile/features/gestor/services/gestor_service.dart';
+import 'package:gameon/features/gestor/services/gestor_service.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -137,12 +137,14 @@ void main() {
                 jsonEncode([insertedPayload]),
                 201,
                 headers: {'content-type': 'application/json'},
+                request: request,
               );
             }
             return http.Response(
               jsonEncode([]),
               200,
               headers: {'content-type': 'application/json'},
+              request: request,
             );
           });
 

@@ -53,6 +53,7 @@ jobs:
           test/features/perfil/password_recovery_view_test.dart
           test/features/perfil/deportes_preferidos_test.dart
           test/features/gestor/registro_instalacion_test.dart
+          test/features/gestor/consultar_reservas_test.dart
 
       - name: Ejecutar pruebas de la aplicación
         run: flutter test --no-pub --coverage --reporter expanded
