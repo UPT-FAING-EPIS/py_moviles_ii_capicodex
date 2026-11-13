@@ -58,6 +58,7 @@ jobs:
           test/features/perfil/deportes_preferidos_test.dart
           test/features/gestor/registro_instalacion_test.dart
           test/features/gestor/consultar_reservas_test.dart
+          test/features/gestor/bloqueo_horarios_test.dart
           test/features/reservas/calificacion_instalacion_test.dart
 
       - name: Ejecutar pruebas de la aplicación
