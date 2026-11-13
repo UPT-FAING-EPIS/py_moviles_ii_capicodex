@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-import '../models/calificacion_instalacion.dart';
 import '../services/calificacion_service.dart';
 
 Future<bool?> mostrarCalificarInstalacionSheet(

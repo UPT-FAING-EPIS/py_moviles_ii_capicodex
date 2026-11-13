@@ -332,7 +332,7 @@ class _ReservaDetailViewState extends State<ReservaDetailView> {
                                         institucionNombre:
                                             inst?.nombre ?? 'Instalación',
                                       );
-                                  if (!mounted || guardada != true) return;
+                                  if (!context.mounted || guardada != true) return;
                                   ScaffoldMessenger.of(context).showSnackBar(
                                     const SnackBar(
                                       content: Text('Calificación guardada'),
