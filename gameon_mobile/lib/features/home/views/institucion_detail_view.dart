@@ -82,6 +82,51 @@ class _InstitucionDetailViewState extends State<InstitucionDetailView> {
     }
   }
 
+  Future<void> _confirmarRuta() async {
+    final destino = viewModel.rutaExterna(widget.institucion);
+    if (destino == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Esta instalación no tiene una ubicación válida.'),
+        ),
+      );
+      return;
+    }
+
+    final confirmar = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('¿Abrir ruta en Google Maps?'),
+        content: const Text(
+          'Se enviarán las coordenadas de la instalación a Google Maps. '
+          'Google Maps puede usar tu ubicación para calcular el recorrido.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: const Text('Cancelar'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: const Text('Abrir ruta'),
+          ),
+        ],
+      ),
+    );
+    if (confirmar != true || !mounted) return;
+
+    try {
+      if (await viewModel.abrirRuta(destino)) return;
+    } on PlatformException {
+      // El sistema no pudo abrir el enlace externo.
+    }
+
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('No se pudo abrir Google Maps.')),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final institucion = widget.institucion;
@@ -145,6 +190,13 @@ class _InstitucionDetailViewState extends State<InstitucionDetailView> {
                     // Botón principal para ver áreas deportivas
                     _buildMainActionButton(context, institucion),
                     const SizedBox(height: 20),
+
+                    OutlinedButton.icon(
+                      onPressed: _confirmarRuta,
+                      icon: const Icon(Icons.directions_outlined),
+                      label: const Text('Cómo llegar'),
+                    ),
+                    const SizedBox(height: 16),
 
                     // Tarjeta de información de contacto
                     _buildContactCard(context, institucion),

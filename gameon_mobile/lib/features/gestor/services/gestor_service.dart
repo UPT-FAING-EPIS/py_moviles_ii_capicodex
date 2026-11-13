@@ -1,3 +1,4 @@
+import 'package:gameon/core/validation/coordenadas.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:image_picker/image_picker.dart';
 
@@ -10,17 +11,7 @@ class GestorService {
 
   /// Verifica que las coordenadas geográficas correspondan a una ubicación válida.
   static bool validarUbicacion(num? latitud, num? longitud) {
-    if (latitud == null || longitud == null) return false;
-    final lat = latitud.toDouble();
-    final lng = longitud.toDouble();
-    if (lat.isNaN || lng.isNaN || lat.isInfinite || lng.isInfinite) {
-      return false;
-    }
-    if (lat < -90 || lat > 90 || lng < -180 || lng > 180) {
-      return false;
-    }
-    if (lat == 0 && lng == 0) return false;
-    return true;
+    return validarCoordenadas(latitud, longitud);
   }
 
   /// Valida rol/autorización del administrador, datos obligatorios y ubicación válida (US-20).
