@@ -1,10 +1,12 @@
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
+import 'package:gameon/core/validation/coordenadas.dart';
 import 'package:gameon/features/home/models/horario_atencion.dart';
 import 'package:gameon/features/home/models/deporte.dart';
 import 'package:gameon/features/home/models/institucion_deportiva.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class InstitucionDetailViewModel extends ChangeNotifier {
   final int institucionId;
@@ -60,6 +62,21 @@ class InstitucionDetailViewModel extends ChangeNotifier {
   Future<SharedPreferences> _getPrefs() async {
     if (_customPrefs != null) return _customPrefs;
     return await SharedPreferences.getInstance();
+  }
+
+  Uri? rutaExterna(InstitucionDeportiva institucion) {
+    final latitud = institucion.latitud;
+    final longitud = institucion.longitud;
+    if (!validarCoordenadas(latitud, longitud)) return null;
+
+    return Uri.https('www.google.com', '/maps/dir/', {
+      'api': '1',
+      'destination': '$latitud,$longitud',
+    });
+  }
+
+  Future<bool> abrirRuta(Uri destino) {
+    return launchUrl(destino, mode: LaunchMode.externalApplication);
   }
 
   String get cacheKey => 'cached_institucion_detail_$institucionId';

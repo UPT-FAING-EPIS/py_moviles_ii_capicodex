@@ -19,13 +19,17 @@ jobs:
         uses: subosito/flutter-action@v2
         with:
           channel: stable
+          flutter-version: "3.38.9"
 
       - name: Instalar dependencias
         run: flutter pub get
 
-      - name: Analizar módulos modificados del Sprint 3
+      - name: Analizar módulos modificados
         run: >
           flutter analyze --no-pub
+          lib/core/validation/coordenadas.dart
+          lib/features/home/views/institucion_detail_view.dart
+          lib/features/home/viewmodels/institucion_detail_viewmodel.dart
           lib/features/home/views/home_view.dart
           lib/features/home/views/mapa_instituciones_view.dart
           lib/features/perfil/services/auth_form_validators.dart
@@ -52,6 +56,7 @@ jobs:
           lib/features/reservas/services/calificacion_service.dart
           lib/features/reservas/views/calificar_instalacion_sheet.dart
           lib/features/reservas/views/reservas_list/reserva_detail_view.dart
+          test/features/home/ruta_instalacion_test.dart
           test/features/perfil/auth_form_validators_test.dart
           test/features/perfil/password_recovery_service_test.dart
           test/features/perfil/password_recovery_view_test.dart
