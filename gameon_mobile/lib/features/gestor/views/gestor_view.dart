@@ -1234,7 +1234,58 @@ class _GestorViewState extends State<GestorView> {
     }
   }
 
+  Future<List<Map<String, dynamic>>> _reservasDeArea(int areaId) async {
+    try {
+      final remotas = await service.reservas([areaId]);
+      if (remotas.isNotEmpty) return remotas;
+    } catch (_) {}
+    return reservas
+        .where((r) => asInt(r['area_deportiva_id']) == areaId)
+        .toList();
+  }
+
+  Future<bool> _confirmarBloqueoConReservas(
+    BuildContext dialogCtx,
+    String dia,
+    List<Map<String, dynamic>> afectadas,
+  ) async {
+    final confirm = await showDialog<bool>(
+      context: dialogCtx,
+      builder: (dialog) => AlertDialog(
+        title: const Text('Confirmar bloqueo de horario'),
+        content: Text(
+          'Existen ${afectadas.length} reserva(s) activa(s) en $dia. '
+          'El bloqueo impedirá nuevas reservas y conservará las reservas existentes sin eliminarlas. '
+          '¿Deseas confirmar el bloqueo?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialog, false),
+            child: const Text('Cancelar'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(dialog, true),
+            child: const Text('Confirmar bloqueo'),
+          ),
+        ],
+      ),
+    );
+    return confirm == true;
+  }
+
   Future<void> _horariosDialog(Map<String, dynamic> area) async {
+    if (widget.managerId <= 0) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Solo un administrador autorizado puede gestionar o bloquear horarios.',
+            ),
+          ),
+        );
+      }
+      return;
+    }
     final areaId = asInt(area['id']);
     Future<void> open() async {
       final rows = await service.horarios(areaId);
@@ -1254,35 +1305,106 @@ class _GestorViewState extends State<GestorView> {
                     subtitle: Text(
                       '${h['hora_apertura']}–${h['hora_cierre']} · ${h['disponible'] == 1 ? 'Disponible' : 'Cerrado'}',
                     ),
-                    trailing: IconButton(
-                      icon: const Icon(Icons.delete_outline),
-                      onPressed: () async {
-                        final confirm = await showDialog<bool>(
-                          context: ctx,
-                          builder: (dialog) => AlertDialog(
-                            title: const Text('Eliminar horario'),
-                            content: Text(
-                              '¿Eliminar el horario de ${h['dia']}?',
-                            ),
-                            actions: [
-                              TextButton(
-                                onPressed: () => Navigator.pop(dialog, false),
-                                child: const Text('Cancelar'),
-                              ),
-                              FilledButton(
-                                onPressed: () => Navigator.pop(dialog, true),
-                                child: const Text('Eliminar'),
-                              ),
-                            ],
+                    trailing: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        IconButton(
+                          tooltip: h['disponible'] == 1
+                              ? 'Bloquear horario'
+                              : 'Habilitar horario',
+                          icon: Icon(
+                            h['disponible'] == 1
+                                ? Icons.block
+                                : Icons.check_circle_outline,
                           ),
-                        );
-                        if (confirm != true || !ctx.mounted) return;
-                        Navigator.pop(ctx);
-                        await action(
-                          () => service.borrarHorario(asInt(h['id'])),
-                        );
-                        await open();
-                      },
+                          onPressed: () async {
+                            final nuevoDisponible = h['disponible'] != 1;
+                            final reservasArea = await _reservasDeArea(areaId);
+                            if (!ctx.mounted) return;
+                            final afectadas =
+                                GestorService.detectarReservasAfectadasPorBloqueo(
+                                  areaId: areaId,
+                                  dia: '${h['dia']}',
+                                  horaApertura: '${h['hora_apertura']}',
+                                  horaCierre: '${h['hora_cierre']}',
+                                  disponible: nuevoDisponible,
+                                  reservasExistentes: reservasArea,
+                                );
+                            if (afectadas.isNotEmpty) {
+                              final ok = await _confirmarBloqueoConReservas(
+                                ctx,
+                                '${h['dia']}',
+                                afectadas,
+                              );
+                              if (!ok || !ctx.mounted) return;
+                            }
+                            Navigator.pop(ctx);
+                            await action(
+                              () => service.cambiarDisponibilidadHorario(
+                                widget.managerId,
+                                h,
+                                nuevoDisponible,
+                                reservasExistentes: reservasArea,
+                                confirmarConReservasExistentes: true,
+                              ),
+                            );
+                            await open();
+                          },
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.delete_outline),
+                          onPressed: () async {
+                            final reservasArea = await _reservasDeArea(areaId);
+                            if (!ctx.mounted) return;
+                            final afectadas =
+                                GestorService.detectarReservasAfectadasPorBloqueo(
+                                  areaId: areaId,
+                                  dia: '${h['dia']}',
+                                  horaApertura: '00:00:00',
+                                  horaCierre: '23:59:00',
+                                  disponible: false,
+                                  reservasExistentes: reservasArea,
+                                );
+                            final confirm = await showDialog<bool>(
+                              context: ctx,
+                              builder: (dialog) => AlertDialog(
+                                title: const Text('Eliminar horario'),
+                                content: Text(
+                                  afectadas.isEmpty
+                                      ? '¿Eliminar el horario de ${h['dia']}?'
+                                      : '¿Eliminar el horario de ${h['dia']}? '
+                                            'Existen ${afectadas.length} reserva(s) activa(s) que se conservarán sin eliminarse.',
+                                ),
+                                actions: [
+                                  TextButton(
+                                    onPressed: () =>
+                                        Navigator.pop(dialog, false),
+                                    child: const Text('Cancelar'),
+                                  ),
+                                  FilledButton(
+                                    onPressed: () =>
+                                        Navigator.pop(dialog, true),
+                                    child: const Text('Eliminar'),
+                                  ),
+                                ],
+                              ),
+                            );
+                            if (confirm != true || !ctx.mounted) return;
+                            Navigator.pop(ctx);
+                            await action(
+                              () => service.borrarHorario(
+                                asInt(h['id']),
+                                gestorId: widget.managerId,
+                                areaId: areaId,
+                                dia: '${h['dia']}',
+                                reservasExistentes: reservasArea,
+                                confirmarConReservasExistentes: true,
+                              ),
+                            );
+                            await open();
+                          },
+                        ),
+                      ],
                     ),
                     onTap: () async {
                       Navigator.pop(ctx);
@@ -1409,6 +1531,20 @@ class _GestorViewState extends State<GestorView> {
         }
         return;
       }
+      final reservasArea = await _reservasDeArea(areaId);
+      if (!mounted) return;
+      final afectadas = GestorService.detectarReservasAfectadasPorBloqueo(
+        areaId: areaId,
+        dia: day,
+        horaApertura: time(open),
+        horaCierre: time(close),
+        disponible: enabled,
+        reservasExistentes: reservasArea,
+      );
+      if (afectadas.isNotEmpty) {
+        final ok = await _confirmarBloqueoConReservas(context, day, afectadas);
+        if (!ok || !mounted) return;
+      }
       await action(
         () => service.guardarHorario(
           areaId,
@@ -1417,6 +1553,9 @@ class _GestorViewState extends State<GestorView> {
           time(close),
           enabled,
           id: h == null ? null : asInt(h['id']),
+          gestorId: widget.managerId,
+          reservasExistentes: reservasArea,
+          confirmarConReservasExistentes: true,
         ),
       );
     }
