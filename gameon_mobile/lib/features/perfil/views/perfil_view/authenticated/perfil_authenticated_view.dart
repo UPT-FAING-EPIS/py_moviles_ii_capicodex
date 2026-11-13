@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:gameon/features/perfil/models/usuario_deportista.dart';
 import 'package:gameon/features/perfil/views/perfil_view/authenticated/edit_perfil/edit_perfil_view.dart';
 import 'package:gameon/features/perfil/views/perfil_view/authenticated/edit_perfil/widgets/deportes_selector_sheet.dart';
@@ -438,11 +439,7 @@ class PerfilAuthenticatedView extends StatelessWidget {
             padding: const EdgeInsets.fromLTRB(20, 12, 12, 8),
             child: Row(
               children: [
-                Icon(
-                  Icons.sports,
-                  color: theme.hintColor,
-                  size: 18,
-                ),
+                Icon(Icons.sports, color: theme.hintColor, size: 18),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
@@ -472,10 +469,7 @@ class PerfilAuthenticatedView extends StatelessWidget {
             child: p.deportesFavoritos.isEmpty
                 ? Text(
                     'Aún no has registrado deportes preferidos para personalizar tu búsqueda.',
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: theme.hintColor,
-                    ),
+                    style: TextStyle(fontSize: 13, color: theme.hintColor),
                   )
                 : Wrap(
                     spacing: 8,
@@ -821,9 +815,119 @@ class PerfilAuthenticatedView extends StatelessWidget {
             },
             isDestructive: true,
           ),
+          Divider(height: 1, color: theme.dividerColor),
+          _buildOptionItem(
+            context: context,
+            icon: Icons.delete_forever_outlined,
+            title: 'Eliminar mi cuenta',
+            subtitle: 'Borra permanentemente tus datos personales',
+            color: Colors.red.shade900,
+            onTap: () => _requestAccountDeletion(context),
+            isDestructive: true,
+          ),
         ],
       ),
     );
+  }
+
+  Future<void> _requestAccountDeletion(BuildContext context) async {
+    final accepted = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('¿Eliminar tu cuenta?'),
+        content: const Text(
+          'Esta acción es permanente. Se eliminarán tu perfil, reservas, '
+          'favoritos, calificaciones y demás datos personales asociados. '
+          'No podrás recuperarlos.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: const Text('Cancelar'),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(backgroundColor: Colors.red),
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: const Text('Continuar'),
+          ),
+        ],
+      ),
+    );
+    if (accepted != true || !context.mounted) return;
+
+    final passwordController = TextEditingController();
+    final formKey = GlobalKey<FormState>();
+    final credentialsConfirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Confirma tu identidad'),
+        content: Form(
+          key: formKey,
+          child: TextFormField(
+            controller: passwordController,
+            autofocus: true,
+            obscureText: true,
+            decoration: const InputDecoration(
+              labelText: 'Contraseña actual',
+              helperText: 'Se requiere para eliminar la cuenta.',
+            ),
+            validator: (value) =>
+                value == null || value.isEmpty ? 'Ingresa tu contraseña' : null,
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: const Text('Cancelar'),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(backgroundColor: Colors.red),
+            onPressed: () {
+              if (formKey.currentState!.validate()) {
+                Navigator.pop(dialogContext, true);
+              }
+            },
+            child: const Text('Eliminar definitivamente'),
+          ),
+        ],
+      ),
+    );
+
+    if (credentialsConfirmed != true || !context.mounted) {
+      passwordController.dispose();
+      return;
+    }
+
+    try {
+      await context.read<PerfilViewModel>().deleteAccount(
+        password: passwordController.text,
+      );
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Tu cuenta y datos han sido eliminados.'),
+          ),
+        );
+      }
+    } on AuthException {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('La contraseña no es correcta.')),
+        );
+      }
+    } catch (_) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'No se pudo eliminar la cuenta. Inténtalo nuevamente.',
+            ),
+          ),
+        );
+      }
+    } finally {
+      passwordController.dispose();
+    }
   }
 
   Widget _buildOptionItem({

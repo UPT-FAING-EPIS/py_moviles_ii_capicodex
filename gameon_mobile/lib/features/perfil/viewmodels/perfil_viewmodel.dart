@@ -1,8 +1,11 @@
 import 'dart:async';
 import 'dart:developer' as developer;
+
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+
 import '../models/usuario_deportista.dart';
+
 import 'package:gameon/features/chat/services/user_sync_service.dart';
 import 'package:gameon/core/services/notification_service.dart';
 
@@ -31,6 +34,7 @@ class PerfilViewModel extends ChangeNotifier {
     notifyListeners();
     return true;
   }
+
   bool get isLoggedIn => supabase.auth.currentSession != null;
 
   final UserSyncService _userSyncService = UserSyncService();
@@ -47,9 +51,13 @@ class PerfilViewModel extends ChangeNotifier {
         case AuthChangeEvent.tokenRefreshed:
           if (session?.user != null) {
             await _loadProfile();
-            if (_profile != null && supabase.auth.currentUser?.id == session!.user.id) {
+            if (_profile != null &&
+                supabase.auth.currentUser?.id == session!.user.id) {
               _registerFcmToken();
-              _userSyncService.setPresence(userId: session.user.id, isOnline: true);
+              _userSyncService.setPresence(
+                userId: session.user.id,
+                isOnline: true,
+              );
               startHeartbeat();
             }
           }
@@ -73,7 +81,9 @@ class PerfilViewModel extends ChangeNotifier {
     });
     // Si ya hay sesión al crear el VM (hot reload), cargar perfil.
     if (supabase.auth.currentSession?.user != null) {
-      _loadProfile().then((_) { if (_profile != null) _registerFcmToken(); });
+      _loadProfile().then((_) {
+        if (_profile != null) _registerFcmToken();
+      });
     }
     // Escuchar rotación del token y actualizar en Supabase
     _tokenRefreshSubscription = _notificationService?.onTokenRefresh.listen((
@@ -285,10 +295,14 @@ class PerfilViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> registerManager({required String businessName, required String ruc}) async {
-    await supabase.rpc('registrar_gestor_actual', params: {
-      'p_nombre': businessName.trim(), 'p_ruc': ruc.trim(),
-    });
+  Future<void> registerManager({
+    required String businessName,
+    required String ruc,
+  }) async {
+    await supabase.rpc(
+      'registrar_gestor_actual',
+      params: {'p_nombre': businessName.trim(), 'p_ruc': ruc.trim()},
+    );
     await _loadProfile();
     if (_managerId == null) throw StateError('No se creó el perfil gestor');
     selectMode(AppUserMode.gestor);
@@ -305,6 +319,39 @@ class PerfilViewModel extends ChangeNotifier {
       _managerId = null;
       _mode = AppUserMode.deportista;
       notifyListeners();
+    }
+  }
+
+  /// Verifica nuevamente las credenciales y elimina la cuenta autenticada.
+  ///
+  /// La eliminación de los datos se realiza en `eliminar_cuenta_actual` para
+  /// que el cliente no necesite —ni pueda exponer— credenciales administrativas.
+  Future<void> deleteAccount({required String password}) async {
+    final user = supabase.auth.currentUser;
+    final email = user?.email;
+    if (user == null || email == null || email.isEmpty) {
+      throw StateError(
+        'No hay una cuenta con correo disponible para eliminar.',
+      );
+    }
+    if (password.isEmpty) {
+      throw ArgumentError.value(password, 'password', 'Ingresa tu contraseña');
+    }
+
+    // Volver a iniciar sesión confirma que quien solicita el borrado conoce la
+    // contraseña actual y renueva el token usado por la función SQL.
+    await supabase.auth.signInWithPassword(email: email, password: password);
+    if (supabase.auth.currentUser?.id != user.id) {
+      throw StateError('No se pudo verificar la identidad de la cuenta.');
+    }
+
+    stopHeartbeat();
+    try {
+      await supabase.rpc('eliminar_cuenta_actual');
+    } finally {
+      // La función elimina auth.users; este cierre limpia la sesión local aun
+      // si el servidor ya invalidó sus credenciales.
+      await signOut();
     }
   }
 
@@ -379,9 +426,11 @@ class PerfilViewModel extends ChangeNotifier {
       await _loadProfile();
       if (!selectMode(mode)) {
         await supabase.auth.signOut();
-        return LoginResult.error(mode == AppUserMode.gestor
-            ? 'Esta cuenta aún no tiene perfil gestor. Regístralo desde tu perfil deportista.'
-            : 'Esta cuenta aún no tiene perfil deportista.');
+        return LoginResult.error(
+          mode == AppUserMode.gestor
+              ? 'Esta cuenta aún no tiene perfil gestor. Regístralo desde tu perfil deportista.'
+              : 'Esta cuenta aún no tiene perfil deportista.',
+        );
       }
       // Actualizar FCM token tras iniciar sesión
       if (_profile != null) {
