@@ -142,9 +142,11 @@ class _ReservaDetailViewState extends State<ReservaDetailView> {
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: IconButton(
+                          tooltip: 'Volver a Mis reservas',
                           icon: const Icon(
                             Icons.arrow_back,
                             color: Colors.white,
+                            semanticLabel: 'Volver a Mis reservas',
                           ),
                           onPressed: () => Navigator.pop(context),
                         ),

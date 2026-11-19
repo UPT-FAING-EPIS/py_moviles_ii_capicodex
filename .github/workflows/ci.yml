@@ -28,6 +28,9 @@ jobs:
         run: >
           flutter analyze --no-pub
           lib/core/validation/coordenadas.dart
+          lib/features/reservas/views/reservas_list/reservas_list_view.dart
+          lib/features/reservas/views/reservas_list/reserva_card.dart
+          test/features/reservas/reservas_list_view_test.dart
           lib/features/home/views/institucion_detail_view.dart
           lib/features/home/viewmodels/institucion_detail_viewmodel.dart
           lib/features/home/views/home_view.dart
