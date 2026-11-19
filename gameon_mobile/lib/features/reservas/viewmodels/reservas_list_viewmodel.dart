@@ -33,7 +33,7 @@ class ReservasListViewModel extends ChangeNotifier {
   final SupabaseClient? _customClient;
 
   ReservasListViewModel({SupabaseClient? supabaseClient})
-      : _customClient = supabaseClient;
+    : _customClient = supabaseClient;
 
   SupabaseClient? get _client {
     if (_customClient != null) return _customClient;
@@ -238,7 +238,7 @@ class ReservasListViewModel extends ChangeNotifier {
   /// usando JOIN. Esto reduce el tiempo de carga de 3 llamadas a 1.
   /// Retorna un record con (reserva, area, institucion) o null si no se encuentra.
   Future<({Reserva reserva, AreaLite area, InstitucionLite institucion})?>
-  getReservaWithDetails(int id) async {
+  getReservaWithDetails(int id, {required int idUsuario}) async {
     final client = _client;
     if (client == null) return null;
     try {
@@ -260,6 +260,7 @@ class ReservasListViewModel extends ChangeNotifier {
             )
           ''')
           .eq('id', id)
+          .eq('id_usuario', idUsuario)
           .maybeSingle();
 
       if (row != null) {
