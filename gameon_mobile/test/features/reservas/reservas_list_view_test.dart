@@ -242,7 +242,7 @@ void main() {
     );
 
     testWidgets(
-      'Criterio 2 - Estado 3/4 (Vacío): Muestra ilustración y mensaje amigable cuando no tiene reservas',
+      'TD-04 - Estado vacío: Muestra ilustración y mensaje amigable cuando no tiene reservas',
       (WidgetTester tester) async {
         reservasVm.setReservasForTesting([]);
 
@@ -267,7 +267,7 @@ void main() {
     );
 
     testWidgets(
-      'Criterio 2 - Estado 4/4 (Error): Muestra mensaje claro y botón de reintento ante fallos de conexión',
+      'TD-04 - Estado de error: Muestra mensaje claro y permite reintentar ante fallos de conexión',
       (WidgetTester tester) async {
         reservasVm.setErrorForTesting('No se pudo conectar con el servidor.');
 
@@ -286,6 +286,17 @@ void main() {
         );
         expect(find.byIcon(Icons.error_outline), findsOneWidget);
         expect(find.text('Reintentar'), findsOneWidget);
+
+        // El reintento vuelve a ejecutar la carga con el usuario de prueba y
+        // conserva una pantalla de error controlada si el servicio no responde.
+        await tester.tap(find.text('Reintentar'));
+        await tester.pumpAndSettle();
+
+        expect(find.text('Error al cargar reservas'), findsOneWidget);
+        expect(
+          find.text('No se pudo conectar con el servicio'),
+          findsOneWidget,
+        );
       },
     );
 
