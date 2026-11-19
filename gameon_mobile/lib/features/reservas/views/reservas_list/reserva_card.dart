@@ -81,141 +81,153 @@ class ReservaCardState extends State<ReservaCard> {
       child: Material(
         color: Colors.transparent,
         borderRadius: BorderRadius.circular(20),
-        child: InkWell(
-          borderRadius: BorderRadius.circular(20),
-          onTap: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (_) =>
-                    ReservaDetailView.fromId(reservaId: r.id as int),
-              ),
-            );
-          },
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
+        child: Semantics(
+          button: true,
+          explicitChildNodes: true,
+          label: 'Abrir detalle de la reserva #${r.id}',
+          onTap: () => _abrirDetalle(context, r.id as int),
+          child: Tooltip(
+            message: 'Abrir detalle de la reserva #${r.id}',
+            excludeFromSemantics: true,
+            child: InkWell(
+              borderRadius: BorderRadius.circular(20),
+              onTap: () => _abrirDetalle(context, r.id as int),
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: [
-                            colorEstado.withValues(alpha: .15),
-                            colorEstado.withValues(alpha: .25),
-                          ],
-                        ),
-                        borderRadius: BorderRadius.circular(14),
-                      ),
-                      child: Icon(icono, color: colorEstado, size: 26),
-                    ),
-                    const SizedBox(width: 14),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Reserva #${r.id}',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                              color: colors.onSurface,
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: [
+                                colorEstado.withValues(alpha: .15),
+                                colorEstado.withValues(alpha: .25),
+                              ],
                             ),
+                            borderRadius: BorderRadius.circular(14),
                           ),
-                          const SizedBox(height: 4),
-                          Text(
-                            areaNombre,
-                            style: TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w600,
-                              color: colors.onSurface.withValues(alpha: .82),
+                          child: Icon(icono, color: colorEstado, size: 26),
+                        ),
+                        const SizedBox(width: 14),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Reserva #${r.id}',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                  color: colors.onSurface,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                areaNombre,
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                  color: colors.onSurface.withValues(alpha: .82),
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ],
+                          ),
+                        ),
+                        EstadoChip(estado: estado),
+                      ],
+                    ),
+                    const SizedBox(height: 14),
+                    if (!loadingExtra && area?.imagenArea != null) ...[
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(14),
+                        child: AspectRatio(
+                          aspectRatio: 16 / 9,
+                          child: Image.network(
+                            area!.imagenArea!,
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) =>
+                                Container(
+                                  color: Colors.grey[200],
+                                  alignment: Alignment.center,
+                                  child: Icon(
+                                    Icons.image_not_supported,
+                                    color: Colors.grey[400],
+                                    size: 40,
+                                  ),
+                                ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 14),
+                    ],
+                    if (instNombre.isNotEmpty) ...[
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.location_on,
+                            size: 16,
+                            color: theme.hintColor,
+                          ),
+                          const SizedBox(width: 6),
+                          Expanded(
+                            child: Text(
+                              instNombre,
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: colors.onSurface.withValues(alpha: .82),
+                                fontWeight: FontWeight.w600,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
                             ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
                           ),
                         ],
                       ),
-                    ),
-                    EstadoChip(estado: estado),
-                  ],
-                ),
-                const SizedBox(height: 14),
-                if (!loadingExtra && area?.imagenArea != null) ...[
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(14),
-                    child: AspectRatio(
-                      aspectRatio: 16 / 9,
-                      child: Image.network(
-                        area!.imagenArea!,
-                        fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) => Container(
-                          color: Colors.grey[200],
-                          alignment: Alignment.center,
-                          child: Icon(
-                            Icons.image_not_supported,
-                            color: Colors.grey[400],
-                            size: 40,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 14),
-                ],
-                if (instNombre.isNotEmpty) ...[
-                  Row(
-                    children: [
-                      Icon(
-                        Icons.location_on,
-                        size: 16,
-                        color: theme.hintColor,
-                      ),
-                      const SizedBox(width: 6),
-                      Expanded(
-                        child: Text(
-                          instNombre,
-                          style: TextStyle(
-                            fontSize: 13,
-                            color: colors.onSurface.withValues(alpha: .82),
-                            fontWeight: FontWeight.w600,
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
+                      const SizedBox(height: 12),
                     ],
-                  ),
-                  const SizedBox(height: 12),
-                ],
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: [
-                    InfoChip(
-                      icon: Icons.schedule,
-                      label: '$inicio - $fin',
-                      color: Colors.blue,
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: [
+                        InfoChip(
+                          icon: Icons.schedule,
+                          label: '$inicio - $fin',
+                          color: Colors.blue,
+                        ),
+                        InfoChip(
+                          icon: Icons.timelapse,
+                          label: durLabel,
+                          color: Colors.orange,
+                        ),
+                        if (r.montoPagado != null)
+                          InfoChip(
+                            icon: Icons.payments,
+                            label: 'S/. ${r.montoPagado.toStringAsFixed(2)}',
+                            color: AppColors.primary,
+                          ),
+                      ],
                     ),
-                    InfoChip(
-                      icon: Icons.timelapse,
-                      label: durLabel,
-                      color: Colors.orange,
-                    ),
-                    if (r.montoPagado != null)
-                      InfoChip(
-                        icon: Icons.payments,
-                        label: 'S/. ${r.montoPagado.toStringAsFixed(2)}',
-                        color: AppColors.primary,
-                      ),
                   ],
                 ),
-              ],
+              ),
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  void _abrirDetalle(BuildContext context, int reservaId) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => ReservaDetailView.fromId(reservaId: reservaId),
       ),
     );
   }

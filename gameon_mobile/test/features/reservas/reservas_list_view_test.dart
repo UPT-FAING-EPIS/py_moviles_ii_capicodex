@@ -8,6 +8,7 @@ import 'package:gameon/features/reservas/models/reserva.dart';
 import 'package:gameon/features/reservas/viewmodels/reservas_list_viewmodel.dart';
 import 'package:gameon/features/reservas/views/reservas_list/reservas_list_view.dart';
 import 'package:gameon/features/reservas/views/reservas_list/reserva_card.dart';
+import 'package:gameon/features/reservas/views/reservas_list/reserva_detail_view.dart';
 import 'package:gameon/features/reservas/views/reservas_list/widgets/estado_chip.dart';
 
 class FakePerfilViewModel extends ChangeNotifier implements PerfilViewModel {
@@ -328,6 +329,60 @@ void main() {
 
         final refreshButton = find.byIcon(Icons.refresh);
         expect(refreshButton, findsOneWidget);
+      },
+    );
+
+    testWidgets(
+      'TD-06 · Accesibilidad: Etiquetas semánticas y tooltips en acciones de abrir detalle, actualizar y volver',
+      (WidgetTester tester) async {
+        final semantics = tester.ensureSemantics();
+        try {
+          reservasVm.setReservasForTesting([
+            createTestReserva(id: 201, idUsuario: 42),
+          ]);
+
+          await tester.pumpWidget(
+            createTestApp(
+              reservasVm: reservasVm,
+              perfilVm: perfilVm,
+            ),
+          );
+          await tester.pumpAndSettle();
+
+          // Control con solo icono: botón de actualizar reservas con tooltip y etiqueta semántica
+          expect(find.byTooltip('Actualizar reservas'), findsOneWidget);
+          expect(find.bySemanticsLabel('Actualizar reservas'), findsOneWidget);
+
+          // Botón de abrir detalle de la reserva con nombre accesible claro
+          final abrirDetalleFinder = find.bySemanticsLabel(
+            'Abrir detalle de la reserva #201',
+          );
+          expect(abrirDetalleFinder, findsOneWidget);
+          expect(
+            find.byTooltip('Abrir detalle de la reserva #201'),
+            findsOneWidget,
+          );
+
+          // Abrir detalle mediante su etiqueta accesible
+          await tester.tap(abrirDetalleFinder);
+          await tester.pumpAndSettle();
+
+          expect(find.byType(ReservaDetailView), findsOneWidget);
+
+          // Botón con solo icono para volver desde el detalle con tooltip y etiqueta semántica
+          final volverFinder = find.bySemanticsLabel('Volver a Mis reservas');
+          expect(volverFinder, findsOneWidget);
+          expect(find.byTooltip('Volver a Mis reservas'), findsOneWidget);
+
+          // Volver a Mis reservas usando el control etiquetado
+          await tester.tap(volverFinder);
+          await tester.pumpAndSettle();
+
+          expect(find.byType(ReservaDetailView), findsNothing);
+          expect(find.text('Mis Reservas'), findsOneWidget);
+        } finally {
+          semantics.dispose();
+        }
       },
     );
   });

@@ -337,18 +337,23 @@ class _ReservasListViewState extends State<ReservasListView> {
                                       borderRadius: BorderRadius.circular(12),
                                     ),
                                   child: IconButton(
+                                    tooltip: 'Actualizar reservas',
                                     icon: m.cargando
-                                        ? SizedBox(
+                                        ? const SizedBox(
                                             width: 20,
                                             height: 20,
                                             child: CircularProgressIndicator(
                                               strokeWidth: 2,
                                               color: Colors.white,
+                                              semanticsLabel:
+                                                  'Actualizando reservas',
                                             ),
                                           )
                                         : const Icon(
                                             Icons.refresh,
                                             color: Colors.white,
+                                            semanticLabel:
+                                                'Actualizar reservas',
                                           ),
                                     onPressed: m.cargando
                                         ? null
