@@ -4,8 +4,11 @@ import 'package:intl/intl.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:gameon/features/reservas/models/reserva.dart';
 import 'package:gameon/features/reservas/viewmodels/reservas_list_viewmodel.dart';
+import 'package:gameon/features/perfil/viewmodels/perfil_viewmodel.dart';
+import 'package:provider/provider.dart';
 import '../reprogramar_reserva_view.dart';
 import '../calificar_instalacion_sheet.dart';
+import 'widgets/reserva_numero_copiable.dart';
 
 class ReservaDetailView extends StatefulWidget {
   final int reservaId;
@@ -41,8 +44,19 @@ class _ReservaDetailViewState extends State<ReservaDetailView> {
 
   Future<void> _loadFromId(int id) async {
     try {
+      final perfil = context.read<PerfilViewModel>();
+      final idUsuario = int.tryParse(perfil.profile?.id ?? '');
+      if (!perfil.isLoggedIn || idUsuario == null) {
+        if (mounted) {
+          setState(() {
+            errorMessage = 'Inicia sesión para consultar esta reserva';
+            loading = false;
+          });
+        }
+        return;
+      }
       final vm = ReservasListViewModel();
-      final details = await vm.getReservaWithDetails(id);
+      final details = await vm.getReservaWithDetails(id, idUsuario: idUsuario);
 
       if (details == null) {
         if (mounted) {
@@ -101,7 +115,11 @@ class _ReservaDetailViewState extends State<ReservaDetailView> {
 
   @override
   Widget build(BuildContext context) {
-    final r = reserva;
+    final perfil = context.watch<PerfilViewModel>();
+    final idUsuario = int.tryParse(perfil.profile?.id ?? '');
+    final r = perfil.isLoggedIn && reserva?.idUsuario == idUsuario
+        ? reserva
+        : null;
 
     // Barra de estado transparente con iconos claros
     final overlay = SystemUiOverlayStyle(
@@ -268,6 +286,8 @@ class _ReservaDetailViewState extends State<ReservaDetailView> {
                       padding: const EdgeInsets.symmetric(horizontal: 20),
                       child: Column(
                         children: [
+                          ReservaNumeroCopiable(numero: r.id),
+                          const SizedBox(height: 16),
                           // Card de horario
                           _ModernCard(
                             icon: Icons.schedule,
@@ -332,7 +352,9 @@ class _ReservaDetailViewState extends State<ReservaDetailView> {
                                         institucionNombre:
                                             inst?.nombre ?? 'Instalación',
                                       );
-                                  if (!context.mounted || guardada != true) return;
+                                  if (!context.mounted || guardada != true) {
+                                    return;
+                                  }
                                   ScaffoldMessenger.of(context).showSnackBar(
                                     const SnackBar(
                                       content: Text('Calificación guardada'),

@@ -55,7 +55,9 @@ jobs:
           lib/features/reservas/models/calificacion_instalacion.dart
           lib/features/reservas/services/calificacion_service.dart
           lib/features/reservas/views/calificar_instalacion_sheet.dart
+          lib/features/reservas/viewmodels/reservas_list_viewmodel.dart
           lib/features/reservas/views/reservas_list/reserva_detail_view.dart
+          lib/features/reservas/views/reservas_list/widgets/reserva_numero_copiable.dart
           test/features/home/ruta_instalacion_test.dart
           test/features/perfil/auth_form_validators_test.dart
           test/features/perfil/password_recovery_service_test.dart
@@ -65,6 +67,7 @@ jobs:
           test/features/gestor/consultar_reservas_test.dart
           test/features/gestor/bloqueo_horarios_test.dart
           test/features/reservas/calificacion_instalacion_test.dart
+          test/features/reservas/reserva_numero_copiable_test.dart
 
       - name: Ejecutar pruebas de la aplicación
         run: flutter test --no-pub --coverage --reporter expanded
