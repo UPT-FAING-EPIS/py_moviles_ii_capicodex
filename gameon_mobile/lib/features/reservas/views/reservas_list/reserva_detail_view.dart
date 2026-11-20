@@ -12,8 +12,13 @@ import 'widgets/reserva_numero_copiable.dart';
 
 class ReservaDetailView extends StatefulWidget {
   final int reservaId;
+  final ReservasListViewModel? viewModel;
 
-  const ReservaDetailView.fromId({super.key, required this.reservaId});
+  const ReservaDetailView.fromId({
+    super.key,
+    required this.reservaId,
+    this.viewModel,
+  });
 
   @override
   State<ReservaDetailView> createState() => _ReservaDetailViewState();
@@ -26,6 +31,7 @@ class _ReservaDetailViewState extends State<ReservaDetailView> {
   InstitucionLite? inst;
   bool loading = true;
   String? errorMessage;
+  bool _requestInProgress = false;
 
   @override
   void initState() {
@@ -43,6 +49,16 @@ class _ReservaDetailViewState extends State<ReservaDetailView> {
   }
 
   Future<void> _loadFromId(int id) async {
+    if (_requestInProgress) return;
+    _requestInProgress = true;
+    setState(() {
+      loading = true;
+      errorMessage = null;
+      reserva = null;
+      area = null;
+      inst = null;
+      listVm = null;
+    });
     try {
       final perfil = context.read<PerfilViewModel>();
       final idUsuario = int.tryParse(perfil.profile?.id ?? '');
@@ -55,8 +71,19 @@ class _ReservaDetailViewState extends State<ReservaDetailView> {
         }
         return;
       }
-      final vm = ReservasListViewModel();
+      final vm = widget.viewModel ?? ReservasListViewModel();
       final details = await vm.getReservaWithDetails(id, idUsuario: idUsuario);
+
+      if (!mounted) return;
+      final currentProfile = context.read<PerfilViewModel>();
+      if (!currentProfile.isLoggedIn ||
+          int.tryParse(currentProfile.profile?.id ?? '') != idUsuario) {
+        setState(() {
+          errorMessage = 'Inicia sesión para consultar esta reserva';
+          loading = false;
+        });
+        return;
+      }
 
       if (details == null) {
         if (mounted) {
@@ -77,13 +104,16 @@ class _ReservaDetailViewState extends State<ReservaDetailView> {
           loading = false;
         });
       }
-    } catch (e) {
+    } catch (_) {
       if (mounted) {
         setState(() {
-          errorMessage = 'Error al cargar: ${e.toString()}';
+          errorMessage =
+              'No se pudo cargar el detalle de la reserva. Inténtalo de nuevo.';
           loading = false;
         });
       }
+    } finally {
+      _requestInProgress = false;
     }
   }
 
@@ -185,7 +215,11 @@ class _ReservaDetailViewState extends State<ReservaDetailView> {
                             ),
                             const SizedBox(height: 4),
                             Text(
-                              r != null ? 'Detalle #${r.id}' : 'Cargando...',
+                              r != null
+                                  ? 'Detalle #${r.id}'
+                                  : loading
+                                  ? 'Cargando...'
+                                  : 'Detalle de reserva',
                               style: const TextStyle(
                                 color: Colors.white,
                                 fontSize: 24,
@@ -264,13 +298,14 @@ class _ReservaDetailViewState extends State<ReservaDetailView> {
                               textAlign: TextAlign.center,
                             ),
                             const SizedBox(height: 24),
-                            ElevatedButton(
-                              onPressed: () => Navigator.pop(context),
+                            ElevatedButton.icon(
+                              onPressed: _load,
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: Colors.green[600],
                                 foregroundColor: Colors.white,
                               ),
-                              child: const Text('Volver'),
+                              icon: const Icon(Icons.refresh),
+                              label: const Text('Reintentar'),
                             ),
                           ],
                         ),

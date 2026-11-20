@@ -20,6 +20,13 @@ void main() {
       expect(viewModel.error, isNull);
     });
 
+    test('detalle propaga fallo de conexión para permitir reintento', () async {
+      await expectLater(
+        viewModel.getReservaWithDetails(100, idUsuario: 42),
+        throwsStateError,
+      );
+    });
+
     test('setReservasForTesting actualiza lista de reservas y notifica listeners', () {
       bool notified = false;
       viewModel.addListener(() => notified = true);
