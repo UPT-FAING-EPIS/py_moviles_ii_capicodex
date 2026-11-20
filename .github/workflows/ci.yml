@@ -44,6 +44,7 @@ jobs:
           lib/features/perfil/views/login_page/login_page.dart
           lib/features/perfil/views/login_page/widgets/custom_password_field.dart
           lib/features/perfil/views/perfil_view/authenticated/perfil_authenticated_view.dart
+          lib/features/perfil/views/perfil_view/authenticated/help_support_view.dart
           lib/features/perfil/views/perfil_view/unauthenticated/forms/signup_form.dart
           lib/features/perfil/views/perfil_view/unauthenticated/forms/widgets/password_field.dart
           lib/features/perfil/models/usuario_deportista.dart
@@ -66,6 +67,7 @@ jobs:
           test/features/perfil/password_recovery_service_test.dart
           test/features/perfil/password_recovery_view_test.dart
           test/features/perfil/deportes_preferidos_test.dart
+          test/features/perfil/help_support_view_test.dart
           test/features/gestor/registro_instalacion_test.dart
           test/features/gestor/consultar_reservas_test.dart
           test/features/gestor/bloqueo_horarios_test.dart

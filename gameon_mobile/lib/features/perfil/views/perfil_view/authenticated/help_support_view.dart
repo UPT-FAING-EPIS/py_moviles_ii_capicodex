@@ -31,6 +31,16 @@ class HelpSupportView extends StatelessWidget {
       'answer':
           'Sí, puedes salir de un partido en cualquier momento desde la vista de detalles del evento, siempre y cuando no haya comenzado.',
     },
+    {
+      'question': '¿Dónde puedo ver mis reservas?',
+      'answer':
+          'En la barra de navegación inferior, entra a la pestaña "Reservas" para abrir la pantalla "Mis Reservas". Allí verás el listado de tus reservas con su estado, fecha y horario; al pulsar sobre una tarjeta abrirás la pantalla "Detalle de reserva", donde puedes consultar la ubicación de la instalación, el pago y copiar tu "N.º de reserva".',
+    },
+    {
+      'question': '¿Cómo solicito la cancelación de una reserva?',
+      'answer':
+          'Ve a "Reservas" > "Mis Reservas", entra al "Detalle de reserva" que deseas cancelar y pulsa "Copiar número" para guardar tu "N.º de reserva" (si solo necesitas cambiar la fecha u hora de una reserva pendiente o confirmada, puedes usar "Reprogramar reserva"). Luego, en "Perfil" > "Ayuda y Soporte", pulsa "Contactar por Email" indicando ese número y el motivo de la solicitud. Cada caso es evaluado por la administración del centro deportivo, por lo que la aplicación no garantiza la cancelación automática ni promete plazos fijos de respuesta o reembolso.',
+    },
   ];
 
   Future<void> _sendEmail() async {
@@ -93,7 +103,7 @@ class HelpSupportView extends StatelessWidget {
                         children: [
                           Container(
                             decoration: BoxDecoration(
-                              color: Colors.white.withOpacity(0.2),
+                              color: Colors.white.withValues(alpha: 0.2),
                               borderRadius: BorderRadius.circular(12),
                             ),
                             child: IconButton(
@@ -158,7 +168,7 @@ class HelpSupportView extends StatelessWidget {
                       borderRadius: BorderRadius.circular(20),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.05),
+                          color: Colors.black.withValues(alpha: 0.05),
                           blurRadius: 10,
                           offset: const Offset(0, 4),
                         ),
@@ -235,28 +245,31 @@ class HelpSupportView extends StatelessWidget {
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: Colors.grey.shade200),
       ),
-      child: Theme(
-        data: ThemeData().copyWith(dividerColor: Colors.transparent),
-        child: ExpansionTile(
-          title: Text(
-            faq['question']!,
-            style: const TextStyle(
-              fontWeight: FontWeight.w600,
-              fontSize: 15,
-              color: Colors.black87,
-            ),
-          ),
-          childrenPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-          children: [
-            Text(
-              faq['answer']!,
-              style: TextStyle(
-                fontSize: 14,
-                color: Colors.grey.shade700,
-                height: 1.5,
+      child: Material(
+        color: Colors.transparent,
+        child: Theme(
+          data: ThemeData().copyWith(dividerColor: Colors.transparent),
+          child: ExpansionTile(
+            title: Text(
+              faq['question']!,
+              style: const TextStyle(
+                fontWeight: FontWeight.w600,
+                fontSize: 15,
+                color: Colors.black87,
               ),
             ),
-          ],
+            childrenPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+            children: [
+              Text(
+                faq['answer']!,
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Colors.grey.shade700,
+                  height: 1.5,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
