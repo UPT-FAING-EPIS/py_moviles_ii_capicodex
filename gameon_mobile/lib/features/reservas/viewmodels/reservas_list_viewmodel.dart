@@ -237,10 +237,11 @@ class ReservasListViewModel extends ChangeNotifier {
   /// Obtiene una reserva con todos sus detalles (área e institución) en una sola query
   /// usando JOIN. Esto reduce el tiempo de carga de 3 llamadas a 1.
   /// Retorna un record con (reserva, area, institucion) o null si no se encuentra.
+  /// Propaga los fallos de consulta para que la vista pueda ofrecer un reintento.
   Future<({Reserva reserva, AreaLite area, InstitucionLite institucion})?>
   getReservaWithDetails(int id, {required int idUsuario}) async {
     final client = _client;
-    if (client == null) return null;
+    if (client == null) throw StateError('Servicio de reservas no disponible');
     try {
       final row = await client
           .from('reservas')
@@ -301,12 +302,14 @@ class ReservasListViewModel extends ChangeNotifier {
         error: e,
         stackTrace: st,
       );
+      rethrow;
     } catch (e, st) {
       developer.log(
         '[ReservasListVM][ERROR] getReservaWithDetails $e',
         error: e,
         stackTrace: st,
       );
+      rethrow;
     }
     return null;
   }
