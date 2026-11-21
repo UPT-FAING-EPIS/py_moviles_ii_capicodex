@@ -1,5 +1,3 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-
 class Notificacion {
   final String id;
   final int usuarioId;
@@ -21,8 +19,7 @@ class Notificacion {
     required this.leido,
   });
 
-  factory Notificacion.fromDoc(DocumentSnapshot<Map<String, dynamic>> doc) {
-    final data = doc.data() ?? <String, dynamic>{};
+  factory Notificacion.fromJson(Map<String, dynamic> data) {
 
     final usuarioIdRaw = data['usuario_id'];
     final usuarioId = usuarioIdRaw is int
@@ -36,16 +33,11 @@ class Notificacion {
               ? referenciaIdRaw
               : int.tryParse('${referenciaIdRaw}'));
 
-    final fechaRaw = data['fecha'];
-    DateTime? fecha;
-    if (fechaRaw is Timestamp) {
-      fecha = fechaRaw.toDate();
-    } else if (fechaRaw is DateTime) {
-      fecha = fechaRaw;
-    }
+    final fechaRaw = data['fecha']?.toString();
+    final fecha = fechaRaw == null ? null : DateTime.tryParse(fechaRaw)?.toLocal();
 
     return Notificacion(
-      id: doc.id,
+      id: data['id'].toString(),
       usuarioId: usuarioId,
       titulo: (data['titulo'] ?? '').toString(),
       mensaje: (data['mensaje'] ?? '').toString(),

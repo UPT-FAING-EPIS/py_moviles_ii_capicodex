@@ -36,6 +36,7 @@ class PerfilViewModel extends ChangeNotifier {
     notifyListeners();
     return true;
   }
+
   bool get isLoggedIn => supabase.auth.currentSession != null;
 
   final UserSyncService _userSyncService = UserSyncService();
@@ -52,9 +53,13 @@ class PerfilViewModel extends ChangeNotifier {
         case AuthChangeEvent.tokenRefreshed:
           if (session?.user != null) {
             await _loadProfile();
-            if (_profile != null && supabase.auth.currentUser?.id == session!.user.id) {
+            if ((_profile != null || _managerId != null) &&
+                supabase.auth.currentUser?.id == session!.user.id) {
               _registerFcmToken();
-              _userSyncService.setPresence(userId: session.user.id, isOnline: true);
+              _userSyncService.setPresence(
+                userId: session.user.id,
+                isOnline: true,
+              );
               startHeartbeat();
             }
           }
@@ -82,7 +87,9 @@ class PerfilViewModel extends ChangeNotifier {
     });
     // Si ya hay sesión al crear el VM (hot reload), cargar perfil.
     if (supabase.auth.currentSession?.user != null) {
-      _loadProfile().then((_) { if (_profile != null) _registerFcmToken(); });
+      _loadProfile().then((_) {
+        if (_profile != null || _managerId != null) _registerFcmToken();
+      });
     }
     // Escuchar rotación del token y actualizar en Supabase
     _tokenRefreshSubscription = _notificationService?.onTokenRefresh.listen((
@@ -278,7 +285,8 @@ class PerfilViewModel extends ChangeNotifier {
     }
     if (_managerStatus != null || _managerId != null || _isAdmin) {
       if (!_isLoggingIn) _mode = AppUserMode.gestor;
-      if (_isAdmin && _profile == null && _managerStatus == null) _mode = AppUserMode.admin;
+      if (_isAdmin && _profile == null && _managerStatus == null)
+        _mode = AppUserMode.admin;
       notifyListeners();
     }
   }
@@ -288,12 +296,17 @@ class PerfilViewModel extends ChangeNotifier {
     await _loadProfile();
   }
 
-  Future<void> registerManager({required String businessName, required String ruc}) async {
-    await supabase.rpc('solicitar_gestor_actual', params: {
-      'p_nombre': businessName.trim(), 'p_ruc': ruc.trim(),
-    });
+  Future<void> registerManager({
+    required String businessName,
+    required String ruc,
+  }) async {
+    await supabase.rpc(
+      'solicitar_gestor_actual',
+      params: {'p_nombre': businessName.trim(), 'p_ruc': ruc.trim()},
+    );
     await _loadProfile();
-    if (_managerStatus == null) throw StateError('No se creó la solicitud gestora');
+    if (_managerStatus == null)
+      throw StateError('No se creó la solicitud gestora');
     selectMode(AppUserMode.gestor);
   }
 
@@ -324,10 +337,7 @@ class PerfilViewModel extends ChangeNotifier {
       if (enabled) {
         await _registerFcmToken();
       } else {
-        await supabase
-            .from('usuarios_deportistas')
-            .update({'fcm_token': null})
-            .eq('auth_id', user.id);
+        await supabase.rpc('registrar_token_fcm', params: {'p_token': ''});
       }
     } on PostgrestException catch (e) {
       developer.log(
@@ -387,11 +397,12 @@ class PerfilViewModel extends ChangeNotifier {
         return LoginResult.error(switch (mode) {
           AppUserMode.gestor => 'Esta cuenta aún no tiene solicitud gestora.',
           AppUserMode.admin => 'Esta cuenta no tiene rol ADM.',
-          AppUserMode.deportista => 'Esta cuenta aún no tiene perfil deportista.',
+          AppUserMode.deportista =>
+            'Esta cuenta aún no tiene perfil deportista.',
         });
       }
       // Actualizar FCM token tras iniciar sesión
-      if (_profile != null) {
+      if (_profile != null || _managerId != null) {
         await _registerFcmToken();
         await _userSyncService.setCurrentUserPresence(true);
       }
@@ -423,10 +434,7 @@ class PerfilViewModel extends ChangeNotifier {
       final t = token ?? await notificationService.getToken();
       if (t == null || t.isEmpty) return;
 
-      await supabase
-          .from('usuarios_deportistas')
-          .update({'fcm_token': t})
-          .eq('auth_id', user.id);
+      await supabase.rpc('registrar_token_fcm', params: {'p_token': t});
     } on PostgrestException catch (e) {
       developer.log('VM FCM PostgrestException: ${e.message}', error: e);
     } catch (e, st) {
@@ -437,7 +445,7 @@ class PerfilViewModel extends ChangeNotifier {
   String _mapAuthError(String message) {
     final m = message.toLowerCase();
     if (m.contains('invalid login credentials')) {
-      return 'Correo o contraseña incorrectos';
+      return 'El correo no está registrado o la contraseña no coincide.';
     }
     if (m.contains('email not confirmed')) return 'Debes confirmar tu correo';
     return message;

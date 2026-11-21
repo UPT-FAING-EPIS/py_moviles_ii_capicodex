@@ -125,6 +125,17 @@ class BotConversationViewModel extends ChangeNotifier {
         content: reply ?? 'No se pudo obtener respuesta',
         role: 'assistant',
       );
+      // La respuesta queda registrada y genera el push mediante el trigger
+      // de notificaciones, incluso si el usuario salió del chat.
+      await supabase.rpc(
+        'crear_notificacion',
+        params: {
+          'p_destinatario': _userId,
+          'p_titulo': 'Asistente GameOn',
+          'p_mensaje': reply ?? 'Tienes una nueva respuesta del asistente.',
+          'p_tipo': 'asistente',
+        },
+      );
     } catch (e) {
       _error = 'Error al enviar mensaje: $e';
       _isTyping = false;

@@ -296,6 +296,10 @@ class ConversationViewModel extends ChangeNotifier {
         content: text.trim(),
         type: MessageType.text,
       );
+      await _notificarMensajeRecibido(
+        titulo: 'Nuevo mensaje de ${nombreCompleto.isEmpty ? 'un usuario' : nombreCompleto}',
+        mensaje: text.trim(),
+      );
 
       _sendingMessage = false;
       notifyListeners();
@@ -347,6 +351,10 @@ class ConversationViewModel extends ChangeNotifier {
         imageUrl: imageUrl,
         lastMessageContent: '🖼️ Imagen',
       );
+      await _notificarMensajeRecibido(
+        titulo: 'Nueva imagen de ${nombreCompleto.isEmpty ? 'un usuario' : nombreCompleto}',
+        mensaje: 'Te envió una imagen en el chat.',
+      );
 
       _sendingMessage = false;
       notifyListeners();
@@ -360,6 +368,35 @@ class ConversationViewModel extends ChangeNotifier {
       _sendingMessage = false;
       notifyListeners();
       rethrow;
+    }
+  }
+
+  Future<void> _notificarMensajeRecibido({
+    required String titulo,
+    required String mensaje,
+  }) async {
+    final destinatario = _conversation?.getOtherUser(currentUserId)?.id;
+    if (destinatario == null ||
+        destinatario.isEmpty ||
+        destinatario == currentUserId ||
+        destinatario == 'bot_assistant') {
+      return;
+    }
+    try {
+      await supabase.rpc(
+        'crear_notificacion',
+        params: {
+          'p_destinatario': destinatario,
+          'p_titulo': titulo,
+          'p_mensaje': mensaje,
+          'p_tipo': 'chat',
+        },
+      );
+    } catch (e) {
+      developer.log(
+        'No se pudo crear la notificación de chat: $e',
+        name: 'ConversationViewModel',
+      );
     }
   }
 

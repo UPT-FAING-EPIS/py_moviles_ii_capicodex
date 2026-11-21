@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'dart:developer' as developer;
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:gameon/features/reservas/models/horario_area.dart';
 import 'package:gameon/features/reservas/models/reserva.dart';
 
@@ -270,29 +269,7 @@ class ReservaCalendarioViewModel {
         '[ReservasVM] Reserva creada id=$idGenerado estado=$estado',
       );
 
-      // Insertar notificación en Firestore solo si está Confirmada
-      if (estado.toLowerCase() == 'confirmada' && idGenerado != null) {
-        try {
-          await FirebaseFirestore.instance.collection('notificaciones').add({
-            'usuario_id': userIdInt,
-            'titulo': 'Reserva confirmada',
-            'mensaje': 'Tu reserva #$idGenerado ha sido confirmada',
-            'tipo': 'reserva',
-            'referencia_id': idGenerado,
-            'fecha': FieldValue.serverTimestamp(),
-            'leido': false,
-          });
-          developer.log(
-            '[ReservasVM] Notificación creada en Firestore para usuario $userIdInt, reservaId=$idGenerado',
-          );
-        } catch (e, st) {
-          developer.log(
-            '[ReservasVM][WARN] Error insertando notificación en Firestore: $e',
-            error: e,
-            stackTrace: st,
-          );
-        }
-      }
+      // El trigger de base de datos crea los avisos para deportista y gestor.
 
       return ReservaInsertResult.success(id: idGenerado);
     } on PostgrestException catch (e, st) {

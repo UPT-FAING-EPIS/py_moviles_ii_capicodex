@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:provider/provider.dart';
+import '../../../core/theme/app_theme.dart';
+import '../../../core/theme/theme_controller.dart';
 import '../viewmodels/notificaciones_viewmodel.dart';
 import '../models/notificacion.dart';
 import '../../reservas/views/reservas_list/reserva_detail_view.dart';
 
 class NotificacionesView extends StatefulWidget {
-  final int usuarioId;
-  const NotificacionesView({super.key, required this.usuarioId});
+  const NotificacionesView({super.key});
 
   @override
   State<NotificacionesView> createState() => _NotificacionesViewState();
@@ -18,7 +20,7 @@ class _NotificacionesViewState extends State<NotificacionesView> {
   @override
   void initState() {
     super.initState();
-    vm = NotificacionesViewModel(usuarioId: widget.usuarioId);
+    vm = NotificacionesViewModel();
     vm.addListener(_onVmChange);
     vm.start();
   }
@@ -55,6 +57,11 @@ class _NotificacionesViewState extends State<NotificacionesView> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
+    final backgroundImage = AppTheme.headerBackgroundFor(
+      context.watch<ThemeController>().selection,
+    );
     final overlay = SystemUiOverlayStyle(
       statusBarColor: Colors.transparent,
       statusBarIconBrightness: Brightness.light,
@@ -64,17 +71,31 @@ class _NotificacionesViewState extends State<NotificacionesView> {
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: overlay,
       child: Scaffold(
-        backgroundColor: Colors.grey[50],
+        backgroundColor: theme.scaffoldBackgroundColor,
         body: Column(
           children: [
-            // Header moderno con gradiente verde
+            // Header coherente con el tema visual elegido en Perfil.
             Container(
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
-                  colors: [Colors.green.shade600, Colors.green.shade800],
+                  colors: [
+                    colors.primary.withValues(
+                      alpha: backgroundImage == null ? 1 : .78,
+                    ),
+                    colors.primaryContainer.withValues(
+                      alpha: backgroundImage == null ? 1 : .84,
+                    ),
+                  ],
                 ),
+                image: backgroundImage == null
+                    ? null
+                    : DecorationImage(
+                        image: AssetImage(backgroundImage),
+                        fit: BoxFit.cover,
+                        opacity: .42,
+                      ),
                 borderRadius: const BorderRadius.only(
                   bottomLeft: Radius.circular(30),
                   bottomRight: Radius.circular(30),
@@ -249,7 +270,7 @@ class _NotificacionesViewState extends State<NotificacionesView> {
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: leida ? Colors.grey[200]! : Colors.green[200]!,
+        color: leida ? Colors.grey[200]! : Colors.green[200]!,
           width: leida ? 1 : 2,
         ),
         boxShadow: [

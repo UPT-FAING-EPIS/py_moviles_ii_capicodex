@@ -1,5 +1,6 @@
 import {onDocumentCreated} from "firebase-functions/v2/firestore";
 import {onSchedule} from "firebase-functions/v2/scheduler";
+import {defineSecret} from "firebase-functions/params";
 import {initializeApp} from "firebase-admin/app";
 import {getMessaging} from "firebase-admin/messaging";
 import {getFirestore, Timestamp} from "firebase-admin/firestore";
@@ -8,9 +9,42 @@ import {createClient} from "@supabase/supabase-js";
 // 🔹 Inicializar Firebase Admin
 initializeApp();
 
+// Estas credenciales se configuran como secretos de Firebase, nunca en el
+// repositorio ni en el APK. La clave debe ser la service_role de Supabase para
+// que las funciones puedan leer y limpiar tokens sin depender de RLS.
+const supabaseUrl = defineSecret("SUPABASE_URL");
+const supabaseServiceRoleKey = defineSecret("SUPABASE_SERVICE_ROLE_KEY");
+
+/**
+ * Creates the privileged Supabase client used only by server-side functions.
+ * @return {object} The privileged Supabase client.
+ */
+function getSupabaseClient() {
+  const url = supabaseUrl.value();
+  const key = supabaseServiceRoleKey.value();
+  if (!url || !key) {
+    throw new Error("Faltan los secretos de Supabase en Cloud Functions.");
+  }
+  return createClient(url, key);
+}
+
+/**
+ * Identifies FCM errors for tokens that must no longer be stored.
+ * @param {unknown} error Error returned by FCM.
+ * @return {boolean} Whether the token is no longer valid.
+ */
+function isInvalidFcmToken(error: unknown): boolean {
+  const code = (error as {code?: string})?.code;
+  return code === "messaging/registration-token-not-registered" ||
+    code === "messaging/invalid-registration-token";
+}
+
 // 🔔 Cloud Function que se activa al crear un documento en "notificaciones"
 export const enviarNotificacion = onDocumentCreated(
-  "notificaciones/{docId}",
+  {
+    document: "notificaciones/{docId}",
+    secrets: [supabaseUrl, supabaseServiceRoleKey],
+  },
   async (event) => {
     const notificacion = event.data?.data();
 
@@ -32,13 +66,7 @@ export const enviarNotificacion = onDocumentCreated(
     }
 
     // 🔹 Inicializar cliente de Supabase en tiempo de ejecución
-    const supabaseUrl: string = process.env.SUPABASE_URL || "";
-    const supabaseKey: string = process.env.SUPABASE_KEY || "";
-    if (!supabaseUrl || !supabaseKey) {
-      console.error("❌ SUPABASE_URL o SUPABASE_KEY no están definidos.");
-      return;
-    }
-    const supabase = createClient(supabaseUrl, supabaseKey);
+    const supabase = getSupabaseClient();
 
     // 🔍 Obtener el token FCM desde Supabase
     const {data: usuario, error} = await supabase
@@ -75,13 +103,22 @@ export const enviarNotificacion = onDocumentCreated(
       console.log("✅ Notificación enviada correctamente:", response);
     } catch (err) {
       console.error("❌ Error al enviar la notificación:", err);
+      if (isInvalidFcmToken(err)) {
+        await supabase
+          .from("usuarios_deportistas")
+          .update({fcm_token: null})
+          .eq("id", usuarioId);
+      }
     }
   }
 );
 
 // 🔔 Cloud Function que envía notificación cuando un cliente recibe un mensaje
 export const enviarNotificacionMensaje = onDocumentCreated(
-  "conversations/{conversationId}/messages/{messageId}",
+  {
+    document: "conversations/{conversationId}/messages/{messageId}",
+    secrets: [supabaseUrl, supabaseServiceRoleKey],
+  },
   async (event) => {
     const mensaje = event.data?.data();
     const conversationId = event.params.conversationId;
@@ -96,6 +133,10 @@ export const enviarNotificacionMensaje = onDocumentCreated(
     const senderId = mensaje.sender_id as string;
     const senderNombre = mensaje.sender_nombre as string;
     const content = mensaje.content as string;
+
+    // La respuesta del bot pertenece al mismo usuario que inició la charla;
+    // no debe provocar un push hacia su propio dispositivo.
+    if (senderId === "bot_assistant") return;
 
     // 🔹 Obtener la conversación para identificar al destinatario
     const db = getFirestore();
@@ -123,13 +164,7 @@ export const enviarNotificacionMensaje = onDocumentCreated(
     console.log(`🔍 Buscando usuario con auth_id: ${recipientId}`);
 
     // 🔹 Inicializar cliente de Supabase
-    const supabaseUrl: string = process.env.SUPABASE_URL || "";
-    const supabaseKey: string = process.env.SUPABASE_KEY || "";
-    if (supabaseUrl == "" || supabaseKey == "") {
-      console.error("❌ SUPABASE_URL o SUPABASE_KEY no están definidos.");
-      return;
-    }
-    const supabase = createClient(supabaseUrl, supabaseKey);
+    const supabase = getSupabaseClient();
 
     // 🔍 Obtener el token FCM del destinatario desde Supabase
     const {data: usuario, error} = await supabase
@@ -168,6 +203,12 @@ export const enviarNotificacionMensaje = onDocumentCreated(
       console.log("✅ Notificación de mensaje enviada correctamente:", response);
     } catch (err) {
       console.error("❌ Error al enviar la notificación:", err);
+      if (isInvalidFcmToken(err)) {
+        await supabase
+          .from("usuarios_deportistas")
+          .update({fcm_token: null})
+          .eq("auth_id", recipientId);
+      }
     }
   }
 );

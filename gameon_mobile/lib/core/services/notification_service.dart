@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
@@ -20,6 +22,8 @@ Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
 /// - Integración con el servicio de navegación
 class NotificationService {
   final NotificationNavigationService _navigationService;
+  final FlutterLocalNotificationsPlugin _localNotifications =
+      FlutterLocalNotificationsPlugin();
 
   NotificationService(this._navigationService);
 
@@ -31,11 +35,38 @@ class NotificationService {
   ///
   /// Debe llamarse en main() antes de runApp()
   Future<void> initialize() async {
-    await requestPermission();
+    await _initializeLocalNotifications();
     await updateNotificationPreferences();
+    await requestPermission();
     await _configureForegroundNotifications();
     _registerBackgroundHandler();
     _setupListeners();
+  }
+
+  /// Configura los avisos locales que se usan cuando llega un push con la app
+  /// abierta. FCM no muestra automáticamente el banner en foreground.
+  Future<void> _initializeLocalNotifications() async {
+    const android = AndroidInitializationSettings('@mipmap/ic_launcher');
+    const ios = DarwinInitializationSettings();
+    await _localNotifications.initialize(
+      const InitializationSettings(android: android, iOS: ios),
+      onDidReceiveNotificationResponse: (response) {
+        final payload = response.payload;
+        if (payload == null || payload.isEmpty) return;
+        try {
+          final data = jsonDecode(payload);
+          if (data is Map<String, dynamic>) {
+            _navigationService.handleNotificationTap(data);
+          } else if (data is Map) {
+            _navigationService.handleNotificationTap(
+              Map<String, dynamic>.from(data),
+            );
+          }
+        } catch (e) {
+          debugPrint('[NotificationService] Payload inválido: $e');
+        }
+      },
+    );
   }
 
   // ==========================================================================
@@ -44,6 +75,14 @@ class NotificationService {
 
   /// Solicita permisos de notificaciones al usuario
   Future<AuthorizationStatus> requestPermission() async {
+    // En Android 13+ el permiso es de tiempo de ejecución. Se solicita
+    // explícitamente también desde el plugin local para que el diálogo del
+    // sistema aparezca de forma consistente antes de registrar el token FCM.
+    await _localNotifications
+        .resolvePlatformSpecificImplementation<
+          AndroidFlutterLocalNotificationsPlugin
+        >()
+        ?.requestNotificationsPermission();
     final settings = await FirebaseMessaging.instance.requestPermission();
     debugPrint(
       '[NotificationService] Estado del permiso: ${settings.authorizationStatus}',
@@ -76,11 +115,8 @@ class NotificationService {
       final soundEnabled = prefs.getBool('notifications_sound') ?? true;
       final vibrationEnabled = prefs.getBool('notifications_vibration') ?? true;
 
-      final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
-          FlutterLocalNotificationsPlugin();
-
       // 1. Eliminar el canal existente
-      await flutterLocalNotificationsPlugin
+      await _localNotifications
           .resolvePlatformSpecificImplementation<
             AndroidFlutterLocalNotificationsPlugin
           >()
@@ -106,7 +142,7 @@ class NotificationService {
         showBadge: true,
       );
 
-      await flutterLocalNotificationsPlugin
+      await _localNotifications
           .resolvePlatformSpecificImplementation<
             AndroidFlutterLocalNotificationsPlugin
           >()
@@ -156,19 +192,38 @@ class NotificationService {
 
   /// Listener para mensajes cuando la app está en PRIMER PLANO
   ///
-  /// No se muestra notificación visual, solo se registra en logs.
-  /// Aquí podrías actualizar la UI internamente si es necesario.
   void _setupForegroundListener() {
-    FirebaseMessaging.onMessage.listen((RemoteMessage message) {
+    FirebaseMessaging.onMessage.listen((RemoteMessage message) async {
       debugPrint(
         '📨 Mensaje recibido en primer plano: ${message.notification?.title}',
       );
-      // Aquí podrías:
-      // - Actualizar un badge de mensajes no leídos
-      // - Refrescar la lista de conversaciones
-      // - Mostrar un banner discreto dentro de la app
-      // - Actualizar un Stream o Provider
+      await _showForegroundNotification(message);
     });
+  }
+
+  Future<void> _showForegroundNotification(RemoteMessage message) async {
+    if (!await areNotificationsEnabled()) return;
+    final notification = message.notification;
+    final title = notification?.title ?? 'Nueva notificación';
+    final body = notification?.body ?? '';
+    const details = NotificationDetails(
+      android: AndroidNotificationDetails(
+        'gameon_main',
+        'Notificaciones de GameOn',
+        channelDescription: 'Notificaciones de mensajes y reservas',
+        importance: Importance.high,
+        priority: Priority.high,
+        icon: '@mipmap/ic_launcher',
+      ),
+      iOS: DarwinNotificationDetails(presentAlert: true, presentSound: true),
+    );
+    await _localNotifications.show(
+      DateTime.now().millisecondsSinceEpoch.remainder(1 << 31),
+      title,
+      body,
+      details,
+      payload: jsonEncode(message.data),
+    );
   }
 
   /// Listener para cuando el usuario toca una notificación (app en BACKGROUND)

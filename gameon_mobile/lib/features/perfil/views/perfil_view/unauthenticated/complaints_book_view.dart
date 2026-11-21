@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:gameon/features/perfil/services/email_service.dart';
+import 'package:gameon/core/theme/app_theme.dart';
+import 'package:gameon/core/theme/theme_controller.dart';
+import 'package:gameon/features/perfil/viewmodels/perfil_viewmodel.dart';
+import 'package:provider/provider.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class ComplaintsBookView extends StatefulWidget {
   const ComplaintsBookView({super.key});
@@ -21,8 +25,26 @@ class _ComplaintsBookViewState extends State<ComplaintsBookView> {
   final _addressController = TextEditingController();
   final _detailController = TextEditingController();
 
-  final _emailService = EmailService();
   bool _loading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _loadSavedData());
+  }
+
+  void _loadSavedData() {
+    if (!mounted) return;
+    final profile = context.read<PerfilViewModel>().profile;
+    final sessionEmail = Supabase.instance.client.auth.currentUser?.email ?? '';
+    setState(() {
+      if (profile != null) {
+        _nameController.text = profile.nombreCompleto;
+        _phoneController.text = profile.telefono;
+      }
+      _emailController.text = sessionEmail;
+    });
+  }
 
   @override
   void dispose() {
@@ -39,15 +61,24 @@ class _ComplaintsBookViewState extends State<ComplaintsBookView> {
     if (_formKey.currentState!.validate()) {
       setState(() => _loading = true);
 
-      final success = await _emailService.sendComplaint(
-        name: _nameController.text,
-        docType: 'DNI', // Simplificación por ahora
-        docNumber: _docNumberController.text,
-        email: _emailController.text,
-        phone: _phoneController.text,
-        type: _type,
-        detail: _detailController.text,
-      );
+      var success = false;
+      try {
+        await Supabase.instance.client.rpc(
+          'registrar_reclamo',
+          params: {
+            'p_tipo': _type,
+            'p_nombre': _nameController.text,
+            'p_documento': _docNumberController.text,
+            'p_email': _emailController.text,
+            'p_telefono': _phoneController.text,
+            'p_direccion': _addressController.text,
+            'p_detalle': _detailController.text,
+          },
+        );
+        success = true;
+      } catch (_) {
+        success = false;
+      }
 
       if (!mounted) return;
       setState(() => _loading = false);
@@ -84,6 +115,11 @@ class _ComplaintsBookViewState extends State<ComplaintsBookView> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
+    final background = AppTheme.headerBackgroundFor(
+      context.watch<ThemeController>().selection,
+    );
     final overlay = SystemUiOverlayStyle(
       statusBarColor: Colors.transparent,
       statusBarIconBrightness: Brightness.light,
@@ -93,7 +129,7 @@ class _ComplaintsBookViewState extends State<ComplaintsBookView> {
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: overlay,
       child: Scaffold(
-        backgroundColor: Colors.grey[50],
+        backgroundColor: theme.scaffoldBackgroundColor,
         body: Column(
           children: [
             // Header
@@ -102,8 +138,15 @@ class _ComplaintsBookViewState extends State<ComplaintsBookView> {
                 gradient: LinearGradient(
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
-                  colors: [Colors.green.shade600, Colors.green.shade800],
+                  colors: [colors.primary, colors.primaryContainer],
                 ),
+                image: background == null
+                    ? null
+                    : DecorationImage(
+                        image: AssetImage(background),
+                        fit: BoxFit.cover,
+                        opacity: .42,
+                      ),
                 borderRadius: const BorderRadius.only(
                   bottomLeft: Radius.circular(30),
                   bottomRight: Radius.circular(30),
@@ -119,7 +162,7 @@ class _ComplaintsBookViewState extends State<ComplaintsBookView> {
                         children: [
                           Container(
                             decoration: BoxDecoration(
-                              color: Colors.white.withOpacity(0.2),
+                              color: Colors.white.withValues(alpha: .2),
                               borderRadius: BorderRadius.circular(12),
                             ),
                             child: IconButton(
@@ -169,7 +212,10 @@ class _ComplaintsBookViewState extends State<ComplaintsBookView> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      _buildSectionTitle('1. Identificación del Consumidor'),
+                      _buildSectionTitle(
+                        context,
+                        '1. Identificación del Consumidor',
+                      ),
                       const SizedBox(height: 16),
                       _buildTextField(
                         controller: _nameController,
@@ -227,11 +273,14 @@ class _ComplaintsBookViewState extends State<ComplaintsBookView> {
                         icon: Icons.location_on_outlined,
                       ),
                       const SizedBox(height: 24),
-                      _buildSectionTitle('2. Detalle de la Reclamación'),
+                      _buildSectionTitle(
+                        context,
+                        '2. Detalle de la Reclamación',
+                      ),
                       const SizedBox(height: 16),
                       Container(
                         decoration: BoxDecoration(
-                          color: Colors.white,
+                          color: theme.cardColor,
                           borderRadius: BorderRadius.circular(12),
                           border: Border.all(color: Colors.grey.shade300),
                         ),
@@ -245,7 +294,7 @@ class _ComplaintsBookViewState extends State<ComplaintsBookView> {
                               ),
                               value: 'Reclamo',
                               groupValue: _type,
-                              activeColor: Colors.green,
+                              activeColor: colors.primary,
                               onChanged: (v) => setState(() => _type = v!),
                             ),
                             Divider(height: 1, color: Colors.grey.shade200),
@@ -257,7 +306,7 @@ class _ComplaintsBookViewState extends State<ComplaintsBookView> {
                               ),
                               value: 'Queja',
                               groupValue: _type,
-                              activeColor: Colors.green,
+                              activeColor: colors.primary,
                               onChanged: (v) => setState(() => _type = v!),
                             ),
                           ],
@@ -279,8 +328,8 @@ class _ComplaintsBookViewState extends State<ComplaintsBookView> {
                         child: ElevatedButton(
                           onPressed: _loading ? null : _submitForm,
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.green.shade700,
-                            foregroundColor: Colors.white,
+                            backgroundColor: colors.primary,
+                            foregroundColor: colors.onPrimary,
                             padding: const EdgeInsets.symmetric(vertical: 16),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12),
@@ -317,13 +366,13 @@ class _ComplaintsBookViewState extends State<ComplaintsBookView> {
     );
   }
 
-  Widget _buildSectionTitle(String title) {
+  Widget _buildSectionTitle(BuildContext context, String title) {
     return Text(
       title,
-      style: const TextStyle(
+      style: TextStyle(
         fontSize: 16,
         fontWeight: FontWeight.bold,
-        color: Colors.black87,
+        color: Theme.of(context).colorScheme.onSurface,
       ),
     );
   }
@@ -343,21 +392,24 @@ class _ComplaintsBookViewState extends State<ComplaintsBookView> {
       validator: validator,
       decoration: InputDecoration(
         labelText: label,
-        prefixIcon: maxLines == 1 ? Icon(icon, color: Colors.grey) : null,
+        prefixIcon: maxLines == 1 ? Icon(icon) : null,
         alignLabelWithHint: maxLines > 1,
         filled: true,
-        fillColor: Colors.white,
+        fillColor: Theme.of(context).colorScheme.surface,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: Colors.grey.shade300),
+          borderSide: BorderSide(color: Theme.of(context).dividerColor),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: Colors.grey.shade300),
+          borderSide: BorderSide(color: Theme.of(context).dividerColor),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: Colors.green.shade600, width: 2),
+          borderSide: BorderSide(
+            color: Theme.of(context).colorScheme.primary,
+            width: 2,
+          ),
         ),
       ),
     );
@@ -378,18 +430,21 @@ class _ComplaintsBookViewState extends State<ComplaintsBookView> {
       decoration: InputDecoration(
         labelText: label,
         filled: true,
-        fillColor: Colors.white,
+        fillColor: Theme.of(context).colorScheme.surface,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: Colors.grey.shade300),
+          borderSide: BorderSide(color: Theme.of(context).dividerColor),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: Colors.grey.shade300),
+          borderSide: BorderSide(color: Theme.of(context).dividerColor),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: Colors.green.shade600, width: 2),
+          borderSide: BorderSide(
+            color: Theme.of(context).colorScheme.primary,
+            width: 2,
+          ),
         ),
       ),
     );

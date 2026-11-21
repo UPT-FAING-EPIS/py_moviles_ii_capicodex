@@ -51,11 +51,11 @@ class DefaultFirebaseOptions {
   );
 
   static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'AIzaSyAvyRkVmA_0xYPY1IGs78Ffbeic14yk7zk',
-    appId: '1:640447509717:android:d30da91d1689aa62599e5c',
-    messagingSenderId: '640447509717',
-    projectId: 'gameon-mobile',
-    storageBucket: 'gameon-mobile.firebasestorage.app',
+    apiKey: 'AIzaSyDrHf8G6Oxd1YRcGP0qLnS5jq0-FrBsnpM',
+    appId: '1:565008976449:android:aae6e69bad49ab803d14c0',
+    messagingSenderId: '565008976449',
+    projectId: 'gameonnotificaciones',
+    storageBucket: 'gameonnotificaciones.firebasestorage.app',
   );
 
   static const FirebaseOptions ios = FirebaseOptions(

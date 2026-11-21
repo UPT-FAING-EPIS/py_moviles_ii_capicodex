@@ -1,4 +1,5 @@
 import 'core/config/backend_config.dart';
+import 'core/config/legacy_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -46,6 +47,7 @@ void main() async {
   // INICIALIZACIÓN DE FIREBASE
   // --------------------------------------------------------------------------
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  await initializeLegacyFirestore();
 
   // --------------------------------------------------------------------------
   // INICIALIZACIÓN DE SERVICIOS DE NOTIFICACIONES

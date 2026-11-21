@@ -1,10 +1,11 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../../core/config/legacy_firestore.dart';
 import '../models/chat_user.dart';
 
 /// Servicio para sincronizar datos de usuarios entre Supabase y Firebase
 class UserSyncService {
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final FirebaseFirestore _firestore = legacyFirestore;
   final SupabaseClient _supabase = Supabase.instance.client;
 
   static const String _usersCollection = 'users';

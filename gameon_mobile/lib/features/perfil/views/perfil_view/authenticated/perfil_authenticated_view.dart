@@ -5,13 +5,14 @@ import 'package:gameon/features/perfil/views/perfil_view/authenticated/edit_perf
 import 'package:gameon/features/perfil/viewmodels/edit_perfil_viewmodel.dart';
 import 'package:gameon/features/perfil/viewmodels/perfil_viewmodel.dart';
 import 'package:gameon/features/perfil/views/perfil_view/authenticated/help_support_view.dart';
+import 'package:gameon/features/perfil/views/perfil_view/unauthenticated/complaints_book_view.dart';
 import 'package:gameon/features/perfil/views/perfil_view/authenticated/notification_settings_view.dart';
 import 'package:provider/provider.dart';
 import 'package:gameon/core/theme/app_theme.dart';
 import 'package:gameon/core/theme/theme_controller.dart';
 import 'package:gameon/core/theme/visual_theme_picker.dart';
 import 'package:gameon/core/widgets/role_switcher.dart';
-import 'package:gameon/features/gestor/views/registro_gestor_view.dart';
+import 'package:gameon/features/gestor/views/solicitud_centro_view.dart';
 import 'package:gameon/features/notificaciones/views/avisos_reserva_view.dart';
 
 String _formatDate(DateTime? dt) {
@@ -647,6 +648,18 @@ class PerfilAuthenticatedView extends StatelessWidget {
           Divider(height: 1, color: theme.dividerColor),
           _buildOptionItem(
             context: context,
+            icon: Icons.receipt_long_outlined,
+            title: 'Libro de reclamaciones',
+            subtitle: 'Registra una queja o reclamo formal',
+            color: Colors.redAccent,
+            onTap: () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const ComplaintsBookView()),
+            ),
+          ),
+          Divider(height: 1, color: theme.dividerColor),
+          _buildOptionItem(
+            context: context,
             icon: Icons.business_outlined,
             title: context.watch<PerfilViewModel>().managerStatus != null
                 ? 'Ver perfil gestor'
@@ -662,7 +675,9 @@ class PerfilAuthenticatedView extends StatelessWidget {
               } else {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (_) => const RegistroGestorView()),
+                  MaterialPageRoute(
+                    builder: (_) => const SolicitudCentroView(),
+                  ),
                 );
               }
             },

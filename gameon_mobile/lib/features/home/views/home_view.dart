@@ -204,17 +204,7 @@ class _HomeTabScaffoldState extends State<HomeTabScaffold> {
       return;
     }
 
-    final idRaw = perfilVm.profile!.id;
-    final idUsuario = int.tryParse(idRaw);
-
-    if (idUsuario != null) {
-      _notificacionesVm = NotificacionesViewModel(usuarioId: idUsuario);
-    } else {
-      // Soporte para perfiles con id string en Firestore
-      _notificacionesVm = NotificacionesViewModel.forStringUser(
-        usuarioIdString: idRaw,
-      );
-    }
+    _notificacionesVm = NotificacionesViewModel();
 
     _notificacionesVm!.addListener(() {
       if (mounted) setState(() {});
@@ -389,9 +379,8 @@ class _HomeTabScaffoldState extends State<HomeTabScaffold> {
                                 Navigator.push(
                                   context,
                                   MaterialPageRoute(
-                                    builder: (context) => NotificacionesView(
-                                      usuarioId: idUsuario,
-                                    ),
+                                    builder: (context) =>
+                                        const NotificacionesView(),
                                   ),
                                 );
                               },

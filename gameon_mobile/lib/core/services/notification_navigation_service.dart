@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../config/legacy_firestore.dart';
 import '../../features/chat/views/conversation_view.dart';
 import '../../features/reservas/views/reservas_list/reserva_detail_view.dart';
 
@@ -26,10 +27,10 @@ class NotificationNavigationService {
   void handleNotificationTap(Map<String, dynamic> data) {
     final tipo = data['tipo'] ?? '';
 
-    if (tipo == 'mensaje') {
+    if (tipo == 'mensaje' && data['conversation_id'] != null) {
       navigateToConversation(data['conversation_id']);
-    } else {
-      // Notificaciones de reserva
+    } else if ((tipo == 'reserva' || tipo == 'pago') &&
+        (data['referencia_id'] ?? data['reserva_id']) != null) {
       navigateToReserva(data['referencia_id'] ?? data['reserva_id']);
     }
   }
@@ -73,7 +74,7 @@ class NotificationNavigationService {
 
     try {
       // Obtener datos de la conversación desde Firestore
-      final conversationDoc = await FirebaseFirestore.instance
+        final conversationDoc = await legacyFirestore
           .collection('conversations')
           .doc(conversationId)
           .get();

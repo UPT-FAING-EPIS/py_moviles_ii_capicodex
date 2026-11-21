@@ -6,11 +6,14 @@ import 'package:gameon/core/theme/visual_theme_picker.dart';
 import 'package:gameon/core/widgets/role_switcher.dart';
 import 'package:gameon/features/perfil/viewmodels/perfil_viewmodel.dart';
 import '../services/gestor_service.dart';
-import '../../notificaciones/views/avisos_reserva_view.dart';
+import '../../notificaciones/views/notificaciones_view.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'centro_ubicacion_picker.dart';
 import 'cancha_form_view.dart';
 import 'configurar_yape_view.dart';
+import 'solicitud_centro_view.dart';
+import '../../perfil/views/perfil_view/authenticated/help_support_view.dart';
+import '../../perfil/views/perfil_view/unauthenticated/complaints_book_view.dart';
 
 class GestorView extends StatefulWidget {
   final int managerId;
@@ -401,7 +404,13 @@ class _GestorViewState extends State<GestorView> {
         ),
         const SizedBox(height: 20),
         FilledButton.icon(
-          onPressed: () => _centroDialog(),
+          onPressed: () async {
+            final sent = await Navigator.push<bool>(
+              context,
+              MaterialPageRoute(builder: (_) => const SolicitudCentroView()),
+            );
+            if (sent == true) refresh();
+          },
           icon: const Icon(Icons.add),
           label: const Text('Nuevo centro'),
         ),
@@ -969,7 +978,31 @@ class _GestorViewState extends State<GestorView> {
           subtitle: const Text('Pagos Yape pendientes y decisiones'),
           onTap: () => Navigator.push(
             context,
-            MaterialPageRoute(builder: (_) => const AvisosReservaView()),
+            MaterialPageRoute(builder: (_) => const NotificacionesView()),
+          ),
+        ),
+      ),
+      Card(
+        child: ListTile(
+          leading: const Icon(Icons.receipt_long_outlined),
+          title: const Text('Libro de reclamaciones'),
+          subtitle: const Text('Registra una queja o reclamo formal'),
+          trailing: const Icon(Icons.chevron_right),
+          onTap: () => Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const ComplaintsBookView()),
+          ),
+        ),
+      ),
+      Card(
+        child: ListTile(
+          leading: const Icon(Icons.help_outline),
+          title: const Text('Ayuda y soporte'),
+          subtitle: const Text('Preguntas frecuentes y contacto'),
+          trailing: const Icon(Icons.chevron_right),
+          onTap: () => Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const HelpSupportView()),
           ),
         ),
       ),

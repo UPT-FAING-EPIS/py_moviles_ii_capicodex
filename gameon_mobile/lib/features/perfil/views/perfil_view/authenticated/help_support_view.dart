@@ -1,83 +1,122 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:gameon/core/theme/app_theme.dart';
+import 'package:gameon/core/theme/theme_controller.dart';
+import 'package:provider/provider.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-class HelpSupportView extends StatelessWidget {
+class HelpSupportView extends StatefulWidget {
   const HelpSupportView({super.key});
 
-  final List<Map<String, String>> _faqs = const [
+  @override
+  State<HelpSupportView> createState() => _HelpSupportViewState();
+}
+
+class _HelpSupportViewState extends State<HelpSupportView> {
+  String _supportEmail = '';
+  bool _loadingEmail = true;
+
+  static const _faqs = [
     {
       'question': '¿Cómo creo un partido?',
       'answer':
-          'Para crear un partido, ve a la pestaña de "Partidos" y pulsa el botón flotante "+". Completa los detalles como deporte, fecha, hora y ubicación, y ¡listo!',
+          'Ve a Partidos, pulsa + y completa deporte, fecha, hora y ubicación.',
     },
     {
       'question': '¿Cómo edito mi perfil?',
-      'answer':
-          'Ve a la pestaña "Perfil", selecciona "Editar perfil" y podrás modificar tu foto, nombre, deportes favoritos y otros datos personales.',
+      'answer': 'En Perfil, selecciona Editar perfil para modificar tus datos.',
     },
     {
       'question': '¿Es gratis usar GameOn?',
       'answer':
-          'Sí, GameOn es completamente gratuito para buscar y unirse a partidos públicos. Algunas funciones avanzadas podrían requerir una suscripción en el futuro.',
+          'Buscar y unirse a partidos públicos es gratis. Las reservas se cobran según la tarifa del complejo.',
     },
     {
       'question': '¿Cómo reportar a un usuario?',
       'answer':
-          'Si un usuario tiene un comportamiento inapropiado, puedes reportarlo desde su perfil o desde el chat, pulsando los tres puntos en la esquina superior derecha.',
+          'Usa el Libro de reclamaciones de tu perfil para dejar un registro formal.',
     },
     {
       'question': '¿Puedo cancelar mi asistencia a un partido?',
       'answer':
-          'Sí, puedes salir de un partido en cualquier momento desde la vista de detalles del evento, siempre y cuando no haya comenzado.',
+          'Sí, desde el detalle del partido, siempre que este aún no haya iniciado.',
     },
   ];
 
-  Future<void> _sendEmail() async {
-    final Uri emailLaunchUri = Uri(
-      scheme: 'mailto',
-      path: 'nkmelndz@gmail.com',
-      query: _encodeQueryParameters(<String, String>{
-        'subject': 'Soporte GameOn - Consulta',
-      }),
-    );
+  @override
+  void initState() {
+    super.initState();
+    _loadSupportEmail();
+  }
 
-    if (!await launchUrl(emailLaunchUri)) {
-      throw Exception('No se pudo abrir el cliente de correo');
+  Future<void> _loadSupportEmail() async {
+    try {
+      final result = await Supabase.instance.client.rpc(
+        'obtener_correo_soporte',
+      );
+      if (!mounted) return;
+      setState(() {
+        _supportEmail = '$result'.trim();
+        _loadingEmail = false;
+      });
+    } catch (_) {
+      if (mounted) setState(() => _loadingEmail = false);
     }
   }
 
-  String? _encodeQueryParameters(Map<String, String> params) {
-    return params.entries
-        .map(
-          (e) =>
-              '${Uri.encodeComponent(e.key)}=${Uri.encodeComponent(e.value)}',
-        )
-        .join('&');
+  Future<void> _sendEmail() async {
+    if (_supportEmail.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'El administrador aún no configuró un correo de soporte.',
+          ),
+        ),
+      );
+      return;
+    }
+    final uri = Uri(
+      scheme: 'mailto',
+      path: _supportEmail,
+      query: 'subject=${Uri.encodeComponent('Soporte GameOn - Consulta')}',
+    );
+    if (!await launchUrl(uri) && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('No se pudo abrir el cliente de correo.')),
+      );
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    final overlay = SystemUiOverlayStyle(
-      statusBarColor: Colors.transparent,
-      statusBarIconBrightness: Brightness.light,
-      statusBarBrightness: Brightness.dark,
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
+    final headerBackground = AppTheme.headerBackgroundFor(
+      context.watch<ThemeController>().selection,
     );
-
     return AnnotatedRegion<SystemUiOverlayStyle>(
-      value: overlay,
+      value: const SystemUiOverlayStyle(
+        statusBarColor: Colors.transparent,
+        statusBarIconBrightness: Brightness.light,
+        statusBarBrightness: Brightness.dark,
+      ),
       child: Scaffold(
-        backgroundColor: Colors.grey[50],
+        backgroundColor: theme.scaffoldBackgroundColor,
         body: Column(
           children: [
-            // Header con gradiente
             Container(
               decoration: BoxDecoration(
                 gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [Colors.green.shade600, Colors.green.shade800],
+                  colors: [colors.primary, colors.primaryContainer],
                 ),
+                image: headerBackground == null
+                    ? null
+                    : DecorationImage(
+                        image: AssetImage(headerBackground),
+                        fit: BoxFit.cover,
+                        opacity: .42,
+                      ),
                 borderRadius: const BorderRadius.only(
                   bottomLeft: Radius.circular(30),
                   bottomRight: Radius.circular(30),
@@ -87,137 +126,103 @@ class HelpSupportView extends StatelessWidget {
                 bottom: false,
                 child: Padding(
                   padding: const EdgeInsets.fromLTRB(24, 20, 24, 32),
-                  child: Column(
+                  child: Row(
                     children: [
-                      Row(
-                        children: [
-                          Container(
-                            decoration: BoxDecoration(
-                              color: Colors.white.withOpacity(0.2),
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: IconButton(
-                              icon: const Icon(
-                                Icons.arrow_back,
+                      Container(
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: .20),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: IconButton(
+                          icon: const Icon(
+                            Icons.arrow_back,
+                            color: Colors.white,
+                          ),
+                          onPressed: () => Navigator.pop(context),
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      const Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Ayuda y soporte',
+                              style: TextStyle(
                                 color: Colors.white,
+                                fontSize: 24,
+                                fontWeight: FontWeight.bold,
                               ),
-                              onPressed: () => Navigator.pop(context),
                             ),
-                          ),
-                          const SizedBox(width: 16),
-                          const Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  'Ayuda y Soporte',
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 24,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                                Text(
-                                  'Preguntas frecuentes y contacto',
-                                  style: TextStyle(
-                                    color: Colors.white70,
-                                    fontSize: 14,
-                                  ),
-                                ),
-                              ],
+                            Text(
+                              'Preguntas frecuentes y contacto',
+                              style: TextStyle(
+                                color: Colors.white70,
+                                fontSize: 14,
+                              ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
                     ],
                   ),
                 ),
               ),
             ),
-            // Contenido
             Expanded(
               child: ListView(
                 padding: const EdgeInsets.all(20),
                 children: [
-                  const Text(
-                    'Preguntas Frecuentes',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black87,
-                    ),
+                  Text(
+                    'Preguntas frecuentes',
+                    style: theme.textTheme.titleLarge,
                   ),
                   const SizedBox(height: 16),
-                  ..._faqs.map((faq) => _buildFaqItem(faq)),
-                  const SizedBox(height: 32),
-                  // Sección de contacto
-                  Container(
-                    padding: const EdgeInsets.all(24),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(20),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.05),
-                          blurRadius: 10,
-                          offset: const Offset(0, 4),
-                        ),
-                      ],
-                    ),
-                    child: Column(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(16),
-                          decoration: BoxDecoration(
-                            color: Colors.blue.shade50,
-                            shape: BoxShape.circle,
-                          ),
-                          child: Icon(
-                            Icons.mail_outline,
-                            size: 32,
-                            color: Colors.blue.shade700,
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-                        const Text(
-                          '¿Aún tienes dudas?',
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.black87,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          'Escríbenos y te responderemos lo antes posible.',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: Colors.grey.shade600,
-                          ),
-                        ),
-                        const SizedBox(height: 24),
-                        SizedBox(
-                          width: double.infinity,
-                          child: ElevatedButton.icon(
-                            onPressed: _sendEmail,
-                            icon: const Icon(Icons.send),
-                            label: const Text('Contactar por Email'),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.blue.shade700,
-                              foregroundColor: Colors.white,
-                              padding: const EdgeInsets.symmetric(vertical: 16),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              elevation: 0,
+                  ..._faqs.map(_faqItem),
+                  const SizedBox(height: 24),
+                  Card(
+                    child: Padding(
+                      padding: const EdgeInsets.all(24),
+                      child: Column(
+                        children: [
+                          CircleAvatar(
+                            radius: 32,
+                            backgroundColor: theme.colorScheme.primaryContainer,
+                            child: Icon(
+                              Icons.mail_outline,
+                              size: 32,
+                              color: theme.colorScheme.primary,
                             ),
                           ),
-                        ),
-                      ],
+                          const SizedBox(height: 16),
+                          Text(
+                            '¿Aún tienes dudas?',
+                            style: theme.textTheme.titleMedium,
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            _supportEmail.isEmpty && !_loadingEmail
+                                ? 'El correo de soporte será publicado por el administrador.'
+                                : 'Escríbenos y te responderemos lo antes posible.',
+                            textAlign: TextAlign.center,
+                          ),
+                          const SizedBox(height: 20),
+                          SizedBox(
+                            width: double.infinity,
+                            child: FilledButton.icon(
+                              onPressed: _loadingEmail ? null : _sendEmail,
+                              icon: const Icon(Icons.send),
+                              label: Text(
+                                _loadingEmail
+                                    ? 'Cargando contacto...'
+                                    : 'Contactar por email',
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
-                  const SizedBox(height: 20),
                 ],
               ),
             ),
@@ -227,38 +232,15 @@ class HelpSupportView extends StatelessWidget {
     );
   }
 
-  Widget _buildFaqItem(Map<String, String> faq) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey.shade200),
+  Widget _faqItem(Map<String, String> faq) => Card(
+    margin: const EdgeInsets.only(bottom: 12),
+    child: ExpansionTile(
+      title: Text(
+        faq['question']!,
+        style: const TextStyle(fontWeight: FontWeight.w600),
       ),
-      child: Theme(
-        data: ThemeData().copyWith(dividerColor: Colors.transparent),
-        child: ExpansionTile(
-          title: Text(
-            faq['question']!,
-            style: const TextStyle(
-              fontWeight: FontWeight.w600,
-              fontSize: 15,
-              color: Colors.black87,
-            ),
-          ),
-          childrenPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-          children: [
-            Text(
-              faq['answer']!,
-              style: TextStyle(
-                fontSize: 14,
-                color: Colors.grey.shade700,
-                height: 1.5,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
+      childrenPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+      children: [Text(faq['answer']!, style: const TextStyle(height: 1.5))],
+    ),
+  );
 }
