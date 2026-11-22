@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:gameon/core/theme/app_theme.dart';
+import 'package:gameon/core/theme/theme_controller.dart';
+import 'package:provider/provider.dart';
 import '../viewmodels/conversation_viewmodel.dart';
 import '../models/message.dart';
 import 'widgets/message_bubble.dart';
@@ -53,6 +56,14 @@ class _ConversationViewState extends State<ConversationView> {
 
   @override
   Widget build(BuildContext context) {
+    final adminOnly = _viewModel.conversation?.adminOnly == true;
+    final canReply =
+        !adminOnly ||
+        _viewModel.conversation?.adminId == _viewModel.currentUserId;
+    final colors = Theme.of(context).colorScheme;
+    final background = AppTheme.headerBackgroundFor(
+      context.watch<ThemeController>().selection,
+    );
     final overlay = SystemUiOverlayStyle(
       statusBarColor: Colors.transparent,
       statusBarIconBrightness: Brightness.dark,
@@ -62,12 +73,26 @@ class _ConversationViewState extends State<ConversationView> {
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: overlay,
       child: Scaffold(
-        backgroundColor: Colors.grey[50],
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         appBar: AppBar(
-          backgroundColor: Colors.green.shade700,
+          backgroundColor: colors.primary,
           elevation: 0,
           surfaceTintColor: Colors.transparent,
           toolbarHeight: 70,
+          flexibleSpace: Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [colors.primary, colors.primaryContainer],
+              ),
+              image: background == null
+                  ? null
+                  : DecorationImage(
+                      image: AssetImage(background),
+                      fit: BoxFit.cover,
+                      opacity: .42,
+                    ),
+            ),
+          ),
           leading: Container(
             margin: const EdgeInsets.only(left: 8),
             child: IconButton(
@@ -169,91 +194,115 @@ class _ConversationViewState extends State<ConversationView> {
             const SizedBox(width: 8),
           ],
         ),
-        body: Column(
+        body: Stack(
+          children: [
+            if (background != null)
+              Positioned.fill(
+                child: Opacity(
+                  opacity: .10,
+                  child: Image.asset(background, fit: BoxFit.cover),
+                ),
+              ),
+            Column(
           children: [
             // Lista de mensajes
             Expanded(child: _buildMessagesList()),
             // Input de mensaje
-            Container(
-              decoration: BoxDecoration(
-                color: Colors.white,
-                border: Border(
-                  top: BorderSide(color: Colors.grey.shade300, width: 1),
+            if (!canReply)
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(14),
+                color: Colors.amber.shade50,
+                child: const Text(
+                  'Canal informativo: solo Administración GameOn puede enviar mensajes.',
                 ),
-              ),
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              child: SafeArea(
-                top: false,
-                child: Row(
-                  children: [
-                    // Botón para adjuntar imagen
-                    Container(
-                      decoration: BoxDecoration(
-                        color: Colors.grey.shade100,
-                        shape: BoxShape.circle,
-                      ),
-                      child: IconButton(
-                        icon: Icon(Icons.image, color: Colors.green.shade700),
-                        onPressed: _showImageSourceDialog,
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    // Campo de texto
-                    Expanded(
-                      child: Container(
+              )
+            else
+              Container(
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  border: Border(
+                    top: BorderSide(color: Colors.grey.shade300, width: 1),
+                  ),
+                ),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 8,
+                ),
+                child: SafeArea(
+                  top: false,
+                  child: Row(
+                    children: [
+                      // Botón para adjuntar imagen
+                      Container(
                         decoration: BoxDecoration(
                           color: Colors.grey.shade100,
-                          borderRadius: BorderRadius.circular(24),
+                          shape: BoxShape.circle,
                         ),
-                        child: TextField(
-                          controller: _messageController,
-                          decoration: const InputDecoration(
-                            hintText: 'Escribe un mensaje...',
-                            border: InputBorder.none,
-                            contentPadding: EdgeInsets.symmetric(
-                              horizontal: 20,
-                              vertical: 12,
-                            ),
+                        child: IconButton(
+                          icon: Icon(Icons.image, color: Colors.green.shade700),
+                          onPressed: _showImageSourceDialog,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      // Campo de texto
+                      Expanded(
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: Colors.grey.shade100,
+                            borderRadius: BorderRadius.circular(24),
                           ),
-                          maxLines: null,
-                          textCapitalization: TextCapitalization.sentences,
-                          onChanged: (value) {
-                            setState(() {});
-                          },
+                          child: TextField(
+                            controller: _messageController,
+                            decoration: const InputDecoration(
+                              hintText: 'Escribe un mensaje...',
+                              border: InputBorder.none,
+                              contentPadding: EdgeInsets.symmetric(
+                                horizontal: 20,
+                                vertical: 12,
+                              ),
+                            ),
+                            maxLines: null,
+                            textCapitalization: TextCapitalization.sentences,
+                            onChanged: (value) {
+                              setState(() {});
+                            },
+                          ),
                         ),
                       ),
-                    ),
-                    const SizedBox(width: 8),
-                    // Botón de enviar
-                    Container(
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: [
-                            Colors.green.shade600,
-                            Colors.green.shade700,
-                          ],
+                      const SizedBox(width: 8),
+                      // Botón de enviar
+                      Container(
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [
+                              Colors.green.shade600,
+                              Colors.green.shade700,
+                            ],
+                          ),
+                          shape: BoxShape.circle,
                         ),
-                        shape: BoxShape.circle,
+                        child: IconButton(
+                          icon: _viewModel.sendingMessage
+                              ? const SizedBox(
+                                  width: 20,
+                                  height: 20,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: Colors.white,
+                                  ),
+                                )
+                              : const Icon(Icons.send, color: Colors.white),
+                          onPressed: _viewModel.sendingMessage
+                              ? null
+                              : _sendMessage,
+                        ),
                       ),
-                      child: IconButton(
-                        icon: _viewModel.sendingMessage
-                            ? const SizedBox(
-                                width: 20,
-                                height: 20,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  color: Colors.white,
-                                ),
-                              )
-                            : const Icon(Icons.send, color: Colors.white),
-                        onPressed: _viewModel.sendingMessage
-                            ? null
-                            : _sendMessage,
-                      ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
+          ],
             ),
           ],
         ),

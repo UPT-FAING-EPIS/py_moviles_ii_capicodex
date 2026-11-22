@@ -33,7 +33,10 @@ class Reserva {
 
   factory Reserva.fromJson(Map<String, dynamic> json) => Reserva(
     id: json['id'] as int,
-    idUsuario: json['id_usuario'] as int,
+    // Las reservas presenciales creadas por un gestor pueden no tener una
+    // cuenta deportista asociada. El 0 solo se usa internamente al calcular
+    // disponibilidad; esas reservas no se muestran en "Mis reservas".
+    idUsuario: (json['id_usuario'] as int?) ?? 0,
     areaDeportivaId: json['area_deportiva_id'] as int,
     fecha: DateTime.parse(json['fecha'] as String),
     horaInicio: json['hora_inicio'] as String,

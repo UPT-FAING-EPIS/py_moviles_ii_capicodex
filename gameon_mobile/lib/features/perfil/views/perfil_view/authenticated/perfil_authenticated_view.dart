@@ -8,6 +8,7 @@ import 'package:gameon/features/perfil/views/perfil_view/authenticated/help_supp
 import 'package:gameon/features/perfil/views/perfil_view/unauthenticated/complaints_book_view.dart';
 import 'package:gameon/features/perfil/views/perfil_view/authenticated/notification_settings_view.dart';
 import 'package:provider/provider.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:gameon/core/theme/app_theme.dart';
 import 'package:gameon/core/theme/theme_controller.dart';
 import 'package:gameon/core/theme/visual_theme_picker.dart';
@@ -668,9 +669,24 @@ class PerfilAuthenticatedView extends StatelessWidget {
                 ? 'Gestiona tus canchas o consulta tu solicitud'
                 : 'Solicita habilitar el perfil gestor',
             color: Colors.green,
-            onTap: () {
+            onTap: () async {
               final vm = context.read<PerfilViewModel>();
-              if (vm.managerStatus != null) {
+              var latestRejected = vm.managerStatus == -1;
+              try {
+                final rows = await Supabase.instance.client
+                    .from('solicitudes_centros_deportivos')
+                    .select('estado')
+                    .order('creado_en', ascending: false)
+                    .limit(1);
+                if (rows is List && rows.isNotEmpty) {
+                  latestRejected =
+                      '${rows.first['estado']}'.toLowerCase() == 'rechazada';
+                }
+              } catch (_) {
+                // Conserva el estado local si aún no existe la tabla en remoto.
+              }
+              if (!context.mounted) return;
+              if (vm.managerStatus != null && !latestRejected) {
                 vm.selectMode(AppUserMode.gestor);
               } else {
                 Navigator.push(

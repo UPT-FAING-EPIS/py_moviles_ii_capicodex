@@ -35,18 +35,28 @@ class ChatListViewModel extends ChangeNotifier {
   StreamSubscription<dynamic>? _authSubscription;
 
   // Getters
-  List<Conversation> get conversations {
-    if (_searchQuery.isEmpty) {
-      return _conversations;
-    }
+  List<Conversation> _filtered(Iterable<Conversation> source) {
+    if (_searchQuery.isEmpty) return source.toList();
 
-    // Filtrar conversaciones por nombre del otro usuario
-    return _conversations.where((conv) {
+    return source.where((conv) {
+      if (conv.isAdminChannel) {
+        return 'administración gameon'.contains(_searchQuery.toLowerCase()) ||
+            'administracion gameon'.contains(_searchQuery.toLowerCase());
+      }
       final otherUser = conv.getOtherUser(currentUserId);
       final otherUserName = otherUser?.nombre.toLowerCase() ?? '';
       return otherUserName.contains(_searchQuery.toLowerCase());
     }).toList();
   }
+
+  /// Conversaciones personales del usuario; el canal institucional no se
+  /// mezcla con ellas para que ningún administrador parezca un jugador.
+  List<Conversation> get conversations =>
+      _filtered(_conversations.where((conv) => !conv.isAdminChannel));
+
+  /// Canal compartido y de solo lectura entre cuentas administradoras.
+  List<Conversation> get adminChannels =>
+      _filtered(_conversations.where((conv) => conv.isAdminChannel));
 
   bool get loading => _loading;
   String? get error => _error;
@@ -149,6 +159,7 @@ class ChatListViewModel extends ChangeNotifier {
     // Obtener todos los IDs de usuarios únicos (excepto el usuario actual)
     final Set<String> userIds = {};
     for (var conv in conversations) {
+      if (conv.isAdminChannel || conv.adminOnly) continue;
       for (var userId in conv.participantIds) {
         if (userId != currentUserId) {
           userIds.add(userId);

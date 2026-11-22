@@ -2,11 +2,14 @@ import 'package:flutter/material.dart';
 import 'dart:math' as math;
 import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:gameon/core/theme/app_theme.dart';
 import 'package:gameon/core/theme/theme_controller.dart';
 import 'package:gameon/core/theme/visual_theme_picker.dart';
 import 'package:gameon/core/widgets/role_switcher.dart';
 import '../../perfil/viewmodels/perfil_viewmodel.dart';
+import '../../chat/services/chat_service.dart';
+import 'solicitud_ubicacion_admin_view.dart';
 
 class AdminView extends StatefulWidget {
   const AdminView({super.key});
@@ -125,7 +128,16 @@ class _AdminUserDetailViewState extends State<AdminUserDetailView> {
     );
     final name = '${widget.user['nombre'] ?? 'Usuario'}'.trim();
     return Scaffold(
-      body: Column(
+      body: Stack(
+        children: [
+          if (background != null)
+            Positioned.fill(
+              child: Opacity(
+                opacity: .08,
+                child: Image.asset(background, fit: BoxFit.cover),
+              ),
+            ),
+          Column(
         children: [
           Container(
             decoration: BoxDecoration(
@@ -202,6 +214,8 @@ class _AdminUserDetailViewState extends State<AdminUserDetailView> {
                           ),
                   )
                 : _content(),
+          ),
+        ],
           ),
         ],
       ),
@@ -420,6 +434,8 @@ class _AdminViewState extends State<AdminView> {
   DateTime rangeEnd = DateUtils.dateOnly(DateTime.now());
   String userSearch = '';
   String userType = 'Todos';
+  String affiliationStatus = 'Todos';
+  String affiliationSearch = '';
   bool loading = true;
   String? error;
   Map<String, dynamic> summary = {};
@@ -545,8 +561,13 @@ class _AdminViewState extends State<AdminView> {
         content: TextField(
           controller: note,
           maxLines: 3,
-          decoration: const InputDecoration(
-            labelText: 'Observación para el solicitante',
+          decoration: InputDecoration(
+            labelText: approve
+                ? 'Mensaje para el solicitante (opcional)'
+                : 'Motivo del rechazo',
+            helperText: approve
+                ? 'Se enviará una confirmación al canal administrativo.'
+                : 'Obligatorio: se enviará al solicitante por mensajería.',
           ),
         ),
         actions: [
@@ -555,24 +576,65 @@ class _AdminViewState extends State<AdminView> {
             child: const Text('Cancelar'),
           ),
           FilledButton(
-            onPressed: () => Navigator.pop(context, true),
+            onPressed: () {
+              if (!approve && note.text.trim().isEmpty) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Escribe el motivo del rechazo.'),
+                  ),
+                );
+                return;
+              }
+              Navigator.pop(context, true);
+            },
             child: Text(approve ? 'Aprobar' : 'Rechazar'),
           ),
         ],
       ),
     );
     if (accepted != true) return;
-    await _action(
-      () => db.rpc(
+    if (!approve && note.text.trim().isEmpty) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Debes indicar el motivo del rechazo.')),
+        );
+      }
+      return;
+    }
+    await _action(() async {
+      await db.rpc(
         'resolver_solicitud_centro',
         params: {
           'p_id': request['id'],
           'p_aprobar': approve,
           'p_observacion': note.text,
         },
-      ),
-      approve ? 'Complejo aprobado' : 'Complejo rechazado',
-    );
+      );
+      final recipientId = '${request['solicitante_auth_id'] ?? ''}';
+      final adminId = db.auth.currentUser?.id;
+      if (recipientId.isNotEmpty && adminId != null) {
+        final message = approve
+            ? '¡Tu solicitud para "${request['nombre']}" fue aprobada! Ya puedes cambiar al rol Gestor de Canchas desde Perfil y administrar tu nuevo complejo deportivo.'
+            : 'Tu solicitud para "${request['nombre']}" fue rechazada. Motivo: ${note.text.trim()}';
+        try {
+            final chat = ChatService();
+            await chat.sendAdminNotice(
+            adminId: adminId,
+            recipientId: recipientId,
+            recipientName: '${request['solicitante_nombre'] ?? 'Solicitante'}',
+            content: message,
+          );
+            final members = await db.rpc('admin_canal_miembros');
+            await chat.sendAdminChannelNotice(
+              adminIds: (members as List).map((value) => '$value').toList(),
+              senderId: adminId,
+              content: message,
+            );
+        } catch (_) {
+          // La decisión y la notificación persistente ya se registraron en Supabase.
+        }
+      }
+    }, approve ? 'Complejo aprobado' : 'Complejo rechazado');
   }
 
   Future<void> _viewFile(String path) async {
@@ -581,6 +643,15 @@ class _AdminViewState extends State<AdminView> {
           .from('gestor-solicitudes')
           .createSignedUrl(path, 300);
       if (!mounted) return;
+      final lower = path.toLowerCase();
+      final isImage =
+          lower.endsWith('.jpg') ||
+          lower.endsWith('.jpeg') ||
+          lower.endsWith('.png');
+      if (!isImage) {
+        await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
+        return;
+      }
       await showDialog<void>(
         context: context,
         builder: (context) => AlertDialog(
@@ -618,7 +689,16 @@ class _AdminViewState extends State<AdminView> {
     );
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
-      body: Column(
+      body: Stack(
+        children: [
+          if (background != null)
+            Positioned.fill(
+              child: Opacity(
+                opacity: .08,
+                child: Image.asset(background, fit: BoxFit.cover),
+              ),
+            ),
+          Column(
         children: [
           Container(
             decoration: BoxDecoration(
@@ -697,6 +777,8 @@ class _AdminViewState extends State<AdminView> {
                 _settings(),
               ],
             ),
+          ),
+        ],
           ),
         ],
       ),
@@ -1178,9 +1260,28 @@ class _AdminViewState extends State<AdminView> {
     ),
   );
 
-  Widget _affiliations() => RefreshIndicator(
-    onRefresh: _load,
-    child: ListView(
+  Widget _affiliations() {
+    final filtered = centerRequests.where((item) {
+      final status = '${item['estado'] ?? ''}'.toLowerCase();
+      final matchesStatus = affiliationStatus == 'Todos' ||
+          status == affiliationStatus.toLowerCase();
+      final haystack =
+          '${item['nombre'] ?? ''} ${item['ruc'] ?? ''} ${item['direccion'] ?? ''} ${item['email'] ?? ''}'
+              .toLowerCase();
+      return matchesStatus && haystack.contains(affiliationSearch.toLowerCase());
+    }).toList()
+      ..sort((a, b) {
+        final aPending = '${a['estado']}'.toLowerCase() == 'pendiente';
+        final bPending = '${b['estado']}'.toLowerCase() == 'pendiente';
+        if (aPending != bPending) return aPending ? -1 : 1;
+        final aDate = DateTime.tryParse('${a['creado_en'] ?? ''}') ?? DateTime(1970);
+        final bDate = DateTime.tryParse('${b['creado_en'] ?? ''}') ?? DateTime(1970);
+        return bDate.compareTo(aDate);
+      });
+
+    return RefreshIndicator(
+      onRefresh: _load,
+      child: ListView(
       padding: const EdgeInsets.all(18),
       children: [
         Text(
@@ -1192,17 +1293,40 @@ class _AdminViewState extends State<AdminView> {
           'Valida los datos del complejo y sus evidencias antes de habilitarlo.',
         ),
         const SizedBox(height: 16),
-        if (centerRequests.isEmpty)
+        TextField(
+          onChanged: (value) => setState(() => affiliationSearch = value),
+          decoration: const InputDecoration(
+            prefixIcon: Icon(Icons.search),
+            hintText: 'Buscar por negocio, RUC, dirección o correo',
+          ),
+        ),
+        const SizedBox(height: 10),
+        DropdownButtonFormField<String>(
+          value: affiliationStatus,
+          decoration: const InputDecoration(
+            labelText: 'Estado de solicitud',
+          ),
+          items: const [
+            DropdownMenuItem(value: 'Todos', child: Text('Todos')),
+            DropdownMenuItem(value: 'pendiente', child: Text('Pendientes')),
+            DropdownMenuItem(value: 'aprobada', child: Text('Aprobados')),
+            DropdownMenuItem(value: 'rechazada', child: Text('Rechazados')),
+          ],
+          onChanged: (value) => setState(() => affiliationStatus = value ?? 'Todos'),
+        ),
+        const SizedBox(height: 16),
+        if (filtered.isEmpty)
           const Card(
             child: ListTile(
               leading: Icon(Icons.check_circle_outline),
-              title: Text('No hay solicitudes de complejos'),
+              title: Text('No hay solicitudes con esos filtros'),
             ),
           ),
-        ...centerRequests.map(_centerRequestCard),
+        ...filtered.map(_centerRequestCard),
       ],
-    ),
-  );
+      ),
+    );
+  }
 
   Widget _centerRequestCard(Map<String, dynamic> item) {
     final pending = item['estado'] == 'pendiente';
@@ -1234,9 +1358,20 @@ class _AdminViewState extends State<AdminView> {
               spacing: 8,
               children: [
                 Chip(label: Text('${item['estado']}')),
-                Chip(
+                ActionChip(
                   avatar: const Icon(Icons.location_on_outlined, size: 16),
                   label: Text('${item['latitud']}, ${item['longitud']}'),
+                  onPressed: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => SolicitudUbicacionAdminView(
+                        nombre: '${item['nombre']}',
+                        direccion: '${item['direccion']}',
+                        latitud: double.tryParse('${item['latitud']}') ?? 0,
+                        longitud: double.tryParse('${item['longitud']}') ?? 0,
+                      ),
+                    ),
+                  ),
                 ),
               ],
             ),

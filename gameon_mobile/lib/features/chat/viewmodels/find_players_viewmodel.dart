@@ -196,7 +196,11 @@ class FindPlayersViewModel extends ChangeNotifier {
       final response = await query;
 
       // Filtrar por edad si se especificó (se hace en memoria porque requiere cálculo)
-      List<dynamic> filteredByAge = response as List;
+      List<dynamic> filteredByAge = (response as List).where((user) {
+        final name = '${user['nombre'] ?? ''} ${user['apellidos'] ?? ''}'.toLowerCase();
+        return !name.contains('administración gameon') &&
+            !name.contains('administracion gameon');
+      }).toList();
       if (_minAge != null || _maxAge != null) {
         final now = DateTime.now();
         filteredByAge = filteredByAge.where((user) {
@@ -253,6 +257,8 @@ class FindPlayersViewModel extends ChangeNotifier {
         try {
           existingConv = conversationsQuery.firstWhere(
             (conv) =>
+                !conv.adminOnly &&
+                !conv.isAdminChannel &&
                 conv.participantIds.contains(userId) &&
                 conv.participantIds.contains(currentUserId),
           );

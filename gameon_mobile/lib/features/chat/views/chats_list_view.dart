@@ -310,70 +310,82 @@ class _ChatsListViewState extends State<ChatsListView> {
     return RefreshIndicator(
       onRefresh: () => _viewModel.refresh(),
       color: Colors.green,
-      child: ListView.builder(
+      child: ListView(
         padding: const EdgeInsets.symmetric(vertical: 8),
-        itemCount: _viewModel.conversations.length + 1, // +1 para el bot
-        itemBuilder: (context, index) {
-          // El primer item es el bot
-          if (index == 0) {
-            return _buildBotListItem();
-          }
-
-          // Los demás items son conversaciones normales
-          final conversation = _viewModel.conversations[index - 1];
-          final otherUser = _viewModel.getOtherUser(conversation);
-          final isOnline = _viewModel.isUserOnline(otherUser?.id ?? '');
-
-          return _ConversationListItem(
-            conversation: conversation,
-            otherUserName: otherUser?.nombre ?? 'Usuario',
-            otherUserAvatar: otherUser?.fotoPerfil,
-            isOnline: isOnline,
-            onTap: () async {
-              if (mounted) {
-                await Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => ConversationView(
-                      conversationId: conversation.id,
-                      otherUserName: otherUser?.nombre ?? 'Usuario',
-                      otherUserAvatar: otherUser?.fotoPerfil,
-                    ),
-                  ),
-                );
-                // Refrescar al volver para asegurar que se muestren los cambios
-                if (mounted) {
-                  _viewModel.refresh();
-                }
-              }
-
-              _viewModel.markConversationAsRead(conversation.id);
-            },
-            onDelete: () async {
-              try {
-                await _viewModel.deleteConversation(conversation.id);
-                if (mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Conversación eliminada'),
-                      backgroundColor: Colors.green,
-                    ),
-                  );
-                }
-              } catch (e) {
-                if (mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text('Error al eliminar: ${e.toString()}'),
-                      backgroundColor: Colors.red,
-                    ),
-                  );
-                }
-              }
-            },
-          );
-        },
+        children: [
+          _buildBotListItem(),
+          if (_viewModel.adminChannels.isNotEmpty) ...[
+            _sectionTitle('Administración'),
+            ..._viewModel.adminChannels.map(_buildConversationItem),
+          ],
+          if (_viewModel.conversations.isNotEmpty) ...[
+            _sectionTitle('Chats personales'),
+            ..._viewModel.conversations.map(_buildConversationItem),
+          ],
+        ],
       ),
+    );
+  }
+
+  Widget _sectionTitle(String title) => Padding(
+    padding: const EdgeInsets.fromLTRB(20, 18, 20, 6),
+    child: Text(
+      title,
+      style: TextStyle(
+        color: Theme.of(context).colorScheme.primary,
+        fontWeight: FontWeight.w700,
+        fontSize: 14,
+      ),
+    ),
+  );
+
+  Widget _buildConversationItem(Conversation conversation) {
+    final isAdminChannel = conversation.isAdminChannel;
+    final otherUser = _viewModel.getOtherUser(conversation);
+    final name = isAdminChannel
+        ? 'Administración GameOn'
+        : otherUser?.nombre ?? 'Usuario';
+
+    return _ConversationListItem(
+      conversation: conversation,
+      otherUserName: name,
+      otherUserAvatar: isAdminChannel ? null : otherUser?.fotoPerfil,
+      isOnline: !isAdminChannel &&
+          _viewModel.isUserOnline(otherUser?.id ?? ''),
+      allowDelete: !isAdminChannel,
+      onTap: () async {
+        if (!mounted) return;
+        await Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => ConversationView(
+              conversationId: conversation.id,
+              otherUserName: name,
+              otherUserAvatar: isAdminChannel ? null : otherUser?.fotoPerfil,
+            ),
+          ),
+        );
+        if (mounted) _viewModel.refresh();
+        _viewModel.markConversationAsRead(conversation.id);
+      },
+      onDelete: () async {
+        try {
+          await _viewModel.deleteConversation(conversation.id);
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+              content: Text('Conversación eliminada'),
+              backgroundColor: Colors.green,
+            ));
+          }
+        } catch (e) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+              content: Text('Error al eliminar: ${e.toString()}'),
+              backgroundColor: Colors.red,
+            ));
+          }
+        }
+      },
     );
   }
 
@@ -499,6 +511,7 @@ class _ConversationListItem extends StatelessWidget {
   final String otherUserName;
   final String? otherUserAvatar;
   final bool isOnline;
+  final bool allowDelete;
   final VoidCallback onTap;
   final VoidCallback onDelete;
 
@@ -507,6 +520,7 @@ class _ConversationListItem extends StatelessWidget {
     required this.otherUserName,
     required this.otherUserAvatar,
     required this.isOnline,
+    this.allowDelete = true,
     required this.onTap,
     required this.onDelete,
   });
@@ -523,6 +537,86 @@ class _ConversationListItem extends StatelessWidget {
     final colors = theme.colorScheme;
     final isDark = theme.brightness == Brightness.dark;
 
+    final content = InkWell(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+        decoration: BoxDecoration(
+          color: hasUnread
+              ? colors.primary.withValues(alpha: isDark ? .24 : .10)
+              : colors.surface,
+          border: Border(
+            bottom: BorderSide(color: theme.dividerColor, width: 1),
+          ),
+        ),
+        child: Row(
+          children: [
+            Stack(
+              children: [
+                CircleAvatar(
+                  radius: 28,
+                  backgroundColor: colors.primary.withValues(alpha: .22),
+                  backgroundImage: otherUserAvatar != null
+                      ? NetworkImage(otherUserAvatar!)
+                      : null,
+                  child: otherUserAvatar == null
+                      ? Text(
+                          otherUserName[0].toUpperCase(),
+                          style: TextStyle(
+                            color: colors.primary,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 20,
+                          ),
+                        )
+                      : null,
+                ),
+                if (isOnline)
+                  Positioned(
+                    right: 0,
+                    top: 0,
+                    child: Container(
+                      width: 16,
+                      height: 16,
+                      decoration: BoxDecoration(
+                        color: colors.primary,
+                        shape: BoxShape.circle,
+                        border: Border.all(color: Colors.white, width: 2),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Expanded(
+                        child: Text(otherUserName, style: TextStyle(fontSize: 16, fontWeight: hasUnread ? FontWeight.bold : FontWeight.w600, color: colors.onSurface), maxLines: 1, overflow: TextOverflow.ellipsis),
+                      ),
+                      Text(_formatTime(conversation.lastMessageTime ?? conversation.createdAt), style: TextStyle(fontSize: 12, color: hasUnread ? colors.primary : theme.hintColor, fontWeight: hasUnread ? FontWeight.w600 : FontWeight.normal)),
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  Row(
+                    children: [
+                      Expanded(child: Text(conversation.lastMessage != null ? '${conversation.lastMessageSenderId == currentUserId ? 'Tú: ' : ''}${conversation.lastMessage}' : 'Nueva conversación', style: TextStyle(fontSize: 14, color: hasUnread ? colors.onSurface : theme.hintColor, fontWeight: hasUnread ? FontWeight.w500 : FontWeight.normal), maxLines: 1, overflow: TextOverflow.ellipsis)),
+                      if (hasUnread)
+                        Container(margin: const EdgeInsets.only(left: 8), padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4), decoration: BoxDecoration(color: colors.primary, borderRadius: BorderRadius.circular(12)), child: Text('${conversation.getUnreadCountForUser(currentUserId)}', style: TextStyle(color: colors.onPrimary, fontSize: 11, fontWeight: FontWeight.bold))),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+
+    if (!allowDelete) return content;
     return Dismissible(
       key: Key(conversation.id),
       direction: DismissDirection.endToStart,
@@ -556,8 +650,11 @@ class _ConversationListItem extends StatelessWidget {
         return confirm ?? false;
       },
       onDismissed: (direction) => onDelete(),
-      child: InkWell(
-        onTap: onTap,
+      child: content,
+    );
+  }
+
+  /*
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
           decoration: BoxDecoration(
@@ -699,6 +796,7 @@ class _ConversationListItem extends StatelessWidget {
       ),
     );
   }
+  */
 
   String _formatTime(DateTime time) {
     final now = DateTime.now();

@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'dart:math';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:provider/provider.dart';
+import 'package:gameon/core/theme/app_theme.dart';
+import 'package:gameon/core/theme/theme_controller.dart';
 import '../viewmodels/bot_conversation_viewmodel.dart';
 
 class BotConversationView extends StatefulWidget {
@@ -102,6 +105,11 @@ class _BotConversationViewState extends State<BotConversationView> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
+    final headerBackground = AppTheme.headerBackgroundFor(
+      context.watch<ThemeController>().selection,
+    );
     final overlay = SystemUiOverlayStyle(
       statusBarColor: Colors.transparent,
       statusBarIconBrightness: Brightness.light,
@@ -111,11 +119,22 @@ class _BotConversationViewState extends State<BotConversationView> {
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: overlay,
       child: Scaffold(
-        backgroundColor: Colors.grey[50],
+        backgroundColor: theme.scaffoldBackgroundColor,
         appBar: AppBar(
-          backgroundColor: Colors.blue.shade700,
+          backgroundColor: colors.primary,
           elevation: 0,
           surfaceTintColor: Colors.transparent,
+          flexibleSpace: headerBackground == null
+              ? null
+              : Container(
+                  decoration: BoxDecoration(
+                    image: DecorationImage(
+                      image: AssetImage(headerBackground),
+                      fit: BoxFit.cover,
+                      opacity: .42,
+                    ),
+                  ),
+                ),
           toolbarHeight: 70,
           leading: Container(
             margin: const EdgeInsets.only(left: 8),
@@ -151,7 +170,7 @@ class _BotConversationViewState extends State<BotConversationView> {
                   backgroundColor: Colors.white,
                   child: Icon(
                     Icons.smart_toy_rounded,
-                    color: Colors.blue.shade700,
+                    color: colors.primary,
                     size: 26,
                   ),
                 ),

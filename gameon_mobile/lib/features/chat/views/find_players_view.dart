@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../viewmodels/find_players_viewmodel.dart';
 import 'conversation_view.dart';
+import 'package:gameon/core/theme/app_theme.dart';
+import 'package:gameon/core/theme/theme_controller.dart';
+import 'package:provider/provider.dart';
 
 class FindPlayersView extends StatefulWidget {
   const FindPlayersView({super.key});
@@ -49,6 +52,11 @@ class _FindPlayersViewState extends State<FindPlayersView> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
+    final headerBackground = AppTheme.headerBackgroundFor(
+      context.watch<ThemeController>().selection,
+    );
     final overlay = SystemUiOverlayStyle(
       statusBarColor: Colors.transparent,
       statusBarIconBrightness: Brightness.light,
@@ -58,8 +66,17 @@ class _FindPlayersViewState extends State<FindPlayersView> {
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: overlay,
       child: Scaffold(
-        backgroundColor: Colors.grey[50],
-        body: Column(
+        backgroundColor: theme.scaffoldBackgroundColor,
+        body: Stack(
+          children: [
+            if (headerBackground != null)
+              Positioned.fill(
+                child: Opacity(
+                  opacity: .10,
+                  child: Image.asset(headerBackground, fit: BoxFit.cover),
+                ),
+              ),
+            Column(
           children: [
             // Header con gradiente
             Container(
@@ -67,8 +84,15 @@ class _FindPlayersViewState extends State<FindPlayersView> {
                 gradient: LinearGradient(
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
-                  colors: [Colors.green.shade600, Colors.green.shade800],
+                  colors: [colors.primary, colors.primaryContainer],
                 ),
+                image: headerBackground == null
+                    ? null
+                    : DecorationImage(
+                        image: AssetImage(headerBackground),
+                        fit: BoxFit.cover,
+                        opacity: .42,
+                      ),
                 borderRadius: const BorderRadius.only(
                   bottomLeft: Radius.circular(30),
                   bottomRight: Radius.circular(30),
@@ -449,6 +473,8 @@ class _FindPlayersViewState extends State<FindPlayersView> {
             Divider(height: 1, color: Colors.grey.shade300),
             // Lista de jugadores
             Expanded(child: _buildBody()),
+          ],
+            ),
           ],
         ),
       ),

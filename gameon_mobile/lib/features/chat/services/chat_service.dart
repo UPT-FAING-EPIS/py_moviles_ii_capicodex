@@ -11,6 +11,7 @@ class ChatService {
   static const String _conversationsCollection = 'conversations';
   static const String _messagesCollection = 'messages';
   static const String _usersCollection = 'users';
+  static const String adminChannelId = 'administracion_gameon';
 
   // ==================== CONVERSACIONES ====================
 
@@ -54,6 +55,72 @@ class ChatService {
     });
 
     return conversationKey;
+  }
+
+  Future<void> sendAdminNotice({
+    required String adminId,
+    required String recipientId,
+    required String recipientName,
+    required String content,
+  }) async {
+    final admin = ChatUser(id: adminId, nombre: 'Administración GameOn');
+    final recipient = ChatUser(id: recipientId, nombre: recipientName);
+    final conversationId = await getOrCreateConversation(
+      currentUserId: adminId,
+      otherUserId: recipientId,
+      currentUser: admin,
+      otherUser: recipient,
+    );
+    await _firestore
+        .collection(_conversationsCollection)
+        .doc(conversationId)
+        .set({
+          'admin_only': true,
+          'admin_id': adminId,
+          'participants.$adminId': admin.toJson(),
+          'participants.$recipientId': recipient.toJson(),
+        }, SetOptions(merge: true));
+    await sendMessage(
+      conversationId: conversationId,
+      senderId: adminId,
+      senderNombre: admin.nombre,
+      content: content,
+    );
+  }
+
+  Future<void> sendAdminChannelNotice({
+    required List<String> adminIds,
+    required String senderId,
+    required String content,
+  }) async {
+    final ref = _firestore.collection(_conversationsCollection).doc(adminChannelId);
+    final existing = await ref.get();
+    final ids = <String>{
+      ...adminIds.where((id) => id.isNotEmpty),
+      ...List<String>.from(existing.data()?['participant_ids'] ?? const []),
+    }.toList();
+    final participants = <String, dynamic>{
+      ...Map<String, dynamic>.from(existing.data()?['participants'] ?? const {}),
+      for (final id in ids)
+        id: ChatUser(id: id, nombre: 'Administrador').toJson(),
+    };
+    await ref.set({
+      'participant_ids': ids,
+      'participants': participants,
+      'is_admin_channel': true,
+      'admin_only': true,
+      'has_messages': existing.data()?['has_messages'] ?? false,
+      'unread_count': existing.data()?['unread_count'] ??
+          {for (final id in ids) id: 0},
+      'created_at': existing.data()?['created_at'] ?? FieldValue.serverTimestamp(),
+      'updated_at': FieldValue.serverTimestamp(),
+    }, SetOptions(merge: true));
+    await sendMessage(
+      conversationId: adminChannelId,
+      senderId: senderId,
+      senderNombre: 'Administración GameOn',
+      content: content,
+    );
   }
 
   /// Obtener conversaciones del usuario actual (excluye conversaciones con bots)

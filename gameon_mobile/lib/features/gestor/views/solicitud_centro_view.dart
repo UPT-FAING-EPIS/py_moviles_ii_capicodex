@@ -1,3 +1,6 @@
+import 'dart:io';
+import 'dart:typed_data';
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
@@ -27,7 +30,7 @@ class _SolicitudCentroViewState extends State<SolicitudCentroView> {
   final _picker = ImagePicker();
   LatLng? _location;
   XFile? _cover;
-  List<XFile> _evidence = [];
+  List<_EvidenceFile> _evidence = [];
   bool _saving = false;
 
   @override
@@ -67,14 +70,84 @@ class _SolicitudCentroViewState extends State<SolicitudCentroView> {
     if (image != null && mounted) setState(() => _cover = image);
   }
 
-  Future<void> _pickEvidence() async {
+  Future<void> _pickEvidenceImages() async {
     final selected = await _picker.pickMultiImage(
       imageQuality: 80,
       maxWidth: 1600,
     );
     if (mounted && selected.isNotEmpty) {
-      setState(() => _evidence = [..._evidence, ...selected].take(3).toList());
+      final files = await Future.wait(
+        selected.map(
+          (file) async => _EvidenceFile(
+            name: file.name,
+            bytes: await file.readAsBytes(),
+            contentType: _contentType(file.name),
+          ),
+        ),
+      );
+      if (mounted) {
+        setState(() => _evidence = [..._evidence, ...files].take(3).toList());
+      }
     }
+  }
+
+  Future<void> _pickEvidenceFiles() async {
+    final selected = await FilePicker.platform.pickFiles(
+      type: FileType.custom,
+      allowedExtensions: const ['jpg', 'jpeg', 'png', 'pdf', 'doc', 'docx'],
+      allowMultiple: true,
+      withData: true,
+    );
+    if (selected == null || !mounted) return;
+    final files = <_EvidenceFile>[];
+    for (final file in selected.files) {
+      final bytes =
+          file.bytes ??
+          (file.path == null ? null : await File(file.path!).readAsBytes());
+      if (bytes != null) {
+        files.add(
+          _EvidenceFile(
+            name: file.name,
+            bytes: bytes,
+            contentType: _contentType(file.name),
+          ),
+        );
+      }
+    }
+    if (mounted) {
+      setState(() => _evidence = [..._evidence, ...files].take(3).toList());
+    }
+  }
+
+  Future<void> _pickEvidence() async {
+    if (_evidence.length >= 3) return;
+    await showModalBottomSheet<void>(
+      context: context,
+      builder: (sheetContext) => SafeArea(
+        child: Wrap(
+          children: [
+            ListTile(
+              leading: const Icon(Icons.photo_library_outlined),
+              title: const Text('Seleccionar imágenes'),
+              subtitle: const Text('JPG o PNG desde la galería'),
+              onTap: () {
+                Navigator.pop(sheetContext);
+                _pickEvidenceImages();
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.attach_file_outlined),
+              title: const Text('Seleccionar archivos'),
+              subtitle: const Text('PDF, DOC, DOCX, JPG o PNG'),
+              onTap: () {
+                Navigator.pop(sheetContext);
+                _pickEvidenceFiles();
+              },
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   Future<String> _upload(XFile file, String prefix) async {
@@ -87,9 +160,39 @@ class _SolicitudCentroViewState extends State<SolicitudCentroView> {
         .uploadBinary(
           path,
           await file.readAsBytes(),
-          fileOptions: const FileOptions(contentType: 'image/jpeg'),
+          fileOptions: FileOptions(contentType: _contentType(file.name)),
         );
     return path;
+  }
+
+  Future<String> _uploadEvidence(_EvidenceFile file) async {
+    final uid = Supabase.instance.client.auth.currentUser!.id;
+    final clean = file.name.replaceAll(RegExp(r'[^a-zA-Z0-9._-]'), '_');
+    final path =
+        '$uid/${DateTime.now().microsecondsSinceEpoch}_evidencia_$clean';
+    await Supabase.instance.client.storage
+        .from('gestor-solicitudes')
+        .uploadBinary(
+          path,
+          file.bytes,
+          fileOptions: FileOptions(contentType: file.contentType),
+        );
+    return path;
+  }
+
+  String _contentType(String fileName) {
+    switch (fileName.split('.').last.toLowerCase()) {
+      case 'png':
+        return 'image/png';
+      case 'pdf':
+        return 'application/pdf';
+      case 'doc':
+        return 'application/msword';
+      case 'docx':
+        return 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+      default:
+        return 'image/jpeg';
+    }
   }
 
   Future<void> _submit() async {
@@ -130,7 +233,7 @@ class _SolicitudCentroViewState extends State<SolicitudCentroView> {
         },
       );
       for (final file in _evidence) {
-        final path = await _upload(file, 'evidencia');
+        final path = await _uploadEvidence(file);
         await db.rpc(
           'agregar_evidencia_solicitud_centro',
           params: {'p_solicitud_id': requestId, 'p_ruta': path},
@@ -170,7 +273,16 @@ class _SolicitudCentroViewState extends State<SolicitudCentroView> {
       context.watch<ThemeController>().selection,
     );
     return Scaffold(
-      body: Column(
+      body: Stack(
+        children: [
+          if (background != null)
+            Positioned.fill(
+              child: Opacity(
+                opacity: .08,
+                child: Image.asset(background, fit: BoxFit.cover),
+              ),
+            ),
+          Column(
         children: [
           Container(
             decoration: BoxDecoration(
@@ -337,7 +449,7 @@ class _SolicitudCentroViewState extends State<SolicitudCentroView> {
                     leading: const Icon(Icons.receipt_long_outlined),
                     title: Text('Evidencias: ${_evidence.length}/3'),
                     subtitle: const Text(
-                      'RUC, boleta, fachada u otros documentos en imagen',
+                      'Hasta 3: imágenes, PDF o documentos Word',
                     ),
                     trailing: const Icon(Icons.add_photo_alternate_outlined),
                     onTap: _evidence.length >= 3 ? null : _pickEvidence,
@@ -367,7 +479,21 @@ class _SolicitudCentroViewState extends State<SolicitudCentroView> {
             ),
           ),
         ],
+          ),
+        ],
       ),
     );
   }
+}
+
+class _EvidenceFile {
+  const _EvidenceFile({
+    required this.name,
+    required this.bytes,
+    required this.contentType,
+  });
+
+  final String name;
+  final Uint8List bytes;
+  final String contentType;
 }

@@ -11,6 +11,9 @@ class Conversation {
   final Map<String, int> unreadCount;
   final DateTime createdAt;
   final DateTime updatedAt;
+  final bool adminOnly;
+  final String? adminId;
+  final bool isAdminChannel;
 
   Conversation({
     required this.id,
@@ -22,6 +25,9 @@ class Conversation {
     required this.unreadCount,
     required this.createdAt,
     required this.updatedAt,
+    this.adminOnly = false,
+    this.adminId,
+    this.isAdminChannel = false,
   });
 
   factory Conversation.fromJson(Map<String, dynamic> json, String id) {
@@ -31,6 +37,14 @@ class Conversation {
       (key, value) =>
           MapEntry(key, ChatUser.fromJson(value as Map<String, dynamic>)),
     );
+    final adminOnly = json['admin_only'] as bool? ?? false;
+    final adminId = json['admin_id'] as String?;
+    if (adminOnly && adminId != null && participants.containsKey(adminId)) {
+      participants[adminId] = ChatUser(
+        id: adminId,
+        nombre: 'Administración GameOn',
+      );
+    }
 
     return Conversation(
       id: id,
@@ -48,6 +62,9 @@ class Conversation {
       updatedAt: json['updated_at'] != null
           ? (json['updated_at'] as Timestamp).toDate()
           : DateTime.now(),
+      adminOnly: adminOnly,
+      adminId: adminId,
+      isAdminChannel: json['is_admin_channel'] as bool? ?? false,
     );
   }
 
@@ -65,6 +82,9 @@ class Conversation {
       'unread_count': unreadCount,
       'created_at': Timestamp.fromDate(createdAt),
       'updated_at': Timestamp.fromDate(updatedAt),
+      'admin_only': adminOnly,
+      'admin_id': adminId,
+      'is_admin_channel': isAdminChannel,
     };
   }
 

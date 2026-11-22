@@ -12,6 +12,7 @@ import 'centro_ubicacion_picker.dart';
 import 'cancha_form_view.dart';
 import 'configurar_yape_view.dart';
 import 'solicitud_centro_view.dart';
+import 'reserva_directa_view.dart';
 import '../../perfil/views/perfil_view/authenticated/help_support_view.dart';
 import '../../perfil/views/perfil_view/unauthenticated/complaints_book_view.dart';
 
@@ -412,7 +413,7 @@ class _GestorViewState extends State<GestorView> {
             if (sent == true) refresh();
           },
           icon: const Icon(Icons.add),
-          label: const Text('Nuevo centro'),
+          label: const Text('Solicitar nuevo centro'),
         ),
         const SizedBox(height: 16),
         if (filtered.isEmpty)
@@ -723,6 +724,33 @@ class _GestorViewState extends State<GestorView> {
     return ListView(
       padding: const EdgeInsets.all(18),
       children: [
+        SizedBox(
+          width: double.infinity,
+          child: FilledButton.icon(
+            onPressed: areas.isEmpty
+                ? null
+                : () async {
+                    final changed = await Navigator.push<bool>(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => ReservaDirectaView(
+                          areas: areas,
+                          centros: centros,
+                        ),
+                      ),
+                    );
+                    if (changed == true) await refresh();
+                  },
+            icon: const Icon(Icons.add_circle_outline),
+            label: const Text('Generar reserva presencial'),
+          ),
+        ),
+        if (areas.isEmpty)
+          const Padding(
+            padding: EdgeInsets.only(top: 8),
+            child: Text('Primero registra una cancha para poder generar reservas.'),
+          ),
+        const SizedBox(height: 24),
         _sectionTitle(
           'Pagos Yape por revisar',
           'Reservas pendientes de todas las fechas',

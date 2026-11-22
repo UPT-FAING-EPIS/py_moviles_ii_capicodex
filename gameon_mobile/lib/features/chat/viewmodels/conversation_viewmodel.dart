@@ -110,7 +110,7 @@ class ConversationViewModel extends ChangeNotifier {
               final other = conversation?.getOtherUser(currentUserId);
               final otherId = other?.id;
 
-              if (otherId != null) {
+              if (otherId != null && conversation?.isAdminChannel != true) {
                 // 1. Suscribirse a presencia
                 _presenceSubscription?.cancel();
                 _presenceSubscription = _chatService
@@ -129,6 +129,11 @@ class ConversationViewModel extends ChangeNotifier {
                 // 2. Actualizar foto del OTRO usuario si no tiene o si queremos asegurar la última
                 // Esto asegura que veas su foto incluso si él no ha entrado al chat
                 try {
+                  if (conversation?.adminOnly == true &&
+                      otherId == conversation?.adminId) {
+                    notifyListeners();
+                    return;
+                  }
                   final response = await supabase
                       .from('usuarios_deportistas')
                       .select('nombre, apellidos, imagen_perfil')
@@ -183,7 +188,10 @@ class ConversationViewModel extends ChangeNotifier {
       // Actualizar información del participante al entrar
       try {
         final user = supabase.auth.currentUser;
-        if (user != null) {
+        if (user != null &&
+            _conversation?.isAdminChannel != true &&
+            !(_conversation?.adminOnly == true &&
+                _conversation?.adminId == user.id)) {
           final response = await supabase
               .from('usuarios_deportistas')
               .select('nombre, apellidos, imagen_perfil')
@@ -254,6 +262,10 @@ class ConversationViewModel extends ChangeNotifier {
   /// Envía un mensaje de texto
   Future<void> sendMessage(String text) async {
     if (text.trim().isEmpty) return;
+    if (_conversation?.adminOnly == true &&
+        _conversation?.adminId != currentUserId) {
+      throw StateError('Este canal solo permite mensajes del administrador.');
+    }
 
     try {
       _sendingMessage = true;
@@ -297,7 +309,8 @@ class ConversationViewModel extends ChangeNotifier {
         type: MessageType.text,
       );
       await _notificarMensajeRecibido(
-        titulo: 'Nuevo mensaje de ${nombreCompleto.isEmpty ? 'un usuario' : nombreCompleto}',
+        titulo:
+            'Nuevo mensaje de ${nombreCompleto.isEmpty ? 'un usuario' : nombreCompleto}',
         mensaje: text.trim(),
       );
 
@@ -352,7 +365,8 @@ class ConversationViewModel extends ChangeNotifier {
         lastMessageContent: '🖼️ Imagen',
       );
       await _notificarMensajeRecibido(
-        titulo: 'Nueva imagen de ${nombreCompleto.isEmpty ? 'un usuario' : nombreCompleto}',
+        titulo:
+            'Nueva imagen de ${nombreCompleto.isEmpty ? 'un usuario' : nombreCompleto}',
         mensaje: 'Te envió una imagen en el chat.',
       );
 
