@@ -6,49 +6,46 @@ class PayPalService {
 
   PayPalService(this.supabase);
 
-  Future<Map<String, dynamic>> createOrder(
-    double amount, {
-    String currency = 'USD',
+  Future<Map<String, dynamic>> createOrder({
+    required int areaId,
+    required String fecha,
+    required String inicio,
+    required String fin,
   }) async {
-    try {
-      final formattedAmount = amount.toStringAsFixed(2);
-
-      final response = await supabase.functions.invoke(
-        'paypal-payment',
-        body: {'amount': formattedAmount, 'currency': currency},
-      );
-
-      return response.data;
-    } catch (e) {
-      throw Exception('Error creando orden: $e');
-    }
+    final response = await supabase.functions.invoke('paypal-payment', body: {
+      'action': 'create', 'areaId': areaId, 'fecha': fecha,
+      'inicio': inicio, 'fin': fin,
+    });
+    final data = Map<String, dynamic>.from(response.data as Map);
+    if (data['error'] != null) throw Exception(data['error']);
+    return data;
   }
 
   Future<Map<String, dynamic>> capturePayment(String orderId) async {
     try {
       final response = await supabase.functions.invoke(
-        'paypal-payment/capture',
-        body: {'orderId': orderId},
+        'paypal-payment', body: {'action': 'capture', 'orderId': orderId},
       );
-
-      return response.data;
+      final data = Map<String, dynamic>.from(response.data as Map);
+      if (data['error'] != null) throw Exception(data['error']);
+      return data;
     } catch (e) {
       throw Exception('Error capturando pago: $e');
     }
   }
 
-  // Método para verificar el estado de una orden
-  Future<Map<String, dynamic>> getOrderDetails(String orderId) async {
-    try {
-      // Esta función necesitarías crearla en tu Edge Function
-      final response = await supabase.functions.invoke(
-        'paypal-payment/order-details',
-        body: {'orderId': orderId},
-      );
-
-      return response.data;
-    } catch (e) {
-      throw Exception('Error obteniendo detalles: $e');
-    }
+  Future<bool> cancelOrder(String orderId) async {
+    final response = await supabase.functions.invoke('paypal-payment',
+      body: {'action': 'cancel', 'orderId': orderId});
+    return (response.data as Map?)?['cancelled'] == true;
   }
+
+  Future<Map<String, dynamic>> recoverReservation(int reservationId) async {
+    final response = await supabase.functions.invoke('paypal-payment',
+      body: {'action': 'recover', 'reservationId': reservationId});
+    final data = Map<String, dynamic>.from(response.data as Map);
+    if (data['error'] != null) throw Exception(data['error']);
+    return data;
+  }
+
 }

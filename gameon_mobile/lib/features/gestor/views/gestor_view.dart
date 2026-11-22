@@ -11,6 +11,7 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'centro_ubicacion_picker.dart';
 import 'cancha_form_view.dart';
 import 'configurar_yape_view.dart';
+import 'configurar_paypal_view.dart';
 import 'solicitud_centro_view.dart';
 import 'reserva_directa_view.dart';
 import '../../perfil/views/perfil_view/authenticated/help_support_view.dart';
@@ -997,6 +998,16 @@ class _GestorViewState extends State<GestorView> {
           subtitle: const Text('Subir o cambiar el QR para todas mis canchas'),
           trailing: const Icon(Icons.chevron_right),
           onTap: _configurarYape,
+        ),
+      ),
+      Card(
+        child: ListTile(
+          leading: const Icon(Icons.account_balance_wallet_outlined),
+          title: const Text('Cobros PayPal Live'),
+          subtitle: const Text('Conectar mi cuenta y fijar precios por cancha'),
+          trailing: const Icon(Icons.chevron_right),
+          onTap: () => Navigator.push(context,
+            MaterialPageRoute(builder: (_) => const ConfigurarPayPalView())),
         ),
       ),
       Card(

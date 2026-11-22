@@ -20,12 +20,15 @@ class ReservaResumenViewModel extends ChangeNotifier {
   bool _reservaCreada = false;
   String? _orderId;
   String? _approvalUrl;
+  String? _amountUsd;
+  String? _exchangeRate;
   String? _error;
 
   bool get procesando => _procesando;
   bool get reservaCreada => _reservaCreada;
   String? get orderId => _orderId;
   String? get approvalUrl => _approvalUrl;
+  String? get amountUsd => _amountUsd;
   String? get error => _error;
 
   ReservaResumenViewModel({
@@ -37,12 +40,6 @@ class ReservaResumenViewModel extends ChangeNotifier {
 
   // Monto original en soles (tarifa * duración)
   double get costoTotal => calendarioVM.costoTotal(area.tarifaPorHora);
-
-  // Tipo de cambio temporal (hardcode) hasta integrar API de conversión
-  static const double _tipoCambioTemporal = 3.7; // 1 USD ≈ 3.7 PEN (temporal)
-
-  // Monto convertido a USD para enviar a PayPal (redondeado a 2 decimales al usarlo)
-  double get costoTotalUsd => costoTotal / _tipoCambioTemporal;
 
   String buildProductName(BuildContext context) {
     final fecha = calendarioVM.selectedDay!;
@@ -74,13 +71,18 @@ class ReservaResumenViewModel extends ChangeNotifier {
     _setError(null);
     try {
       final service = PayPalService(supabase);
-      final usd = double.parse(costoTotalUsd.toStringAsFixed(2));
-      print(
-        '[VM] Creando orden PayPal por $usd USD (equiv S/. ${costoTotal.toStringAsFixed(2)})',
+      String format(TimeOfDay t) =>
+          '${t.hour.toString().padLeft(2, '0')}:${t.minute.toString().padLeft(2, '0')}:00';
+      final data = await service.createOrder(
+        areaId: area.id,
+        fecha: DateFormat('yyyy-MM-dd').format(calendarioVM.selectedDay!),
+        inicio: format(calendarioVM.startTime!),
+        fin: format(calendarioVM.horaFinReal),
       );
-      final data = await service.createOrder(usd, currency: 'USD');
       _orderId = data['orderId'];
       _approvalUrl = data['approvalUrl'];
+      _amountUsd = data['amountUsd']?.toString();
+      _exchangeRate = data['exchangeRate']?.toString();
       print('[VM] Orden creada. orderId=$_orderId');
       if (_orderId == null || _approvalUrl == null) {
         throw 'Respuesta incompleta del servidor PayPal';
@@ -98,6 +100,20 @@ class ReservaResumenViewModel extends ChangeNotifier {
     if (procesando) return;
     await crearOrdenPayPal();
     if (_approvalUrl == null) return;
+    if (!context.mounted) return;
+    final confirmed = await showDialog<bool>(context: context, builder: (dialogContext) => AlertDialog(
+      title: const Text('Confirmar pago PayPal'),
+      content: Text('Tarifa: S/ ${costoTotal.toStringAsFixed(2)}. Se enviará a PayPal US\$ ${_amountUsd ?? '0.00'} (referencia: 1 USD ≈ S/ ${_exchangeRate ?? '—'}, fuente Frankfurter). PayPal o tu banco pueden aplicar otra conversión y comisiones.'),
+      actions: [TextButton(onPressed: () => Navigator.pop(dialogContext, false), child: const Text('Cancelar')),
+        FilledButton(onPressed: () => Navigator.pop(dialogContext, true), child: const Text('Continuar a PayPal'))],
+    ));
+    if (confirmed != true) {
+      try {
+        if (_orderId != null && await PayPalService(supabase).cancelOrder(_orderId!)) resetearPago();
+      } catch (_) { _setError('No se pudo cancelar la orden. Puedes reintentar el pago.'); }
+      return;
+    }
+    if (!context.mounted) return;
     final productName = buildProductName(context);
     print('[VM] Abriendo WebView PayPal con URL $_approvalUrl');
     final result = await Navigator.of(context).push(
@@ -105,7 +121,7 @@ class ReservaResumenViewModel extends ChangeNotifier {
         builder: (_) => PayPalWebView(
           paypalUrl: _approvalUrl!,
           productName: productName,
-          amount: costoTotal,
+          amount: double.tryParse(_amountUsd ?? '') ?? 0,
         ),
       ),
     );
@@ -120,6 +136,13 @@ class ReservaResumenViewModel extends ChangeNotifier {
       print(
         '[VM] El usuario salió sin aprobación final detectada (result=$result).',
       );
+      try {
+        if (_orderId != null && await PayPalService(supabase).cancelOrder(_orderId!)) {
+          resetearPago();
+        }
+      } catch (_) {
+        _setError('No se pudo verificar si PayPal canceló la orden. Puedes reintentar.');
+      }
     }
   }
 
@@ -138,40 +161,13 @@ class ReservaResumenViewModel extends ChangeNotifier {
       final capture = await service.capturePayment(_orderId!);
       print('[VM] Resultado captura (raw): $capture');
       if (capture['success'] == true) {
-        print('[VM] Creando reserva en BD');
-        // Tras capturar un pago exitoso establecemos la reserva como Confirmada
-        // Extraer datos relevantes de la captura (si vienen en la respuesta)
-        final amountCapturedUsd =
-            double.tryParse(
-              (capture['amount']?['value'] ?? capture['amount'])?.toString() ??
-                  '',
-            ) ??
-            costoTotalUsd; // fallback
-        final amountCapturedSoles = amountCapturedUsd * _tipoCambioTemporal;
-
-        // Validación ligera (no bloqueante) de consistencia de monto
-        final diff = (amountCapturedSoles - costoTotal).abs();
-        if (diff > 0.05) {
-          print(
-            '[VM][WARN] Diferencia entre monto calculado (S/. ${costoTotal.toStringAsFixed(2)}) y capturado (~S/. ${amountCapturedSoles.toStringAsFixed(2)}).',
-          );
-        }
-
-        final res = await calendarioVM.crearReserva(
-          idUsuario: userId,
-          estado: 'Confirmada',
-          // Guardamos el monto pagado en soles (monto local para tus reportes)
-          montoPagado: double.parse(amountCapturedSoles.toStringAsFixed(2)),
-          metodoPago: 'paypal',
-          fechaPago: DateTime.now(),
-          paypalOrderId: _orderId,
-        );
-        if (res.ok) {
+        if (capture['reservationId'] != null) {
           _reservaCreada = true;
 
           // Actualizar automáticamente la lista de reservas
           await ReservasListViewModel.refreshIfActive(int.parse(userId));
 
+          if (!context.mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text('Reserva creada exitosamente'),
@@ -180,7 +176,7 @@ class ReservaResumenViewModel extends ChangeNotifier {
           );
           Navigator.of(context).popUntil((r) => r.isFirst);
         } else {
-          _setError(res.message ?? 'Error creando reserva');
+          _setError('No se confirmó la reserva. Reintenta la verificación.');
         }
       } else {
         _setError('Captura fallida: ${capture['status']}');
@@ -197,6 +193,8 @@ class ReservaResumenViewModel extends ChangeNotifier {
   void resetearPago() {
     _orderId = null;
     _approvalUrl = null;
+    _amountUsd = null;
+    _exchangeRate = null;
     _reservaCreada = false;
     _error = null;
     notifyListeners();

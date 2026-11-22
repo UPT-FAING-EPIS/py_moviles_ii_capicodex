@@ -24,7 +24,6 @@ class _PayPalWebViewState extends State<PayPalWebView> {
   late final WebViewController _controller;
   bool _isLoading = true;
   String _currentUrl = '';
-  DateTime? _firstThanksDetection;
   bool _paymentCompleted = false;
 
   @override
@@ -38,24 +37,6 @@ class _PayPalWebViewState extends State<PayPalWebView> {
       ..setJavaScriptMode(JavaScriptMode.unrestricted)
       ..setUserAgent(
         'Mozilla/5.0 (Linux; Android 10; SM-G981B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.6099.193 Mobile Safari/537.36',
-      )
-      ..addJavaScriptChannel(
-        'PayPalHandler',
-        onMessageReceived: (message) {
-          final msg = message.message;
-          print('Mensaje JS recibido: $msg');
-          if (msg == 'PAYPAL_THANKS') {
-            if (_firstThanksDetection == null) {
-              _firstThanksDetection = DateTime.now();
-            }
-            Future.delayed(const Duration(seconds: 1), () {
-              if (mounted) {
-                print('Closing WebView after PayPal final screen.');
-                Navigator.pop(context, true);
-              }
-            });
-          }
-        },
       )
       ..enableZoom(false)
       ..setNavigationDelegate(
@@ -79,9 +60,6 @@ class _PayPalWebViewState extends State<PayPalWebView> {
             });
             print('Página terminada: $url');
 
-            _injectCompatibilityScript();
-            _checkForPaymentCompletion(url);
-            _injectThanksDetector();
           },
           onNavigationRequest: (NavigationRequest request) {
             print('Navegando a: ${request.url}');
@@ -94,15 +72,13 @@ class _PayPalWebViewState extends State<PayPalWebView> {
               final uri = Uri.parse(request.url);
               final token = uri.queryParameters['token'];
               final payerId = uri.queryParameters['PayerID'];
-
-              print('📝 Token: $token, PayerID: $payerId');
-
-              if (token != null && payerId != null && !_paymentCompleted) {
+              if (uri.queryParameters['result'] == 'success' &&
+                  token != null && !_paymentCompleted) {
                 _paymentCompleted = true;
 
                 // Notificar que el pago fue aprobado
                 if (widget.onPaymentApproved != null) {
-                  widget.onPaymentApproved!(token, payerId);
+                  widget.onPaymentApproved!(token, payerId ?? '');
                 }
 
                 // Cerrar el WebView y retornar éxito
@@ -112,6 +88,9 @@ class _PayPalWebViewState extends State<PayPalWebView> {
                   }
                 });
 
+                return NavigationDecision.prevent;
+              } else if (uri.queryParameters['result'] == 'cancel') {
+                Navigator.pop(context, false);
                 return NavigationDecision.prevent;
               }
             }
@@ -137,57 +116,9 @@ class _PayPalWebViewState extends State<PayPalWebView> {
 
   // Detectar URLs de retorno de PayPal
   bool _isPaymentReturnUrl(String url) {
-    return url.contains('https://www.paypal.com/checkoutnow/approved') ||
-        url.contains('https://www.paypal.com/checkoutnow/error') ||
-        url.contains('success') && url.contains('token') ||
-        url.contains('return') && url.contains('token');
-  }
-
-  // Inyectar JavaScript básico para logging
-  void _injectCompatibilityScript() {
-    const compatibilityScript = '''
-      (function() {
-        console.log('PayPal WebView Script loaded');
-        
-        window.addEventListener('error', function(e) {
-          console.log('JavaScript error:', e.message);
-        });
-        
-        console.log('PayPal WebView Script initialized');
-      })();
-    ''';
-
-    _controller.runJavaScript(compatibilityScript).catchError((error) {
-      print('Error inyectando script: $error');
-    });
-  }
-
-  // Detectar pantalla final de agradecimiento de PayPal
-  void _injectThanksDetector() {
-    const detectScript = '''(function(){
-      if (window.__paypal_thanks_detector_installed) return; 
-      window.__paypal_thanks_detector_installed = true;
-      function check(){
-        try {
-          const txt = document.body.innerText.toLowerCase();
-          if (txt.includes('thanks for using paypal') || 
-              txt.includes('gracias por usar paypal') ||
-              txt.includes('pago completado') ||
-              txt.includes('payment complete')) {
-            PayPalHandler.postMessage('PAYPAL_THANKS');
-          }
-        } catch(e) { /* ignore */ }
-      }
-      setInterval(check, 1200);
-      check();
-    })();''';
-    _controller.runJavaScript(detectScript).catchError((e) {
-      print('Error inyectando detector de thanks: $e');
-    });
-  }
-
-  void _checkForPaymentCompletion(String url) {
-    print('Revisando URL para completación de pago: $url');
+    final uri = Uri.tryParse(url);
+    return uri != null && uri.scheme == 'https' &&
+        uri.path.endsWith('/functions/v1/paypal-payment/return');
   }
 
   @override
@@ -387,7 +318,7 @@ class _PayPalWebViewState extends State<PayPalWebView> {
                               borderRadius: BorderRadius.circular(10),
                             ),
                             child: Text(
-                              'S/. ${widget.amount.toStringAsFixed(2)}',
+                              'US\$ ${widget.amount.toStringAsFixed(2)}',
                               style: const TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.bold,

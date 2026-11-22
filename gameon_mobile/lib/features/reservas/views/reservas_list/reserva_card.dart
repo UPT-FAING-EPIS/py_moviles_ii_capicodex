@@ -5,6 +5,8 @@ import 'package:provider/provider.dart';
 import '../../viewmodels/reservas_list_viewmodel.dart';
 import 'reserva_detail_view.dart';
 import '../historial_pagos_view.dart';
+import '../../services/paypal_service.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:gameon/core/theme/app_theme.dart';
 
 class ReservaCard extends StatefulWidget {
@@ -19,6 +21,19 @@ class ReservaCardState extends State<ReservaCard> {
   AreaLite? area;
   InstitucionLite? inst;
   bool loadingExtra = true;
+  bool verifyingPayPal = false;
+
+  Future<void> _verifyPayPal() async {
+    setState(() => verifyingPayPal = true);
+    try {
+      await PayPalService(Supabase.instance.client).recoverReservation(widget.reserva.id as int);
+      if (!mounted) return;
+      await context.read<ReservasListViewModel>().cargarReservasUsuario(idUsuario: widget.reserva.idUsuario as int);
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Pago PayPal confirmado. Reserva actualizada.')));
+    } catch (e) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('PayPal aún no confirmó el pago: $e')));
+    } finally { if (mounted) setState(() => verifyingPayPal = false); }
+  }
 
   @override
   void didChangeDependencies() {
@@ -219,6 +234,12 @@ class ReservaCardState extends State<ReservaCard> {
                   icon: const Icon(Icons.history),
                   label: const Text('Historial de transacciones'),
                 )),
+                if (r.metodoPago?.toLowerCase() == 'paypal' && estado.toLowerCase() == 'pendiente')
+                  OutlinedButton.icon(
+                    onPressed: verifyingPayPal ? null : _verifyPayPal,
+                    icon: const Icon(Icons.verified_outlined),
+                    label: Text(verifyingPayPal ? 'Verificando...' : 'Verificar pago PayPal'),
+                  ),
               ],
             ),
           ),
