@@ -12,6 +12,7 @@ import 'centro_ubicacion_picker.dart';
 import 'cancha_form_view.dart';
 import 'configurar_yape_view.dart';
 import 'configurar_paypal_view.dart';
+import 'gestor_estadisticas_panel.dart';
 import 'solicitud_centro_view.dart';
 import 'reserva_directa_view.dart';
 import '../../perfil/views/perfil_view/authenticated/help_support_view.dart';
@@ -30,6 +31,7 @@ class _GestorViewState extends State<GestorView> {
   final service = GestorService();
   ScaffoldMessengerState? _messenger;
   int tab = 0;
+  int statsRefresh = 0;
   bool loading = true;
   String? error;
   List<Map<String, dynamic>> centros = [],
@@ -96,6 +98,7 @@ class _GestorViewState extends State<GestorView> {
         reservas = r;
         pendientesYape = pendientes;
         deportes = d;
+        statsRefresh++;
         loading = false;
       });
     } catch (e) {
@@ -334,6 +337,8 @@ class _GestorViewState extends State<GestorView> {
           onTap: _configurarYape,
         ),
       ),
+      const SizedBox(height: 20),
+      GestorEstadisticasPanel(centros: centros, refreshToken: statsRefresh),
       const SizedBox(height: 24),
       FilledButton.icon(
         onPressed: () => setState(() => tab = 1),
