@@ -16,6 +16,7 @@ import 'solicitud_centro_view.dart';
 import 'reserva_directa_view.dart';
 import '../../perfil/views/perfil_view/authenticated/help_support_view.dart';
 import '../../perfil/views/perfil_view/unauthenticated/complaints_book_view.dart';
+import '../../reservas/views/constancia_reserva_view.dart';
 
 class GestorView extends StatefulWidget {
   final int managerId;
@@ -734,10 +735,8 @@ class _GestorViewState extends State<GestorView> {
                     final changed = await Navigator.push<bool>(
                       context,
                       MaterialPageRoute(
-                        builder: (_) => ReservaDirectaView(
-                          areas: areas,
-                          centros: centros,
-                        ),
+                        builder: (_) =>
+                            ReservaDirectaView(areas: areas, centros: centros),
                       ),
                     );
                     if (changed == true) await refresh();
@@ -749,7 +748,9 @@ class _GestorViewState extends State<GestorView> {
         if (areas.isEmpty)
           const Padding(
             padding: EdgeInsets.only(top: 8),
-            child: Text('Primero registra una cancha para poder generar reservas.'),
+            child: Text(
+              'Primero registra una cancha para poder generar reservas.',
+            ),
           ),
         const SizedBox(height: 24),
         _sectionTitle(
@@ -850,6 +851,10 @@ class _GestorViewState extends State<GestorView> {
     final pendienteYape =
         '${r['metodo_pago']}'.toLowerCase() == 'yape' &&
         '${r['estado']}'.toLowerCase() == 'pendiente';
+    final constanciaDisponible = [
+      'confirmada',
+      'completada',
+    ].contains('${r['estado']}'.toLowerCase());
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
       child: Padding(
@@ -894,6 +899,20 @@ class _GestorViewState extends State<GestorView> {
                       onPressed: () => _revisarYape(r),
                       icon: const Icon(Icons.verified_outlined),
                       label: const Text('Verificar pago Yape'),
+                    ),
+                  ],
+                  if (constanciaDisponible) ...[
+                    const SizedBox(height: 8),
+                    TextButton.icon(
+                      onPressed: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) =>
+                              ConstanciaReservaView(reservaId: asInt(r['id'])),
+                        ),
+                      ),
+                      icon: const Icon(Icons.receipt_long_outlined),
+                      label: const Text('Ver constancia'),
                     ),
                   ],
                 ],
@@ -1006,8 +1025,10 @@ class _GestorViewState extends State<GestorView> {
           title: const Text('Cobros PayPal Live'),
           subtitle: const Text('Conectar mi cuenta y fijar precios por cancha'),
           trailing: const Icon(Icons.chevron_right),
-          onTap: () => Navigator.push(context,
-            MaterialPageRoute(builder: (_) => const ConfigurarPayPalView())),
+          onTap: () => Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const ConfigurarPayPalView()),
+          ),
         ),
       ),
       Card(

@@ -8,6 +8,7 @@ import '../reprogramar_reserva_view.dart';
 import 'package:provider/provider.dart';
 import 'package:gameon/core/theme/app_theme.dart';
 import 'package:gameon/core/theme/theme_controller.dart';
+import '../constancia_reserva_view.dart';
 
 class ReservaDetailView extends StatefulWidget {
   final int reservaId;
@@ -483,6 +484,26 @@ class _ReservaDetailViewState extends State<ReservaDetailView> {
                                 ),
                             ],
                           ),
+                          if ([
+                            'confirmada',
+                            'completada',
+                          ].contains(r.estado.toLowerCase())) ...[
+                            const SizedBox(height: 16),
+                            SizedBox(
+                              width: double.infinity,
+                              child: FilledButton.icon(
+                                onPressed: () => Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) =>
+                                        ConstanciaReservaView(reservaId: r.id),
+                                  ),
+                                ),
+                                icon: const Icon(Icons.receipt_long_outlined),
+                                label: const Text('Ver constancia de reserva'),
+                              ),
+                            ),
+                          ],
                           const SizedBox(height: 32),
                         ],
                       ),
